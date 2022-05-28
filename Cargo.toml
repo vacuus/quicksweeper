@@ -13,3 +13,6 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.7", features = ["dynamic"] }
+tap = "1.0"
+itertools = "0.10"
+derive_more = "0.99"
