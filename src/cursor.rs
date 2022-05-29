@@ -4,7 +4,7 @@ use crate::minefield::Position;
 
 struct Cursor(Position);
 
-struct CursorPlugin;
+pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {

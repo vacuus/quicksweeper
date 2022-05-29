@@ -21,5 +21,6 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_startup_system(textures::load_textures)
         .add_plugin(minefield::MinefieldPlugin)
+        .add_plugin(cursor::CursorPlugin)
         .run();
 }
