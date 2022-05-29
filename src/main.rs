@@ -1,15 +1,14 @@
-use bevy::{prelude::*, ecs::system::Command};
+#![allow(dead_code)]
+
+mod minefield;
+
+use bevy::prelude::*;
 use derive_more::Deref;
+use rand::prelude::*;
 use tap::Tap;
 
 #[derive(Deref)]
 struct MineTextures(Handle<TextureAtlas>);
-
-impl Command for MineTextures {
-    fn write(self, world: &mut World) {
-        world.insert_resource(self)
-    }
-}
 
 fn init(
     mut commands: Commands,
@@ -25,17 +24,14 @@ fn init(
     let texture: Handle<Image> = asset_server.load("textures.png");
     let atlas = assets.add(TextureAtlas::from_grid(texture, Vec2::splat(32.0), 4, 3));
 
-    commands.spawn_bundle(SpriteSheetBundle {
-        sprite: TextureAtlasSprite::new(0),
-        texture_atlas: atlas,
-        ..Default::default()
-    });
-    println!("inserted mine textures")
+    commands.insert_resource(MineTextures(atlas));
 }
 
 fn main() {
     App::new()
+        .insert_resource(StdRng::from_entropy())
         .add_plugins(DefaultPlugins)
         .add_startup_system(init)
+        .add_plugin(minefield::MinefieldPlugin)
         .run();
 }
