@@ -5,7 +5,8 @@ use derive_more::Deref;
 use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
 
-use crate::{AppState, MineTextures};
+use crate::{AppState};
+use crate::textures::MineTextures;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MineCell {
