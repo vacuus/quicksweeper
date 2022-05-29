@@ -26,8 +26,9 @@ pub fn regenerate_minefield(mut field: ResMut<Minefield>, mut rng: ResMut<StdRng
     // generate thirty mines
     rand::seq::index::sample(&mut *rng, len, len * 3 / 10)
         .into_iter()
-        .map(|x| (x / cols, x % rows))
+        .map(|x| (x / cols, x % cols))
         .for_each(|ix| {
+            println!("inserted into {ix:?}");
             field[ix] = MineCell::Mine;
         });
 }
@@ -44,7 +45,7 @@ pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 11)))
+        app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 32)))
             .add_startup_system(regenerate_minefield)
             .add_enter_system(AppState::Game, regenerate_minefield)
             .add_enter_system(AppState::Game, display_minefield);
