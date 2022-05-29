@@ -17,7 +17,7 @@ pub fn load_textures(
         }));
 
     let texture: Handle<Image> = asset_server.load("textures.png");
-    let atlas = assets.add(TextureAtlas::from_grid(texture, Vec2::splat(32.0), 4, 4));
+    let atlas = assets.add(TextureAtlas::from_grid(texture, Vec2::splat(32.0), 4, 3));
 
     commands.insert_resource(MineTextures(atlas));
 }
