@@ -2,6 +2,7 @@
 
 mod minefield;
 mod textures;
+mod cursor;
 
 use bevy::prelude::*;
 use iyes_loopless::prelude::AppLooplessStateExt;

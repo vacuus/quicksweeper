@@ -16,7 +16,7 @@ pub enum MineCell {
 }
 
 #[derive(Component)]
-pub struct Position(usize, usize);
+pub struct Position(pub usize, pub usize);
 
 #[derive(Deref, DerefMut)]
 pub struct Minefield(Array2D<MineCell>);
