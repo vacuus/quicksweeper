@@ -21,3 +21,38 @@ pub fn load_textures(
 
     commands.insert_resource(MineTextures(atlas));
 }
+
+impl MineTextures {
+    pub fn filled_with(&self, amount: u8) -> SpriteSheetBundle {
+        assert!(amount < 9);
+        SpriteSheetBundle {
+            sprite: TextureAtlasSprite::new(amount as usize),
+            texture_atlas: (*self).clone(),
+            ..Default::default()
+        }
+    }
+
+    pub fn empty(&self) -> SpriteSheetBundle {
+        SpriteSheetBundle {
+            sprite: TextureAtlasSprite::new(9),
+            texture_atlas: (*self).clone(),
+            ..Default::default()
+        }
+    }
+
+    pub fn flagged(&self) -> SpriteSheetBundle {
+        SpriteSheetBundle {
+            sprite: TextureAtlasSprite::new(10),
+            texture_atlas: (*self).clone(),
+            ..Default::default()
+        }
+    }
+
+    pub fn mine(&self) -> SpriteSheetBundle {
+        SpriteSheetBundle {
+            sprite: TextureAtlasSprite::new(11),
+            texture_atlas: (*self).clone(),
+            ..Default::default()
+        }
+    }
+}

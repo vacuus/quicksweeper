@@ -4,9 +4,10 @@ use derive_more::Deref;
 // use itertools::Itertools;
 use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
+use tap::Tap;
 
-use crate::{AppState};
 use crate::textures::MineTextures;
+use crate::AppState;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MineCell {
@@ -46,15 +47,12 @@ pub(crate) fn display_minefield(
         .enumerate()
         .map(|(ix, x)| ((ix / cols, ix % cols), x))
         .for_each(|((y, x), _)| {
-            commands.spawn_bundle(SpriteSheetBundle {
-                sprite: TextureAtlasSprite::new(0),
-                texture_atlas: textures.clone(),
-                transform: Transform {
+            commands.spawn_bundle(textures.empty().tap_mut(|b| {
+                b.transform = Transform {
                     translation: Vec3::new((x * 32) as f32, (y * 32) as f32, 0f32),
                     ..Default::default()
-                },
-                ..Default::default()
-            });
+                }
+            }));
         });
 
     // todo!()
