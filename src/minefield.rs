@@ -15,6 +15,9 @@ pub enum MineCell {
     MarkedMine,
 }
 
+#[derive(Component)]
+pub struct Position(usize, usize);
+
 #[derive(Deref, DerefMut)]
 pub struct Minefield(Array2D<MineCell>);
 
@@ -28,7 +31,6 @@ pub fn regenerate_minefield(mut field: ResMut<Minefield>, mut rng: ResMut<StdRng
         .into_iter()
         .map(|x| (x / cols, x % cols))
         .for_each(|ix| {
-            println!("inserted into {ix:?}");
             field[ix] = MineCell::Mine;
         });
 }
@@ -45,18 +47,20 @@ pub fn display_minefield(
         .enumerate()
         .map(|(ix, x)| ((ix / cols, ix % cols), x))
         .for_each(|((y, x), ty)| {
-            commands.spawn_bundle(
-                match ty {
-                    MineCell::Mine => textures.mine(),
-                    _ => textures.empty(),
-                }
-                .tap_mut(|b| {
-                    b.transform = Transform {
-                        translation: Vec3::new((x * 32) as f32, (y * 32) as f32, 0f32),
-                        ..Default::default()
+            commands
+                .spawn_bundle(
+                    match ty {
+                        MineCell::Mine => textures.mine(),
+                        _ => textures.empty(),
                     }
-                }),
-            );
+                    .tap_mut(|b| {
+                        b.transform = Transform {
+                            translation: Vec3::new((x * 32) as f32, (y * 32) as f32, 0f32),
+                            ..Default::default()
+                        }
+                    }),
+                )
+                .insert(Position(x, y));
         });
 }
 
