@@ -1,12 +1,13 @@
 use array2d::Array2D;
 use bevy::prelude::*;
 use derive_more::Deref;
+// use itertools::Itertools;
 use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
 
 use crate::{AppState, MineTextures};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MineCell {
     Empty,
     Mine,
@@ -20,7 +21,6 @@ pub struct Minefield(Array2D<MineCell>);
 pub fn regenerate_minefield(mut field: ResMut<Minefield>, mut rng: ResMut<StdRng>) {
     // let mut mine_positions = Array2D::filled_with(MineCell::Empty, 10, 10);
     let len = field.num_elements();
-    let rows = field.num_rows();
     let cols = field.num_columns();
 
     // generate thirty mines
@@ -38,7 +38,25 @@ pub(crate) fn display_minefield(
     textures: Res<MineTextures>,
     field: Res<Minefield>,
 ) {
-    todo!()
+    let cols = field.num_columns();
+
+    field
+        .elements_row_major_iter()
+        .enumerate()
+        .map(|(ix, x)| ((ix / cols, ix % cols), x))
+        .for_each(|((y, x), _)| {
+            commands.spawn_bundle(SpriteSheetBundle {
+                sprite: TextureAtlasSprite::new(0),
+                texture_atlas: textures.clone(),
+                transform: Transform {
+                    translation: Vec3::new((x * 32) as f32, (y * 32) as f32, 0f32),
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
+        });
+
+    // todo!()
 }
 
 pub struct MinefieldPlugin;
