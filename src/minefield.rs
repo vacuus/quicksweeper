@@ -1,16 +1,10 @@
 use array2d::Array2D;
 use bevy::prelude::*;
 use derive_more::Deref;
+use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
 
-pub struct MinefieldPlugin;
-
-impl Plugin for MinefieldPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 11)))
-            .add_startup_system(regenerate_minefield);
-    }
-}
+use crate::{AppState, MineTextures};
 
 #[derive(Clone)]
 pub enum MineCell {
@@ -36,4 +30,23 @@ pub fn regenerate_minefield(mut field: ResMut<Minefield>, mut rng: ResMut<StdRng
         .for_each(|ix| {
             field[ix] = MineCell::Mine;
         });
+}
+
+pub(crate) fn display_minefield(
+    mut commands: Commands,
+    textures: Res<MineTextures>,
+    field: Res<Minefield>,
+) {
+    todo!()
+}
+
+pub struct MinefieldPlugin;
+
+impl Plugin for MinefieldPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 11)))
+            .add_startup_system(regenerate_minefield)
+            .add_enter_system(AppState::Game, regenerate_minefield)
+            .add_enter_system(AppState::Game, display_minefield);
+    }
 }

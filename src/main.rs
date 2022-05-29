@@ -4,11 +4,18 @@ mod minefield;
 
 use bevy::prelude::*;
 use derive_more::Deref;
+use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::*;
 use tap::Tap;
 
 #[derive(Deref)]
 struct MineTextures(Handle<TextureAtlas>);
+
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+enum AppState {
+    Menu,
+    Game,
+}
 
 fn init(
     mut commands: Commands,
@@ -29,6 +36,7 @@ fn init(
 
 fn main() {
     App::new()
+        .add_loopless_state(AppState::Game)
         .insert_resource(StdRng::from_entropy())
         .add_plugins(DefaultPlugins)
         .add_startup_system(init)
