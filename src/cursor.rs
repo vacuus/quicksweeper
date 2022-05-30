@@ -15,7 +15,6 @@ fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>) {
-    println!("I rendered the thing");
     commands
         .spawn_bundle(SpriteBundle {
             texture: (*texture).clone(),
