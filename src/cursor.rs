@@ -1,7 +1,4 @@
-use crate::{
-    minefield::{Minefield, Position},
-    AppState,
-};
+use crate::{common::Position, minefield::Minefield, AppState};
 use bevy::prelude::*;
 use derive_more::Deref;
 use iyes_loopless::prelude::*;

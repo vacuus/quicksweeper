@@ -1,3 +1,4 @@
+use crate::common::Position;
 use crate::textures::MineTextures;
 use crate::AppState;
 use array2d::Array2D;
@@ -15,8 +16,9 @@ pub enum MineCell {
     MarkedMine,
 }
 
+
 #[derive(Component)]
-pub struct Position(pub usize, pub usize);
+struct Mine(Position);
 
 #[derive(Deref, DerefMut)]
 pub struct Minefield(Array2D<MineCell>);
@@ -60,7 +62,7 @@ pub fn display_minefield(
                         }
                     }),
                 )
-                .insert(Position(x, y));
+                .insert(Mine(Position(x, y)));
         });
 }
 
