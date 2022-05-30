@@ -1,12 +1,12 @@
 use crate::{common::Position, minefield::Minefield, AppState};
-use bevy::prelude::*;
+use bevy::{prelude::*, render::camera::Camera2d};
 use derive_more::Deref;
 use iyes_loopless::prelude::*;
 
 #[derive(Deref)]
 struct CursorTexture(Handle<Image>);
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Cursor(Position);
 
 fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -28,15 +28,11 @@ fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>) {
         .insert(Cursor(Position(0, 0)));
 }
 
-fn move_cursor(
-    mut cursor: Query<(&mut Cursor, &mut Transform)>,
-    kb: Res<Input<KeyCode>>,
-    minefield: Res<Minefield>,
-) {
+fn move_cursor(mut cursor: Query<&mut Cursor>, kb: Res<Input<KeyCode>>, minefield: Res<Minefield>) {
     let max_x = minefield.num_columns() - 1;
     let max_y = minefield.num_rows() - 1;
 
-    let (mut cursor, mut transform) = cursor.iter_mut().next().unwrap(); // assume single cursor
+    let mut cursor = cursor.iter_mut().next().unwrap(); // assume single cursor
     let Cursor(Position(ref mut x, ref mut y)) = *cursor;
 
     if kb.just_pressed(KeyCode::A) {
@@ -50,8 +46,24 @@ fn move_cursor(
     } else if kb.just_pressed(KeyCode::W) && *y < max_y {
         *y += 1;
     }
+}
 
-    transform.translation = Vec3::new((*x * 32) as f32, (*y * 32) as f32, 3.0);
+fn translate_components(
+    mut cursor: Query<(&mut Transform, &Cursor), Without<Camera2d>>,
+    mut camera: Query<&mut Transform, With<Camera2d>>,
+    mut previous: Local<Option<Position>>,
+) {
+    let (mut cursor_transform, Cursor(position)) = cursor.iter_mut().next().unwrap();
+    let mut camera_transform = camera.iter_mut().next().unwrap();
+    if previous.is_none() || previous.as_ref().unwrap() != position {
+        let Position(x, y) = position;
+        let translation = Vec3::new((*x * 32) as f32, (*y * 32) as f32, 3.0);
+
+        cursor_transform.translation = translation.clone();
+        camera_transform.translation = translation;
+
+        *previous = Some(position.clone());
+    }
 }
 
 pub struct CursorPlugin;
@@ -60,6 +72,7 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
             .add_enter_system(AppState::Game, create_cursor)
-            .add_system(move_cursor.run_in_state(AppState::Game));
+            .add_system(move_cursor.run_in_state(AppState::Game))
+            .add_system(translate_components.run_in_state(AppState::Game));
     }
 }
