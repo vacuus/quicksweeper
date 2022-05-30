@@ -1,4 +1,8 @@
-use crate::{common::Position, minefield::Minefield, AppState};
+use crate::{
+    common::{CheckCell, Position},
+    minefield::Minefield,
+    AppState,
+};
 use bevy::{prelude::*, render::camera::Camera2d};
 use derive_more::Deref;
 use iyes_loopless::prelude::*;
@@ -27,7 +31,11 @@ fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>) {
         .insert(Cursor(Position(0, 0)));
 }
 
-fn move_cursor(mut cursor: Query<&mut Cursor>, kb: Res<Input<KeyCode>>, minefield: Query<&Minefield>) {
+fn move_cursor(
+    mut cursor: Query<&mut Cursor>,
+    kb: Res<Input<KeyCode>>,
+    minefield: Query<&Minefield>,
+) {
     let minefield = minefield.iter().next().unwrap();
     let max_x = minefield.num_columns() - 1;
     let max_y = minefield.num_rows() - 1;
@@ -66,6 +74,12 @@ fn translate_components(
     }
 }
 
+fn check_cell(cursor: Query<&Cursor>, kb: Res<Input<KeyCode>>, mut ev: EventWriter<CheckCell>) {
+    if kb.just_pressed(KeyCode::Space) {
+        ev.send(CheckCell(cursor.get_single().unwrap().0.clone()));
+    }
+}
+
 pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
@@ -73,6 +87,7 @@ impl Plugin for CursorPlugin {
         app.add_startup_system(load_cursor_texture)
             .add_enter_system(AppState::Game, create_cursor)
             .add_system(move_cursor.run_in_state(AppState::Game))
-            .add_system(translate_components.run_in_state(AppState::Game));
+            .add_system(translate_components.run_in_state(AppState::Game))
+            .add_system(check_cell.run_in_state(AppState::Game));
     }
 }

@@ -1,11 +1,11 @@
-use crate::common::Position;
+use crate::common::{CheckCell, Position};
 use crate::textures::MineTextures;
 use crate::AppState;
 use array2d::Array2D;
 use bevy::prelude::*;
 use derive_more::Deref;
 use itertools::Itertools;
-use iyes_loopless::prelude::AppLooplessStateExt;
+use iyes_loopless::prelude::*;
 use rand::prelude::StdRng;
 use tap::Tap;
 
@@ -68,10 +68,18 @@ fn generate_minefield(
     commands.spawn().insert(Minefield(minefield));
 }
 
+fn reveal_cell(field: Query<&mut Minefield>, mut ev: EventReader<CheckCell>) {
+    ev.iter().for_each(|CheckCell(position)| {
+        println!("Event received with position {position:?}");
+        //TODO
+    })
+}
+
 pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(AppState::Game, generate_minefield);
+        app.add_enter_system(AppState::Game, generate_minefield)
+            .add_system(reveal_cell.run_in_state(AppState::Game));
     }
 }
