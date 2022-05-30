@@ -27,7 +27,8 @@ fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>) {
         .insert(Cursor(Position(0, 0)));
 }
 
-fn move_cursor(mut cursor: Query<&mut Cursor>, kb: Res<Input<KeyCode>>, minefield: Res<Minefield>) {
+fn move_cursor(mut cursor: Query<&mut Cursor>, kb: Res<Input<KeyCode>>, minefield: Query<&Minefield>) {
+    let minefield = minefield.iter().next().unwrap();
     let max_x = minefield.num_columns() - 1;
     let max_y = minefield.num_rows() - 1;
 

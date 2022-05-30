@@ -4,12 +4,19 @@ use crate::AppState;
 use array2d::Array2D;
 use bevy::prelude::*;
 use derive_more::Deref;
+use itertools::Itertools;
 use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
 use tap::Tap;
 
+#[derive(Clone, Debug)]
+pub struct MineCell {
+    sprite: Entity,
+    state: MineCellState,
+}
+
 #[derive(Clone, Debug, PartialEq)]
-pub enum MineCell {
+pub enum MineCellState {
     Empty,
     Mine,
     MarkedEmpty(u8),
@@ -19,53 +26,52 @@ pub enum MineCell {
 #[derive(Component)]
 struct Mine(Position);
 
-#[derive(Deref, DerefMut)]
+#[derive(Deref, DerefMut, Component)]
 pub struct Minefield(Array2D<MineCell>);
 
-pub fn regenerate_minefield(mut field: ResMut<Minefield>, mut rng: ResMut<StdRng>) {
-    // let mut mine_positions = Array2D::filled_with(MineCell::Empty, 10, 10);
-    let len = field.num_elements();
-    let cols = field.num_columns();
-
-    // generate mines with density 3/10
-    rand::seq::index::sample(&mut *rng, len, len * 3 / 10)
-        .into_iter()
-        .map(|x| (x / cols, x % cols))
-        .for_each(|ix| {
-            field[ix] = MineCell::Mine;
-        });
-}
-
-pub fn init_display_minefield(
+fn generate_minefield(
     mut commands: Commands,
     textures: Res<MineTextures>,
-    field: Res<Minefield>,
+    mut rng: ResMut<StdRng>,
 ) {
-    let cols = field.num_columns();
+    let rows = 10;
+    let cols = 20;
 
-    field
-        .elements_row_major_iter()
-        .enumerate()
-        .map(|(ix, x)| ((ix / cols, ix % cols), x))
-        .for_each(|((y, x), _)| {
-            commands
-                .spawn_bundle(textures.empty().tap_mut(|b| {
-                    b.transform = Transform {
-                        translation: Vec3::new((x * 32) as f32, (y * 32) as f32, 0f32),
-                        ..Default::default()
-                    }
-                }))
-                .insert(Mine(Position(x, y)));
-        });
+    let len = rows * cols;
+
+    // generate mines with density 3/10
+    let indices = rand::seq::index::sample(&mut *rng, len, len * 3 / 10);
+
+    let minefield_iter = (0..len).map(|ix| {
+        let (y, x) = (ix / cols, ix % cols);
+
+        let state = indices
+            .iter()
+            .contains(&ix)
+            .then(|| MineCellState::Mine)
+            .unwrap_or(MineCellState::Empty);
+
+        let sprite = commands
+            .spawn_bundle(textures.empty().tap_mut(|b| {
+                b.transform = Transform {
+                    translation: Vec3::new(x as f32 * 32.0, y as f32 * 32.0, 3.0),
+                    ..Default::default()
+                };
+            }))
+            .id();
+
+        MineCell { sprite, state }
+    });
+
+    let minefield = Array2D::from_iter_row_major(minefield_iter, rows, cols);
+
+    commands.spawn().insert(Minefield(minefield));
 }
 
 pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 20)))
-            .add_startup_system(regenerate_minefield)
-            .add_enter_system(AppState::Game, regenerate_minefield)
-            .add_enter_system(AppState::Game, init_display_minefield);
+        app.add_enter_system(AppState::Game, generate_minefield);
     }
 }
