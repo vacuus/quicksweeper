@@ -16,7 +16,6 @@ pub enum MineCell {
     MarkedMine,
 }
 
-
 #[derive(Component)]
 struct Mine(Position);
 
@@ -37,7 +36,7 @@ pub fn regenerate_minefield(mut field: ResMut<Minefield>, mut rng: ResMut<StdRng
         });
 }
 
-pub fn display_minefield(
+pub fn init_display_minefield(
     mut commands: Commands,
     textures: Res<MineTextures>,
     field: Res<Minefield>,
@@ -48,20 +47,14 @@ pub fn display_minefield(
         .elements_row_major_iter()
         .enumerate()
         .map(|(ix, x)| ((ix / cols, ix % cols), x))
-        .for_each(|((y, x), ty)| {
+        .for_each(|((y, x), _)| {
             commands
-                .spawn_bundle(
-                    match ty {
-                        MineCell::Mine => textures.mine(),
-                        _ => textures.empty(),
+                .spawn_bundle(textures.empty().tap_mut(|b| {
+                    b.transform = Transform {
+                        translation: Vec3::new((x * 32) as f32, (y * 32) as f32, 0f32),
+                        ..Default::default()
                     }
-                    .tap_mut(|b| {
-                        b.transform = Transform {
-                            translation: Vec3::new((x * 32) as f32, (y * 32) as f32, 0f32),
-                            ..Default::default()
-                        }
-                    }),
-                )
+                }))
                 .insert(Mine(Position(x, y)));
         });
 }
@@ -73,6 +66,6 @@ impl Plugin for MinefieldPlugin {
         app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 20)))
             .add_startup_system(regenerate_minefield)
             .add_enter_system(AppState::Game, regenerate_minefield)
-            .add_enter_system(AppState::Game, display_minefield);
+            .add_enter_system(AppState::Game, init_display_minefield);
     }
 }
