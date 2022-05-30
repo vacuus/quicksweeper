@@ -13,7 +13,7 @@ pub fn load_textures(
     commands
         .spawn()
         .insert_bundle(OrthographicCameraBundle::new_2d().tap_mut(|bundle| {
-            bundle.transform.translation = Vec3::new(0.0, 0.0, 1.0);
+            bundle.transform.translation = Vec3::new(0.0, 0.0, 100.0);
         }));
 
     let texture: Handle<Image> = asset_server.load("textures.png");

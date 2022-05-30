@@ -20,7 +20,7 @@ fn main() {
         .insert_resource(StdRng::from_entropy())
         .add_plugins(DefaultPlugins)
         .add_startup_system(textures::load_textures)
-        .add_plugin(minefield::MinefieldPlugin)
         .add_plugin(cursor::CursorPlugin)
+        .add_plugin(minefield::MinefieldPlugin)
         .run();
 }
