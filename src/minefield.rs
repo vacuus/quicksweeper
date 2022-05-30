@@ -68,7 +68,7 @@ pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 32)))
+        app.insert_resource(Minefield(Array2D::filled_with(MineCell::Empty, 10, 20)))
             .add_startup_system(regenerate_minefield)
             .add_enter_system(AppState::Game, regenerate_minefield)
             .add_enter_system(AppState::Game, display_minefield);
