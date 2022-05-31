@@ -58,6 +58,10 @@ fn reveal_cell(
     ev.p0().iter().for_each(|CheckCell(position)| {
         println!("Event received with position {position:?}");
 
+        field.iter_neighbors_enumerated(position.clone()).for_each(|pos| {
+            println!("{pos:?}");
+        });
+
         match field[position.clone()].state {
             MineCellState::Empty => {}
             MineCellState::Mine => {
