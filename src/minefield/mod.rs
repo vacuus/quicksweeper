@@ -52,11 +52,10 @@ fn generate_minefield(
 
 fn reveal_cell(
     mut field: Query<&mut Minefield>,
-    mut ev: EventReader<CheckCell>,
-    mut feedback: EventWriter<CheckCell>,
+    mut ev: ParamSet<(EventReader<CheckCell>, EventWriter<CheckCell>)>,
 ) {
     let field = field.single_mut();
-    ev.iter().for_each(|CheckCell(position)| {
+    ev.p0().iter().for_each(|CheckCell(position)| {
         println!("Event received with position {position:?}");
 
         match field[position.clone()].state {
