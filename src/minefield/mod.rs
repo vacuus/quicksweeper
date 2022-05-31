@@ -53,6 +53,7 @@ fn generate_minefield(
 }
 
 fn reveal_cell(
+    mut commands: Commands,
     mut field: Query<&mut Minefield>,
     mut cell_sprite: Query<&mut TextureAtlasSprite>,
     mut ev: EventReader<CheckCell>,
@@ -81,15 +82,14 @@ fn reveal_cell(
                     TextureAtlasSprite::new(mine_neighbors.len());
             }
             MineCellState::Mine => {
-                println!("end game")
+                println!("end game");
+                commands.insert_resource(NextState(AppState::GameFailed));
             }
             MineCellState::MarkedEmpty(_) => {
                 println!("reveal if filled");
             }
             _ => (), // ignore marked cells
         }
-
-        //TODO
     }
 }
 

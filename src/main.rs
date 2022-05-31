@@ -14,6 +14,7 @@ use rand::prelude::*;
 enum AppState {
     Menu,
     Game,
+    GameFailed,
 }
 
 fn main() {
