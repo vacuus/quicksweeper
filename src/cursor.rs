@@ -45,13 +45,13 @@ fn move_cursor(
 
     if kb.just_pressed(KeyCode::A) {
         *x = x.saturating_sub(1);
-    } else if kb.just_pressed(KeyCode::D) && *x < max_x {
+    } else if kb.just_pressed(KeyCode::D) && *x < max_x as u32 {
         *x += 1;
     }
 
     if kb.just_pressed(KeyCode::S) {
         *y = y.saturating_sub(1);
-    } else if kb.just_pressed(KeyCode::W) && *y < max_y {
+    } else if kb.just_pressed(KeyCode::W) && *y < max_y as u32 {
         *y += 1;
     }
 }
