@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use crate::common::{CheckCell, Position};
 use crate::textures::MineTextures;
 use crate::AppState;
@@ -28,6 +30,20 @@ struct Mine(Position);
 
 #[derive(Deref, DerefMut, Component)]
 pub struct Minefield(Array2D<MineCell>);
+
+impl Index<Position> for Minefield {
+    type Output = MineCell;
+
+    fn index(&self, Position(x, y): Position) -> &Self::Output {
+        &(**self)[(x, y)]
+    }
+}
+
+impl IndexMut<Position> for Minefield {
+    fn index_mut(&mut self, Position(x, y): Position) -> &mut Self::Output {
+        &mut (**self)[(x, y)]
+    }
+}
 
 fn generate_minefield(
     mut commands: Commands,
@@ -68,9 +84,29 @@ fn generate_minefield(
     commands.spawn().insert(Minefield(minefield));
 }
 
-fn reveal_cell(field: Query<&mut Minefield>, mut ev: EventReader<CheckCell>) {
+fn reveal_cell(
+    mut field: Query<&mut Minefield>,
+    mut ev: EventReader<CheckCell>,
+    mut feedback: EventWriter<CheckCell>,
+) {
+    let field = field.single_mut();
     ev.iter().for_each(|CheckCell(position)| {
         println!("Event received with position {position:?}");
+
+
+        match field[position.clone()].state {
+            MineCellState::Empty => {
+                
+            }
+            MineCellState::Mine => {
+                println!("end game")
+            }
+            MineCellState::MarkedEmpty(_) => {
+                println!("reveal if filled");
+            }
+            _ => (), // ignore marked cells
+        }
+
         //TODO
     })
 }
