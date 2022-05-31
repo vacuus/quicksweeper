@@ -52,18 +52,26 @@ fn generate_minefield(
 
 fn reveal_cell(
     mut field: Query<&mut Minefield>,
+    mut cell_sprite: Query<&mut TextureAtlasSprite>,
     mut ev: ParamSet<(EventReader<CheckCell>, EventWriter<CheckCell>)>,
 ) {
-    let field = field.single_mut();
+    let mut field = field.single_mut();
     ev.p0().iter().for_each(|CheckCell(position)| {
         println!("Event received with position {position:?}");
 
-        field.iter_neighbors_enumerated(position.clone()).for_each(|pos| {
-            println!("{pos:?}");
-        });
+        let (mine_neighbors, blank_neighbors): (Vec<_>, Vec<_>) = field
+            .iter_neighbors_enumerated(position.clone())
+            .map(|(a, b)| (a, b.clone()))
+            .partition(|(_, x)| matches!(x.state, MineCellState::Mine | MineCellState::MarkedMine));
 
-        match field[position.clone()].state {
-            MineCellState::Empty => {}
+        let checking = &mut field[position.clone()];
+
+        match checking.state {
+            MineCellState::Empty => {
+                checking.state = MineCellState::MarkedEmpty(mine_neighbors.len() as u8);
+                *cell_sprite.get_mut(checking.sprite).unwrap() =
+                    TextureAtlasSprite::new(mine_neighbors.len());
+            }
             MineCellState::Mine => {
                 println!("end game")
             }
