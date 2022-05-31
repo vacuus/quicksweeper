@@ -58,7 +58,6 @@ fn reveal_cell(
     mut ev: EventReader<CheckCell>,
     mut check_next: Local<VecDeque<CheckCell>>,
 ) {
-
     check_next.extend(ev.iter().cloned());
     let mut field = field.single_mut();
 
@@ -74,6 +73,9 @@ fn reveal_cell(
 
         match checking.state {
             MineCellState::Empty => {
+                if mine_neighbors.is_empty() {
+                    check_next.extend(blank_neighbors.into_iter().map(|(pos, _)| CheckCell(pos)));
+                }
                 checking.state = MineCellState::MarkedEmpty(mine_neighbors.len() as u8);
                 *cell_sprite.get_mut(checking.sprite).unwrap() =
                     TextureAtlasSprite::new(mine_neighbors.len());
