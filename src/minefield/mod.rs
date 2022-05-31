@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::common::CheckCell;
 use crate::textures::MineTextures;
 use crate::AppState;
@@ -53,10 +55,14 @@ fn generate_minefield(
 fn reveal_cell(
     mut field: Query<&mut Minefield>,
     mut cell_sprite: Query<&mut TextureAtlasSprite>,
-    mut ev: ParamSet<(EventReader<CheckCell>, EventWriter<CheckCell>)>,
+    mut ev: EventReader<CheckCell>,
+    mut check_next: Local<VecDeque<CheckCell>>,
 ) {
+
+    check_next.extend(ev.iter().cloned());
     let mut field = field.single_mut();
-    ev.p0().iter().for_each(|CheckCell(position)| {
+
+    if let Some(CheckCell(position)) = check_next.pop_front() {
         println!("Event received with position {position:?}");
 
         let (mine_neighbors, blank_neighbors): (Vec<_>, Vec<_>) = field
@@ -82,7 +88,7 @@ fn reveal_cell(
         }
 
         //TODO
-    })
+    }
 }
 
 pub struct MinefieldPlugin;
