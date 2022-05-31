@@ -1,49 +1,15 @@
-use std::ops::{Index, IndexMut};
-
-use crate::common::{CheckCell, Position};
+use crate::common::CheckCell;
 use crate::textures::MineTextures;
 use crate::AppState;
 use array2d::Array2D;
 use bevy::prelude::*;
-use derive_more::Deref;
 use itertools::Itertools;
 use iyes_loopless::prelude::*;
 use rand::prelude::StdRng;
 use tap::Tap;
 
-#[derive(Clone, Debug)]
-pub struct MineCell {
-    sprite: Entity,
-    state: MineCellState,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MineCellState {
-    Empty,
-    Mine,
-    MarkedEmpty(u8),
-    MarkedMine,
-}
-
-#[derive(Component)]
-struct Mine(Position);
-
-#[derive(Deref, DerefMut, Component)]
-pub struct Minefield(Array2D<MineCell>);
-
-impl Index<Position> for Minefield {
-    type Output = MineCell;
-
-    fn index(&self, Position(x, y): Position) -> &Self::Output {
-        &(**self)[(x, y)]
-    }
-}
-
-impl IndexMut<Position> for Minefield {
-    fn index_mut(&mut self, Position(x, y): Position) -> &mut Self::Output {
-        &mut (**self)[(x, y)]
-    }
-}
+mod field;
+pub use field::*;
 
 fn generate_minefield(
     mut commands: Commands,
@@ -93,11 +59,8 @@ fn reveal_cell(
     ev.iter().for_each(|CheckCell(position)| {
         println!("Event received with position {position:?}");
 
-
         match field[position.clone()].state {
-            MineCellState::Empty => {
-                
-            }
+            MineCellState::Empty => {}
             MineCellState::Mine => {
                 println!("end game")
             }
