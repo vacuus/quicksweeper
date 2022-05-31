@@ -68,7 +68,7 @@ fn reveal_cell(
         let (mine_neighbors, blank_neighbors): (Vec<_>, Vec<_>) = field
             .iter_neighbors_enumerated(position.clone())
             .map(|(a, b)| (a, b.clone()))
-            .partition(|(_, x)| matches!(x.state, MineCellState::Mine | MineCellState::MarkedMine));
+            .partition(|(_, x)| matches!(x.state, MineCellState::Mine | MineCellState::Flagged));
 
         let checking = &mut field[position.clone()];
 
@@ -77,7 +77,7 @@ fn reveal_cell(
                 if mine_neighbors.is_empty() {
                     check_next.extend(blank_neighbors.into_iter().map(|(pos, _)| CheckCell(pos)));
                 }
-                checking.state = MineCellState::MarkedEmpty(mine_neighbors.len() as u8);
+                checking.state = MineCellState::FoundEmpty(mine_neighbors.len() as u8);
                 *cell_sprite.get_mut(checking.sprite).unwrap() =
                     TextureAtlasSprite::new(mine_neighbors.len());
             }
@@ -85,7 +85,7 @@ fn reveal_cell(
                 println!("end game");
                 commands.insert_resource(NextState(AppState::GameFailed));
             }
-            MineCellState::MarkedEmpty(_) => {
+            MineCellState::FoundEmpty(_) => {
                 println!("reveal if filled");
             }
             _ => (), // ignore marked cells

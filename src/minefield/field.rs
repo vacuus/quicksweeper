@@ -18,8 +18,8 @@ pub struct MineCell {
 pub enum MineCellState {
     Empty,
     Mine,
-    MarkedEmpty(u8),
-    MarkedMine,
+    FoundEmpty(u8),
+    Flagged,
 }
 
 #[derive(Component)]
