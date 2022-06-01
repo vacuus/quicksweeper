@@ -59,15 +59,11 @@ impl Minefield {
         let max_x = (self.num_columns() - 1) as u32;
         let max_y = (self.num_rows() - 1) as u32;
 
-        // let mut write =
-        //     |size: usize, pos| unsafe { ((&mut items[size]) as *mut Position).write(pos) };
-
         // left
         if pos.0 != 0 {
             // lower left
             if pos.1 != 0 {
                 items[size] = Position(pos.0 - 1, pos.1 - 1);
-                // write(size, Position(pos.0 - 1, pos.1 - 1));
                 size += 1;
             }
             // upper left

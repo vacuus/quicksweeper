@@ -13,13 +13,14 @@ use rand::prelude::*;
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 enum AppState {
     Menu,
+    PreGame,
     Game,
     GameFailed,
 }
 
 fn main() {
     App::new()
-        .add_loopless_state(AppState::Game)
+        .add_loopless_state(AppState::PreGame)
         .insert_resource(StdRng::from_entropy())
         .add_event::<CheckCell>()
         .add_plugins(DefaultPlugins)

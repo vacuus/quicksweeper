@@ -85,8 +85,12 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
-            .add_enter_system(AppState::Game, create_cursor)
-            .add_system(move_cursor.run_in_state(AppState::Game))
+            .add_enter_system(AppState::PreGame, create_cursor)
+            .add_system(
+                move_cursor
+                    .run_in_state(AppState::Game)
+                    .run_in_state(AppState::PreGame),
+            )
             .add_system(translate_components.run_in_state(AppState::Game))
             .add_system(check_cell.run_in_state(AppState::Game));
     }
