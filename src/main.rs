@@ -4,19 +4,14 @@ mod minefield;
 mod textures;
 mod cursor;
 mod common;
+mod state;
 
 use bevy::prelude::*;
 use common::CheckCell;
 use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::*;
 
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-enum AppState {
-    Menu,
-    PreGame,
-    Game,
-    GameFailed,
-}
+pub use state::AppState;
 
 fn main() {
     App::new()
