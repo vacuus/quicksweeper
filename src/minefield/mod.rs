@@ -13,6 +13,38 @@ use tap::Tap;
 mod field;
 pub use field::*;
 
+fn create_minefield(
+    mut commands: Commands,
+    textures: Res<MineTextures>,
+) {
+    let rows = 10;
+    let cols = 20;
+    let len = rows * cols;
+
+    let minefield_iter = (0..len).map(|ix| {
+        let (y, x) = (ix / cols, ix % cols);
+
+        let sprite = commands
+            .spawn_bundle(textures.empty().tap_mut(|b| {
+                b.transform = Transform {
+                    translation: Vec3::new(x as f32 * 32.0, y as f32 * 32.0, 3.0),
+                    ..Default::default()
+                };
+            }))
+            .id();
+
+        MineCell {
+            sprite,
+            state: MineCellState::Empty,
+        }
+    });
+
+    let minefield = Minefield(Array2D::from_iter_row_major(minefield_iter, rows, cols));
+    commands.spawn().insert(minefield);
+    
+    commands.insert_resource(NextState(AppState::PreGame));
+}
+
 fn generate_minefield(
     mut commands: Commands,
     textures: Res<MineTextures>,
@@ -97,7 +129,9 @@ pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(AppState::Game, generate_minefield)
+        app
+            // .add_enter_system(AppState::Game, generate_minefield)
+            .add_system(create_minefield.run_in_state(AppState::Loading))
             .add_system(reveal_cell.run_in_state(AppState::Game));
     }
 }
