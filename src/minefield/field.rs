@@ -53,10 +53,7 @@ impl MineCell {
 }
 
 pub fn render_mines(mut q: Query<&mut Minefield>, mut sprites: Query<&mut TextureAtlasSprite>) {
-    let mut minefield = q.single_mut();
-    let cols = minefield.num_columns();
-    for ix in (0..minefield.num_elements()).map(|pos| (pos / cols, pos % cols)) {
-        let cell = &mut (**minefield)[ix];
+    q.single_mut().for_each_mut(|cell| {
         if cell.modified == true {
             cell.modified = false;
             *sprites.get_mut(cell.sprite).unwrap() = match cell.state {
@@ -67,7 +64,7 @@ pub fn render_mines(mut q: Query<&mut Minefield>, mut sprites: Query<&mut Textur
                 MineCellState::FoundEmpty(x) => TextureAtlasSprite::new(x as usize),
             }
         }
-    }
+    });
 }
 
 pub fn display_mines(mut q: Query<&mut Minefield>, mut sprites: Query<&mut TextureAtlasSprite>) {
