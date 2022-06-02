@@ -5,7 +5,7 @@ use iyes_loopless::prelude::*;
 
 use crate::AppState;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Eq, Hash)]
 pub struct Position(pub u32, pub u32);
 
 pub struct PositionNeighborsIter {

@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use crate::textures::MineTextures;
@@ -78,11 +78,16 @@ fn reveal_cell(
     mut ev: EventReader<CheckCell>,
     mut check_next: Local<VecDeque<CheckCell>>,
 ) {
+    let mut seen = HashSet::new();
+
     check_next.extend(ev.iter().cloned());
     let mut field = field.single_mut();
 
     while let Some(CheckCell(position)) = check_next.pop_front() {
-        println!("Event received with position {position:?}");
+        if seen.contains(&position) {
+            break;
+        }
+        seen.insert(position.clone());
 
         let neighbors = field
             .iter_neighbors_enumerated(position.clone())
@@ -104,8 +109,21 @@ fn reveal_cell(
                     cell.state(),
                     MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
                 )
-            }).inspect(|(pos, _)| {
-                println!("unflagged neighbor: {pos:?}");
+            })
+        };
+
+        let flagged_neighbors = || {
+            neighbors.iter().filter(|(_, cell)| {
+                matches!(
+                    cell.state(),
+                    MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
+                )
+            })
+        };
+
+        let unmarked = || {
+            neighbors.iter().filter(|(_, cell)| {
+                matches!(cell.state(), MineCellState::Mine | MineCellState::Empty)
             })
         };
 
@@ -114,17 +132,17 @@ fn reveal_cell(
             MineCellState::Empty => {
                 let count_mine_neighbors = mine_neighbors().count() as u8;
                 if count_mine_neighbors == 0 {
-                    check_next.extend(
-                        unflagged_neighbors().map(|(pos, _)| CheckCell(pos.clone())),
-                    );
+                    check_next.extend(unflagged_neighbors().map(|(pos, _)| CheckCell(pos.clone())));
                 }
                 checking.set_state(MineCellState::FoundEmpty(count_mine_neighbors));
             }
             MineCellState::Mine => {
                 commands.insert_resource(NextState(AppState::GameFailed));
             }
-            MineCellState::FoundEmpty(_) => {
-                println!("reveal if filled");
+            MineCellState::FoundEmpty(x) => {
+                if flagged_neighbors().count() == *x as usize {
+                    check_next.extend(unmarked().map(|(pos, _)| CheckCell(pos.clone())));
+                }
             }
             _ => (), // ignore marked cells
         }
