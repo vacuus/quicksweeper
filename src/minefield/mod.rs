@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::common::{CheckCell, InitCheckCell, Position};
+use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use crate::textures::MineTextures;
 use crate::AppState;
 use array2d::Array2D;
@@ -102,7 +102,12 @@ fn reveal_cell(
         let (mine_neighbors, blank_neighbors): (Vec<_>, Vec<_>) = field
             .iter_neighbors_enumerated(position.clone())
             .map(|(a, b)| (a, b.clone()))
-            .partition(|(_, x)| matches!(x.state, MineCellState::Mine | MineCellState::Flagged));
+            .partition(|(_, x)| {
+                matches!(
+                    x.state,
+                    MineCellState::Mine | MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
+                )
+            });
 
         let checking = &mut field[position.clone()];
 
@@ -126,12 +131,47 @@ fn reveal_cell(
     }
 }
 
+fn flag_cell(
+    mut ev: EventReader<FlagCell>,
+    mut field: Query<&mut Minefield>,
+    mut cell_sprite: Query<&mut TextureAtlasSprite>,
+) {
+    for FlagCell(pos) in ev.iter() {
+        println!("flag event received with position {pos:?}");
+        let cell = &mut field.get_single_mut().unwrap()[pos.clone()];
+        match cell.state {
+            MineCellState::Empty => {
+                cell.state = MineCellState::FlaggedEmpty;
+                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(10);
+                println!("texture");
+            }
+            MineCellState::FlaggedEmpty => {
+                cell.state = MineCellState::Empty;
+                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(9);
+                println!("untexture");
+            }
+            MineCellState::Mine => {
+                cell.state = MineCellState::FlaggedMine;
+                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(10);
+                println!("texture");
+            }
+            MineCellState::FlaggedMine => {
+                cell.state = MineCellState::Mine;
+                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(9);
+                println!("untexture");
+            }
+            _ => (), // ignore marked cells
+        }
+    }
+}
+
 pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(create_minefield.run_in_state(AppState::Loading))
             .add_system(generate_minefield.run_in_state(AppState::PreGame))
+            .add_system(flag_cell.run_in_state(AppState::Game))
             .add_system(reveal_cell.run_in_state(AppState::Game));
     }
 }

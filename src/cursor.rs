@@ -1,5 +1,5 @@
 use crate::{
-    common::{CheckCell, InitCheckCell, Position},
+    common::{CheckCell, FlagCell, InitCheckCell, Position},
     minefield::Minefield,
     AppState,
 };
@@ -74,9 +74,18 @@ fn translate_components(
     }
 }
 
-fn check_cell(cursor: Query<&Cursor>, kb: Res<Input<KeyCode>>, mut ev: EventWriter<CheckCell>) {
+fn check_cell(
+    cursor: Query<&Cursor>,
+    kb: Res<Input<KeyCode>>,
+    mut check: EventWriter<CheckCell>,
+    mut flag: EventWriter<FlagCell>,
+) {
+    let pos = &cursor.get_single().unwrap().0;
     if kb.just_pressed(KeyCode::Space) {
-        ev.send(CheckCell(cursor.get_single().unwrap().0.clone()));
+        check.send(CheckCell(pos.clone()));
+    } else if kb.just_pressed(KeyCode::F) {
+        println!("flag event sent");
+        flag.send(FlagCell(pos.clone()));
     }
 }
 

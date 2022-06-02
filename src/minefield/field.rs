@@ -16,7 +16,8 @@ pub enum MineCellState {
     Empty,
     Mine,
     FoundEmpty(u8),
-    Flagged,
+    FlaggedEmpty,
+    FlaggedMine,
 }
 
 #[derive(Component)]

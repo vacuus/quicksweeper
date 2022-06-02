@@ -84,6 +84,9 @@ pub struct CheckCell(pub Position);
 #[derive(Clone, Debug)]
 pub struct InitCheckCell(pub Position);
 
+#[derive(Clone, Debug)]
+pub struct FlagCell(pub Position);
+
 pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {
@@ -91,6 +94,7 @@ impl Plugin for QuicksweeperTypes {
         app.add_loopless_state(AppState::Loading)
             .insert_resource(StdRng::from_entropy())
             .add_event::<CheckCell>()
+            .add_event::<FlagCell>()
             .add_event::<InitCheckCell>();
     }
 }
