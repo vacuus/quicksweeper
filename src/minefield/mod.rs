@@ -84,24 +84,41 @@ fn reveal_cell(
     while let Some(CheckCell(position)) = check_next.pop_front() {
         println!("Event received with position {position:?}");
 
-        let (mine_neighbors, blank_neighbors): (Vec<_>, Vec<_>) = field
+        let neighbors = field
             .iter_neighbors_enumerated(position.clone())
             .map(|(a, b)| (a, b.clone()))
-            .partition(|(_, x)| {
+            .collect_vec();
+
+        let mine_neighbors = || {
+            neighbors.iter().filter(|(_, cell)| {
                 matches!(
-                    x.state(),
-                    MineCellState::Mine | MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
+                    cell.state(),
+                    MineCellState::Mine | MineCellState::FlaggedMine
                 )
-            });
+            })
+        };
+
+        let unflagged_neighbors = || {
+            neighbors.iter().filter(|(_, cell)| {
+                !matches!(
+                    cell.state(),
+                    MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
+                )
+            }).inspect(|(pos, _)| {
+                println!("unflagged neighbor: {pos:?}");
+            })
+        };
 
         let checking = &mut field[position.clone()];
-
         match checking.state() {
             MineCellState::Empty => {
-                if mine_neighbors.is_empty() {
-                    check_next.extend(blank_neighbors.into_iter().map(|(pos, _)| CheckCell(pos)));
+                let count_mine_neighbors = mine_neighbors().count() as u8;
+                if count_mine_neighbors == 0 {
+                    check_next.extend(
+                        unflagged_neighbors().map(|(pos, _)| CheckCell(pos.clone())),
+                    );
                 }
-                checking.set_state(MineCellState::FoundEmpty(mine_neighbors.len() as u8));
+                checking.set_state(MineCellState::FoundEmpty(count_mine_neighbors));
             }
             MineCellState::Mine => {
                 commands.insert_resource(NextState(AppState::GameFailed));

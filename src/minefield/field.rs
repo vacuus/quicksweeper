@@ -23,6 +23,13 @@ impl MineCell {
         self.state = state;
     }
 
+    pub fn is_flagged(&self) -> bool {
+        match self.state {
+            MineCellState::FlaggedEmpty | MineCellState::FlaggedMine => true,
+            _ => false,
+        }
+    }
+
     pub fn new_empty(
         commands: &mut Commands,
         Position(x, y): Position,
@@ -48,19 +55,13 @@ impl MineCell {
 pub fn render_mines(mut q: Query<&mut Minefield>, mut sprites: Query<&mut TextureAtlasSprite>) {
     let mut minefield = q.single_mut();
     let cols = minefield.num_columns();
-    for ix in (0..minefield.num_elements()).map( |pos| {
-        (pos / cols, pos % cols)
-    }) {
+    for ix in (0..minefield.num_elements()).map(|pos| (pos / cols, pos % cols)) {
         let cell = &mut (**minefield)[ix];
         if cell.modified == true {
             cell.modified = false;
             *sprites.get_mut(cell.sprite).unwrap() = match cell.state {
-                MineCellState::Empty | MineCellState::Mine => {
-                    // commands.insert(sprite, textures.empty());
-                    TextureAtlasSprite::new(9)
-                }
+                MineCellState::Empty | MineCellState::Mine => TextureAtlasSprite::new(9),
                 MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => {
-                    // commands.insert(sprite, textures.flag());
                     TextureAtlasSprite::new(10)
                 }
                 MineCellState::FoundEmpty(x) => TextureAtlasSprite::new(x as usize),
