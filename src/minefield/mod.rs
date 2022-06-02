@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::common::CheckCell;
+use crate::common::{CheckCell, Position};
 use crate::textures::MineTextures;
 use crate::AppState;
 use array2d::Array2D;
@@ -13,10 +13,7 @@ use tap::Tap;
 mod field;
 pub use field::*;
 
-fn create_minefield(
-    mut commands: Commands,
-    textures: Res<MineTextures>,
-) {
+fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
     let rows = 10;
     let cols = 20;
     let len = rows * cols;
@@ -41,47 +38,54 @@ fn create_minefield(
 
     let minefield = Minefield(Array2D::from_iter_row_major(minefield_iter, rows, cols));
     commands.spawn().insert(minefield);
-    
+
     commands.insert_resource(NextState(AppState::PreGame));
 }
 
 fn generate_minefield(
     mut commands: Commands,
-    textures: Res<MineTextures>,
+    mut position: EventReader<CheckCell>,
+    mut minefield: Query<&mut Minefield>,
     mut rng: ResMut<StdRng>,
 ) {
-    let rows = 10;
-    let cols = 20;
+    if let Some(CheckCell(position)) = position.iter().next() {
+        let mut minefield = minefield.single_mut();
+        let cols = minefield.num_columns();
+        let len = minefield.num_elements();
 
-    let len = rows * cols;
+        let neighbors = minefield
+            .iter_neighbor_positions(position.clone())
+            .chain(std::iter::once(position.clone()))
+            .inspect(|pos| println!("keeping position {pos:?} clear"))
+            .map(|pos| pos.1 * cols as u32 + pos.0)
+            .collect_vec();
 
-    // generate mines with density 3/10
-    let indices = rand::seq::index::sample(&mut *rng, len, len * 3 / 10);
+        println!("keeping positions {neighbors:?} clear");
 
-    let minefield_iter = (0..len).map(|ix| {
-        let (y, x) = (ix / cols, ix % cols);
+        // generate mines with density 3/10
+        rand::seq::index::sample_weighted(
+            &mut *rng,
+            len,
+            |pos| {
+                if neighbors.contains(&(pos as u32)) {
+                    0.0
+                } else {
+                    1.0 / (len - neighbors.len()) as f32
+                }
+            },
+            len * 3 / 10,
+        ).unwrap()
+        .into_iter()
+        .map(|x| Position(
+            (x % cols) as u32,
+            (x / cols) as u32,
+        ))
+        .for_each(|pos| {
+            minefield[pos].state = MineCellState::Mine;
+        });
 
-        let state = indices
-            .iter()
-            .contains(&ix)
-            .then(|| MineCellState::Mine)
-            .unwrap_or(MineCellState::Empty);
-
-        let sprite = commands
-            .spawn_bundle(textures.empty().tap_mut(|b| {
-                b.transform = Transform {
-                    translation: Vec3::new(x as f32 * 32.0, y as f32 * 32.0, 3.0),
-                    ..Default::default()
-                };
-            }))
-            .id();
-
-        MineCell { sprite, state }
-    });
-
-    let minefield = Array2D::from_iter_row_major(minefield_iter, rows, cols);
-
-    commands.spawn().insert(Minefield(minefield));
+        commands.insert_resource(NextState(AppState::Game));
+    }
 }
 
 fn reveal_cell(
@@ -130,8 +134,8 @@ pub struct MinefieldPlugin;
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
         app
-            // .add_enter_system(AppState::Game, generate_minefield)
             .add_system(create_minefield.run_in_state(AppState::Loading))
+            .add_system(generate_minefield.run_in_state(AppState::PreGame))
             .add_system(reveal_cell.run_in_state(AppState::Game));
     }
 }

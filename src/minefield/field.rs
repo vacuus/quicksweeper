@@ -30,8 +30,12 @@ impl Minefield {
         &self,
         pos: Position,
     ) -> impl Iterator<Item = (Position, &MineCell)> + '_ {
-        pos.iter_neighbors(self.num_columns() as u32, self.num_rows() as u32)
+        self.iter_neighbor_positions(pos)
             .map(|pos| (pos.clone(), &self[pos]))
+    }
+
+    pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> {
+        pos.iter_neighbors(self.num_columns() as u32, self.num_rows() as u32)
     }
 }
 
