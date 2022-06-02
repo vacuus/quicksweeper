@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::common::{CheckCell, Position};
+use crate::common::{CheckCell, InitCheckCell, Position};
 use crate::textures::MineTextures;
 use crate::AppState;
 use array2d::Array2D;
@@ -44,23 +44,23 @@ fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
 
 fn generate_minefield(
     mut commands: Commands,
-    mut position: EventReader<CheckCell>,
+    mut position: EventReader<InitCheckCell>,
+    mut write_back: EventWriter<CheckCell>,
     mut minefield: Query<&mut Minefield>,
     mut rng: ResMut<StdRng>,
 ) {
-    if let Some(CheckCell(position)) = position.iter().next() {
+    if let Some(InitCheckCell(pos)) = position.iter().next().cloned() {
+        write_back.send(CheckCell(pos.clone()));
+
         let mut minefield = minefield.single_mut();
         let cols = minefield.num_columns();
         let len = minefield.num_elements();
 
         let neighbors = minefield
-            .iter_neighbor_positions(position.clone())
-            .chain(std::iter::once(position.clone()))
-            .inspect(|pos| println!("keeping position {pos:?} clear"))
+            .iter_neighbor_positions(pos.clone())
+            .chain(std::iter::once(pos.clone()))
             .map(|pos| pos.1 * cols as u32 + pos.0)
             .collect_vec();
-
-        println!("keeping positions {neighbors:?} clear");
 
         // generate mines with density 3/10
         rand::seq::index::sample_weighted(
@@ -74,12 +74,10 @@ fn generate_minefield(
                 }
             },
             len * 3 / 10,
-        ).unwrap()
+        )
+        .unwrap()
         .into_iter()
-        .map(|x| Position(
-            (x % cols) as u32,
-            (x / cols) as u32,
-        ))
+        .map(|x| Position((x % cols) as u32, (x / cols) as u32))
         .for_each(|pos| {
             minefield[pos].state = MineCellState::Mine;
         });
@@ -133,8 +131,7 @@ pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system(create_minefield.run_in_state(AppState::Loading))
+        app.add_system(create_minefield.run_in_state(AppState::Loading))
             .add_system(generate_minefield.run_in_state(AppState::PreGame))
             .add_system(reveal_cell.run_in_state(AppState::Game));
     }

@@ -7,7 +7,7 @@ mod state;
 mod textures;
 
 use bevy::prelude::*;
-use common::CheckCell;
+use common::{CheckCell, InitCheckCell};
 use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::*;
 
@@ -18,6 +18,7 @@ fn main() {
         .add_loopless_state(AppState::Loading)
         .insert_resource(StdRng::from_entropy())
         .add_event::<CheckCell>()
+        .add_event::<InitCheckCell>()
         .add_plugins(DefaultPlugins)
         .add_startup_system(textures::load_textures)
         .add_plugin(cursor::CursorPlugin)

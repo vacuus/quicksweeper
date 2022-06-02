@@ -75,3 +75,6 @@ impl Position {
 
 #[derive(Clone, Debug)]
 pub struct CheckCell(pub Position);
+
+#[derive(Clone, Debug)]
+pub struct InitCheckCell(pub Position);

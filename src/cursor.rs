@@ -1,5 +1,5 @@
 use crate::{
-    common::{CheckCell, Position},
+    common::{CheckCell, InitCheckCell, Position},
     minefield::Minefield,
     AppState,
 };
@@ -79,6 +79,17 @@ fn check_cell(cursor: Query<&Cursor>, kb: Res<Input<KeyCode>>, mut ev: EventWrit
         ev.send(CheckCell(cursor.get_single().unwrap().0.clone()));
     }
 }
+
+fn init_check_cell(
+    cursor: Query<&Cursor>,
+    kb: Res<Input<KeyCode>>,
+    mut ev: EventWriter<InitCheckCell>,
+) {
+    if kb.just_pressed(KeyCode::Space) {
+        ev.send(InitCheckCell(cursor.get_single().unwrap().0.clone()));
+    }
+}
+
 pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
@@ -92,8 +103,9 @@ impl Plugin for CursorPlugin {
                     })
                     .with_system(move_cursor)
                     .with_system(translate_components)
-                    .with_system(check_cell)
                     .into(),
-            );
+            )
+            .add_system(init_check_cell.run_in_state(AppState::PreGame))
+            .add_system(check_cell.run_in_state(AppState::Game));
     }
 }
