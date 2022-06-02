@@ -8,32 +8,18 @@ use bevy::prelude::*;
 use itertools::Itertools;
 use iyes_loopless::prelude::*;
 use rand::prelude::StdRng;
-use tap::Tap;
 
 mod field;
 pub use field::*;
 
 fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
-    let rows = 10;
+    let rows: usize = 10;
     let cols = 20;
     let len = rows * cols;
 
     let minefield_iter = (0..len).map(|ix| {
         let (y, x) = (ix / cols, ix % cols);
-
-        let sprite = commands
-            .spawn_bundle(textures.empty().tap_mut(|b| {
-                b.transform = Transform {
-                    translation: Vec3::new(x as f32 * 32.0, y as f32 * 32.0, 3.0),
-                    ..Default::default()
-                };
-            }))
-            .id();
-
-        MineCell {
-            sprite,
-            state: MineCellState::Empty,
-        }
+        MineCell::new_empty(&mut commands, Position(x as u32, y as u32), &textures)
     });
 
     let minefield = Minefield(Array2D::from_iter_row_major(minefield_iter, rows, cols));
@@ -79,7 +65,7 @@ fn generate_minefield(
         .into_iter()
         .map(|x| Position((x % cols) as u32, (x / cols) as u32))
         .for_each(|pos| {
-            minefield[pos].state = MineCellState::Mine;
+            minefield[pos].set_state(MineCellState::Mine);
         });
 
         commands.insert_resource(NextState(AppState::Game));
@@ -89,7 +75,6 @@ fn generate_minefield(
 fn reveal_cell(
     mut commands: Commands,
     mut field: Query<&mut Minefield>,
-    mut cell_sprite: Query<&mut TextureAtlasSprite>,
     mut ev: EventReader<CheckCell>,
     mut check_next: Local<VecDeque<CheckCell>>,
 ) {
@@ -104,21 +89,19 @@ fn reveal_cell(
             .map(|(a, b)| (a, b.clone()))
             .partition(|(_, x)| {
                 matches!(
-                    x.state,
+                    x.state(),
                     MineCellState::Mine | MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
                 )
             });
 
         let checking = &mut field[position.clone()];
 
-        match checking.state {
+        match checking.state() {
             MineCellState::Empty => {
                 if mine_neighbors.is_empty() {
                     check_next.extend(blank_neighbors.into_iter().map(|(pos, _)| CheckCell(pos)));
                 }
-                checking.state = MineCellState::FoundEmpty(mine_neighbors.len() as u8);
-                *cell_sprite.get_mut(checking.sprite).unwrap() =
-                    TextureAtlasSprite::new(mine_neighbors.len());
+                checking.set_state(MineCellState::FoundEmpty(mine_neighbors.len() as u8));
             }
             MineCellState::Mine => {
                 commands.insert_resource(NextState(AppState::GameFailed));
@@ -131,35 +114,15 @@ fn reveal_cell(
     }
 }
 
-fn flag_cell(
-    mut ev: EventReader<FlagCell>,
-    mut field: Query<&mut Minefield>,
-    mut cell_sprite: Query<&mut TextureAtlasSprite>,
-) {
+fn flag_cell(mut ev: EventReader<FlagCell>, mut field: Query<&mut Minefield>) {
     for FlagCell(pos) in ev.iter() {
         println!("flag event received with position {pos:?}");
         let cell = &mut field.get_single_mut().unwrap()[pos.clone()];
-        match cell.state {
-            MineCellState::Empty => {
-                cell.state = MineCellState::FlaggedEmpty;
-                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(10);
-                println!("texture");
-            }
-            MineCellState::FlaggedEmpty => {
-                cell.state = MineCellState::Empty;
-                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(9);
-                println!("untexture");
-            }
-            MineCellState::Mine => {
-                cell.state = MineCellState::FlaggedMine;
-                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(10);
-                println!("texture");
-            }
-            MineCellState::FlaggedMine => {
-                cell.state = MineCellState::Mine;
-                *cell_sprite.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(9);
-                println!("untexture");
-            }
+        match cell.state() {
+            MineCellState::Empty => cell.set_state(MineCellState::FlaggedEmpty),
+            MineCellState::FlaggedEmpty => cell.set_state(MineCellState::Empty),
+            MineCellState::Mine => cell.set_state(MineCellState::FlaggedMine),
+            MineCellState::FlaggedMine => cell.set_state(MineCellState::Mine),
             _ => (), // ignore marked cells
         }
     }
@@ -172,6 +135,7 @@ impl Plugin for MinefieldPlugin {
         app.add_system(create_minefield.run_in_state(AppState::Loading))
             .add_system(generate_minefield.run_in_state(AppState::PreGame))
             .add_system(flag_cell.run_in_state(AppState::Game))
-            .add_system(reveal_cell.run_in_state(AppState::Game));
+            .add_system(reveal_cell.run_in_state(AppState::Game))
+            .add_system(field::render_mines.run_not_in_state(AppState::Loading));
     }
 }

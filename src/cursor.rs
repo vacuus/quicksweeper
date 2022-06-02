@@ -84,7 +84,6 @@ fn check_cell(
     if kb.just_pressed(KeyCode::Space) {
         check.send(CheckCell(pos.clone()));
     } else if kb.just_pressed(KeyCode::F) {
-        println!("flag event sent");
         flag.send(FlagCell(pos.clone()));
     }
 }
