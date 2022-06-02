@@ -70,6 +70,14 @@ pub fn render_mines(mut q: Query<&mut Minefield>, mut sprites: Query<&mut Textur
     }
 }
 
+pub fn display_mines(mut q: Query<&mut Minefield>, mut sprites: Query<&mut TextureAtlasSprite>) {
+    q.single_mut().for_each_mut(|cell| {
+        if cell.state == MineCellState::Mine {
+            *sprites.get_mut(cell.sprite).unwrap() = TextureAtlasSprite::new(11)
+        }
+    });
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MineCellState {
     Empty,
@@ -96,6 +104,16 @@ impl Minefield {
 
     pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> {
         pos.iter_neighbors(self.num_columns() as u32, self.num_rows() as u32)
+    }
+
+    pub fn for_each_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut MineCell),
+    {
+        let cols = self.num_columns();
+        for ix in (0..self.num_elements()).map(|pos| (pos / cols, pos % cols)) {
+            f(&mut (**self)[ix])
+        }
     }
 }
 
