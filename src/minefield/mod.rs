@@ -96,7 +96,7 @@ fn reveal_cell(
     check_next.extend(ev.iter().cloned());
     let mut field = field.single_mut();
 
-    if let Some(CheckCell(position)) = check_next.pop_front() {
+    while let Some(CheckCell(position)) = check_next.pop_front() {
         println!("Event received with position {position:?}");
 
         let (mine_neighbors, blank_neighbors): (Vec<_>, Vec<_>) = field
@@ -116,7 +116,6 @@ fn reveal_cell(
                     TextureAtlasSprite::new(mine_neighbors.len());
             }
             MineCellState::Mine => {
-                println!("end game");
                 commands.insert_resource(NextState(AppState::GameFailed));
             }
             MineCellState::FoundEmpty(_) => {
