@@ -1,4 +1,9 @@
+use bevy::prelude::*;
+use rand::{prelude::StdRng, SeedableRng};
 use std::mem::MaybeUninit;
+use iyes_loopless::prelude::*;
+
+use crate::AppState;
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Position(pub u32, pub u32);
@@ -78,3 +83,14 @@ pub struct CheckCell(pub Position);
 
 #[derive(Clone, Debug)]
 pub struct InitCheckCell(pub Position);
+
+pub struct QuicksweeperTypes;
+
+impl Plugin for QuicksweeperTypes {
+    fn build(&self, app: &mut App) {
+        app.add_loopless_state(AppState::Loading)
+            .insert_resource(StdRng::from_entropy())
+            .add_event::<CheckCell>()
+            .add_event::<InitCheckCell>();
+    }
+}
