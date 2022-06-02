@@ -79,17 +79,21 @@ fn check_cell(cursor: Query<&Cursor>, kb: Res<Input<KeyCode>>, mut ev: EventWrit
         ev.send(CheckCell(cursor.get_single().unwrap().0.clone()));
     }
 }
-
 pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
             .add_enter_system(AppState::PreGame, create_cursor)
-            .add_system(move_cursor.run_in_state(AppState::PreGame))
-            .add_system(move_cursor.run_in_state(AppState::Game))
-            .add_system(translate_components.run_in_state(AppState::PreGame))
-            .add_system(translate_components.run_in_state(AppState::Game))
-            .add_system(check_cell.run_in_state(AppState::Game));
+            .add_system_set(
+                ConditionSet::new()
+                    .run_if(|state: Res<CurrentState<AppState>>| {
+                        [AppState::PreGame, AppState::Game].contains(&state.0)
+                    })
+                    .with_system(move_cursor)
+                    .with_system(translate_components)
+                    .with_system(check_cell)
+                    .into(),
+            );
     }
 }
