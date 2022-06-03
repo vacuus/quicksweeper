@@ -21,8 +21,15 @@ fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(CursorTexture(tex));
 }
 
-fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>, init_data: Res<GameInitData>) {
+fn create_cursor(
+    mut commands: Commands,
+    texture: Res<CursorTexture>,
+    mut camera_transform: Query<&mut Transform, With<Camera2d>>,
+    init_data: Res<GameInitData>,
+) {
     let init_position = init_data.field_center();
+
+    camera_transform.single_mut().translation = init_position.absolute(32.0, 32.0).extend(3.0);
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -33,7 +40,7 @@ fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>, init_data:
             },
             ..Default::default()
         })
-        .insert(Cursor(init_position));
+        .insert(Cursor(init_position.clone()));
 }
 
 fn move_cursor(

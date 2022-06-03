@@ -6,7 +6,7 @@ use std::mem::MaybeUninit;
 
 use crate::AppState;
 
-#[derive(PartialEq, Clone, Debug, Deref, DerefMut)]
+#[derive(PartialEq, Clone, Copy, Debug, Deref, DerefMut)]
 pub struct Position(pub XY<u32>);
 
 pub struct PositionNeighborsIter {
