@@ -74,13 +74,12 @@ fn translate_components(
     let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
     if transform_magnitude > 0.0 {
         let scale = 0.4;
-        *camera_translation +=
-            dbg!((camera_diff * time.delta_seconds() * scale).extend(0.0));
+        *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
     }
 
     // translate cursor
     if cursor_diff.length_squared() > 0.0001 {
-    let scale = 10.0;
+        let scale = 10.0;
         *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend(0.0);
     } else {
         *cursor_translation = target_translation.extend(3.0);
