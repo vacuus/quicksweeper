@@ -75,17 +75,10 @@ pub fn reveal_cell(
     mut ev: EventReader<CheckCell>,
     mut check_next: Local<VecDeque<CheckCell>>,
 ) {
-    let mut seen = HashSet::new();
-
     check_next.extend(ev.iter().cloned());
     let mut field = field.single_mut();
 
     while let Some(CheckCell(position)) = check_next.pop_front() {
-        if seen.contains(&position) {
-            break;
-        }
-        seen.insert(position.clone());
-
         let neighbors = field
             .iter_neighbors_enumerated(position.clone())
             .map(|(a, b)| (a, b.clone()))
