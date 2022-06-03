@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 use iyes_loopless::prelude::*;
 use rand::prelude::StdRng;
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
 pub fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
     let rows: usize = 30;
