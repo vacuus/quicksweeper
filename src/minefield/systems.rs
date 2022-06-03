@@ -15,7 +15,7 @@ pub fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
     let len = rows * cols;
 
     let minefield_iter = (0..len).map(|ix| {
-        let (y, x) = (ix / cols, ix % cols);
+        let (x, y) = (ix % cols, ix / cols);
         MineCell::new_empty(&mut commands, Position::new(x as u32, y as u32), &textures)
     });
 
@@ -61,6 +61,9 @@ pub fn generate_minefield(
         .unwrap()
         .into_iter()
         .map(|x| Position::new((x % cols) as u32, (x / cols) as u32))
+        .inspect(|pos| {
+            dbg!(pos);
+        })
         .for_each(|pos| {
             minefield[pos].set_state(MineCellState::Mine);
         });

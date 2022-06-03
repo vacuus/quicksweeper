@@ -117,13 +117,13 @@ impl Minefield {
 impl Index<Position> for Minefield {
     type Output = MineCell;
 
-    fn index(&self, Position(XY { y, x }): Position) -> &Self::Output {
+    fn index(&self, Position(XY { x: y, y: x }): Position) -> &Self::Output {
         &(**self)[(x as usize, y as usize)]
     }
 }
 
 impl IndexMut<Position> for Minefield {
-    fn index_mut(&mut self, Position(XY { y, x }): Position) -> &mut Self::Output {
+    fn index_mut(&mut self, Position(XY { x: y, y: x }): Position) -> &mut Self::Output {
         &mut (**self)[(x as usize, y as usize)]
     }
 }
