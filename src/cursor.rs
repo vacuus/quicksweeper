@@ -4,6 +4,7 @@ use crate::{
     minefield::Minefield,
     AppState,
 };
+use bevy::math::XY;
 use bevy::{prelude::*, render::camera::Camera2d};
 use derive_more::Deref;
 use iyes_loopless::prelude::*;
@@ -29,7 +30,7 @@ fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>) {
             },
             ..Default::default()
         })
-        .insert(Cursor(Position(0, 0)));
+        .insert(Cursor(Position::new(0, 0)));
 }
 
 fn move_cursor(
@@ -41,8 +42,11 @@ fn move_cursor(
     let max_x = minefield.num_columns() - 1;
     let max_y = minefield.num_rows() - 1;
 
-    let mut cursor = cursor.iter_mut().next().unwrap(); // assume single cursor
-    let Cursor(Position(ref mut x, ref mut y)) = *cursor;
+    let mut cursor = cursor.single_mut(); // assume single cursor
+    let Cursor(Position(XY {
+        ref mut x,
+        ref mut y,
+    })) = *cursor;
 
     if kb.just_pressed(KeyCode::A) {
         *x = x.saturating_sub(1);

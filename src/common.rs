@@ -1,12 +1,13 @@
-use bevy::prelude::*;
+use bevy::{math::XY, prelude::*};
+use derive_more::{Deref, DerefMut};
 use iyes_loopless::prelude::*;
 use rand::{prelude::StdRng, SeedableRng};
 use std::mem::MaybeUninit;
 
 use crate::AppState;
 
-#[derive(PartialEq, Clone, Debug, Eq, Hash)]
-pub struct Position(pub u32, pub u32);
+#[derive(PartialEq, Clone, Debug, Deref, DerefMut)]
+pub struct Position(pub XY<u32>);
 
 pub struct PositionNeighborsIter {
     items: [Position; 8],
@@ -25,49 +26,53 @@ impl Iterator for PositionNeighborsIter {
 }
 
 impl Position {
+    pub fn new(x: u32, y: u32) -> Self {
+        Self(XY { x, y })
+    }
+
     pub fn iter_neighbors(&self, max_x: u32, max_y: u32) -> PositionNeighborsIter {
         let (max_x, max_y) = (max_x - 1, max_y - 1);
         let mut size = 0;
         let mut items: [Position; 8] = unsafe { MaybeUninit::uninit().assume_init() };
 
         // left
-        if self.0 != 0 {
+        if self.x != 0 {
             // lower left
-            if self.1 != 0 {
-                items[size] = Position(self.0 - 1, self.1 - 1);
+            if self.y != 0 {
+                items[size] = Self::new(self.x - 1, self.y - 1);
                 size += 1;
             }
             // upper left
-            if self.1 != max_y {
-                items[size] = Position(self.0 - 1, self.1 + 1);
+            if self.y != max_y {
+                items[size] = Self::new(self.x - 1, self.y + 1);
                 size += 1;
             }
-            items[size] = Position(self.0 - 1, self.1);
+            items[size] = Self::new(self.x - 1, self.y);
             size += 1;
         }
         // right
-        if self.0 != max_x {
+        if self.x != max_x {
             // lower right
-            if self.1 != 0 {
-                items[size] = Position(self.0 + 1, self.1 - 1);
+            if self.y != 0 {
+                items[size] = Self::new(self.x + 1, self.y - 1);
                 size += 1;
             }
             // upper right
-            if self.1 != max_y {
-                items[size] = Position(self.0 + 1, self.1 + 1);
+            if self.y != max_y {
+                items[size] = Self::new(self.x + 1, self.y + 1);
                 size += 1;
             }
-            items[size] = Position(self.0 + 1, self.1);
+            items[size] = Self::new(self.x + 1, self.y);
             size += 1;
         }
         // bottom
-        if self.1 != 0 {
-            items[size] = Position(self.0, self.1 - 1);
+        if self.y != 0 {
+            items[size] = Self::new(self.x, self.y - 1);
             size += 1;
         }
         // top
-        if self.1 != max_y {
-            items[size] = Position(self.0, self.1 + 1);
+        if self.y != max_y {
+            items[size] = Self::new(self.x, self.y + 1);
             size += 1;
         }
 
@@ -78,7 +83,7 @@ impl Position {
     }
 
     pub fn absolute(&self, size_x: f32, size_y: f32) -> Vec2 {
-        Vec2::new(self.0 as f32 * size_x, self.1 as f32 * size_y)
+        Vec2::new(self.x as f32 * size_x, self.y as f32 * size_y)
     }
 }
 

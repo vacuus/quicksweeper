@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use array2d::Array2D;
-use bevy::prelude::*;
+use bevy::{math::XY, prelude::*};
 use tap::Tap;
 
 use crate::{common::Position, textures::MineTextures};
@@ -32,7 +32,7 @@ impl MineCell {
 
     pub fn new_empty(
         commands: &mut Commands,
-        Position(x, y): Position,
+        Position(XY { x, y }): Position,
         textures: &Res<MineTextures>,
     ) -> Self {
         let sprite = commands
@@ -117,13 +117,13 @@ impl Minefield {
 impl Index<Position> for Minefield {
     type Output = MineCell;
 
-    fn index(&self, Position(y, x): Position) -> &Self::Output {
+    fn index(&self, Position(XY { y, x }): Position) -> &Self::Output {
         &(**self)[(x as usize, y as usize)]
     }
 }
 
 impl IndexMut<Position> for Minefield {
-    fn index_mut(&mut self, Position(y, x): Position) -> &mut Self::Output {
+    fn index_mut(&mut self, Position(XY { y, x }): Position) -> &mut Self::Output {
         &mut (**self)[(x as usize, y as usize)]
     }
 }

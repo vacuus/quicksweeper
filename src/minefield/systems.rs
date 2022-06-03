@@ -16,7 +16,7 @@ pub fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
 
     let minefield_iter = (0..len).map(|ix| {
         let (y, x) = (ix / cols, ix % cols);
-        MineCell::new_empty(&mut commands, Position(x as u32, y as u32), &textures)
+        MineCell::new_empty(&mut commands, Position::new(x as u32, y as u32), &textures)
     });
 
     let minefield = Minefield(Array2D::from_iter_row_major(minefield_iter, rows, cols));
@@ -42,7 +42,7 @@ pub fn generate_minefield(
         let neighbors = minefield
             .iter_neighbor_positions(pos.clone())
             .chain(std::iter::once(pos.clone()))
-            .map(|pos| pos.1 * cols as u32 + pos.0)
+            .map(|pos| pos.y * cols as u32 + pos.x)
             .collect_vec();
 
         // generate mines with density 3/10
@@ -60,7 +60,7 @@ pub fn generate_minefield(
         )
         .unwrap()
         .into_iter()
-        .map(|x| Position((x % cols) as u32, (x / cols) as u32))
+        .map(|x| Position::new((x % cols) as u32, (x / cols) as u32))
         .for_each(|pos| {
             minefield[pos].set_state(MineCellState::Mine);
         });
@@ -105,9 +105,9 @@ pub fn reveal_cell(
         };
 
         let unmarked = || {
-            neighbors.iter().filter(|(_, cell)| {
-                matches!(cell.state(), Mine | Empty)
-            })
+            neighbors
+                .iter()
+                .filter(|(_, cell)| matches!(cell.state(), Mine | Empty))
         };
 
         let checking = &mut field[position.clone()];
