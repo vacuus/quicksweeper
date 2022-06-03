@@ -13,8 +13,8 @@ mod field;
 pub use field::*;
 
 fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
-    let rows: usize = 10;
-    let cols = 20;
+    let rows: usize = 30;
+    let cols = 50;
     let len = rows * cols;
 
     let minefield_iter = (0..len).map(|ix| {
@@ -59,7 +59,7 @@ fn generate_minefield(
                     1.0 / (len - neighbors.len()) as f32
                 }
             },
-            len * 3 / 10,
+            len * 2 / 10,
         )
         .unwrap()
         .into_iter()
