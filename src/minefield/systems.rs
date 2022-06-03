@@ -84,36 +84,29 @@ pub fn reveal_cell(
             .map(|(a, b)| (a, b.clone()))
             .collect_vec();
 
+        use MineCellState::*;
+
         let mine_neighbors = || {
-            neighbors.iter().filter(|(_, cell)| {
-                matches!(
-                    cell.state(),
-                    MineCellState::Mine | MineCellState::FlaggedMine
-                )
-            })
+            neighbors
+                .iter()
+                .filter(|(_, cell)| matches!(cell.state(), Mine | FlaggedMine))
         };
 
         let unflagged_neighbors = || {
-            neighbors.iter().filter(|(_, cell)| {
-                !matches!(
-                    cell.state(),
-                    MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
-                )
-            })
+            neighbors
+                .iter()
+                .filter(|(_, cell)| !matches!(cell.state(), FlaggedMine | FlaggedEmpty))
         };
 
         let flagged_neighbors = || {
-            neighbors.iter().filter(|(_, cell)| {
-                matches!(
-                    cell.state(),
-                    MineCellState::FlaggedMine | MineCellState::FlaggedEmpty
-                )
-            })
+            neighbors
+                .iter()
+                .filter(|(_, cell)| matches!(cell.state(), FlaggedMine | FlaggedEmpty))
         };
 
         let unmarked = || {
             neighbors.iter().filter(|(_, cell)| {
-                matches!(cell.state(), MineCellState::Mine | MineCellState::Empty)
+                matches!(cell.state(), Mine | Empty)
             })
         };
 
