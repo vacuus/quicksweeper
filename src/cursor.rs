@@ -1,3 +1,4 @@
+use crate::common::GameInitData;
 use crate::state::ConditionalHelpersExt;
 use crate::{
     common::{CheckCell, FlagCell, InitCheckCell, Position},
@@ -20,17 +21,19 @@ fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(CursorTexture(tex));
 }
 
-fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>) {
+fn create_cursor(mut commands: Commands, texture: Res<CursorTexture>, init_data: Res<GameInitData>) {
+    let init_position = init_data.field_center();
+
     commands
         .spawn_bundle(SpriteBundle {
             texture: (*texture).clone(),
             transform: Transform {
-                translation: Vec3::new(0.0, 0.0, 3.0),
+                translation: init_position.absolute(32.0, 32.0).extend(3.0),
                 ..Default::default()
             },
             ..Default::default()
         })
-        .insert(Cursor(Position::new(0, 0)));
+        .insert(Cursor(init_position));
 }
 
 fn move_cursor(
