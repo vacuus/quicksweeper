@@ -96,6 +96,11 @@ pub struct InitCheckCell(pub Position);
 #[derive(Clone, Debug)]
 pub struct FlagCell(pub Position);
 
+pub struct GameInitData {
+    pub rows: u32,
+    pub cols: u32,
+}
+
 pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {
@@ -104,6 +109,11 @@ impl Plugin for QuicksweeperTypes {
             .insert_resource(StdRng::from_entropy())
             .add_event::<CheckCell>()
             .add_event::<FlagCell>()
-            .add_event::<InitCheckCell>();
+            .add_event::<InitCheckCell>()
+            // temporary addition
+            .insert_resource(GameInitData {
+                rows: 30,
+                cols: 50,
+            });
     }
 }

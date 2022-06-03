@@ -1,5 +1,5 @@
 use super::field::*;
-use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
+use crate::common::{CheckCell, FlagCell, GameInitData, InitCheckCell, Position};
 use crate::state::AppState;
 use crate::textures::MineTextures;
 use array2d::Array2D;
@@ -9,9 +9,12 @@ use iyes_loopless::prelude::*;
 use rand::prelude::StdRng;
 use std::collections::VecDeque;
 
-pub fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
-    let rows: usize = 30;
-    let cols = 50;
+pub fn create_minefield(
+    mut commands: Commands,
+    textures: Res<MineTextures>,
+    init_data: Res<GameInitData>,
+) {
+    let GameInitData { rows, cols, .. } = *init_data;
     let len = rows * cols;
 
     let minefield_iter = (0..len).map(|ix| {
@@ -19,7 +22,11 @@ pub fn create_minefield(mut commands: Commands, textures: Res<MineTextures>) {
         MineCell::new_empty(&mut commands, Position::new(x as u32, y as u32), &textures)
     });
 
-    let minefield = Minefield(Array2D::from_iter_row_major(minefield_iter, rows, cols));
+    let minefield = Minefield(Array2D::from_iter_row_major(
+        minefield_iter,
+        rows as usize,
+        cols as usize,
+    ));
     commands.spawn().insert(minefield);
 
     commands.insert_resource(NextState(AppState::PreGame));
