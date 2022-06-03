@@ -1,3 +1,4 @@
+use crate::state::ConditionalHelpersExt;
 use crate::{
     common::{CheckCell, FlagCell, InitCheckCell, Position},
     minefield::Minefield,
@@ -116,15 +117,16 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
             .add_enter_system(AppState::PreGame, create_cursor)
-            .add_system_set(
-                ConditionSet::new()
-                    .run_if(|state: Res<CurrentState<AppState>>| {
-                        [AppState::PreGame, AppState::Game].contains(&state.0)
-                    })
-                    .with_system(move_cursor)
-                    .with_system(translate_components)
-                    .into(),
+            .add_system(
+                move_cursor
+                    .into_conditional()
+                    .run_in_states([AppState::PreGame, AppState::Game]),
             )
+            .add_system(translate_components.into_conditional().run_in_states([
+                AppState::PreGame,
+                AppState::Game,
+                AppState::GameFailed,
+            ]))
             .add_system(init_check_cell.run_in_state(AppState::PreGame))
             .add_system(check_cell.run_in_state(AppState::Game));
     }
