@@ -1,7 +1,7 @@
 use bevy::prelude::*;
+use iyes_loopless::prelude::*;
 use rand::{prelude::StdRng, SeedableRng};
 use std::mem::MaybeUninit;
-use iyes_loopless::prelude::*;
 
 use crate::AppState;
 
@@ -75,6 +75,10 @@ impl Position {
             items,
             size: size as u8,
         }
+    }
+
+    pub fn absolute(&self, size_x: f32, size_y: f32) -> Vec2 {
+        Vec2::new(self.0 as f32 * size_x, self.1 as f32 * size_y)
     }
 }
 

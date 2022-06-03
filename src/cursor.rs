@@ -59,18 +59,24 @@ fn move_cursor(
 fn translate_components(
     mut cursor: Query<(&mut Transform, &Cursor), Without<Camera2d>>,
     mut camera: Query<&mut Transform, With<Camera2d>>,
-    mut previous: Local<Option<Position>>,
+    time: Res<Time>,
 ) {
-    let (mut cursor_transform, Cursor(position)) = cursor.iter_mut().next().unwrap();
-    let mut camera_transform = camera.iter_mut().next().unwrap();
-    if previous.is_none() || previous.as_ref().unwrap() != position {
-        let Position(x, y) = position;
-        let translation = Vec3::new((*x * 32) as f32, (*y * 32) as f32, 3.0);
+    let (mut cursor_transform, Cursor(position)) = cursor.single_mut();
+    let cursor_translation = &mut cursor_transform.translation;
+    // let mut camera_transform = camera.single_mut();
 
-        cursor_transform.translation = translation.clone();
-        camera_transform.translation = translation;
+    // println!("seconds passed since last tick: {}", time.delta_seconds());
 
-        *previous = Some(position.clone());
+    let target_translation = position.absolute(32.0, 32.0);
+    println!("with target {target_translation:?}");
+    let diff = target_translation - cursor_translation.clone().truncate();
+    println!("diff is {diff:?}");
+
+    if diff.length() > 0.01 {
+        let scale = 10.0;
+        *cursor_translation += (diff * time.delta_seconds() * scale).extend(0.0);
+    } else {
+        *cursor_translation = target_translation.extend(3.0);
     }
 }
 
