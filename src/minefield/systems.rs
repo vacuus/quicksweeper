@@ -73,12 +73,12 @@ pub fn reveal_cell(
     mut commands: Commands,
     mut field: Query<&mut Minefield>,
     mut ev: EventReader<CheckCell>,
-    mut check_next: Local<VecDeque<CheckCell>>,
+    mut check_next: Local<VecDeque<Position>>,
 ) {
-    check_next.extend(ev.iter().cloned());
+    check_next.extend(ev.iter().map(|CheckCell(x)| x).cloned());
     let mut field = field.single_mut();
 
-    while let Some(CheckCell(position)) = check_next.pop_front() {
+    while let Some(position) = check_next.pop_front() {
         let neighbors = field
             .iter_neighbors_enumerated(position.clone())
             .map(|(a, b)| (a, b.clone()))
@@ -122,7 +122,7 @@ pub fn reveal_cell(
             MineCellState::Empty => {
                 let count_mine_neighbors = mine_neighbors().count() as u8;
                 if count_mine_neighbors == 0 {
-                    check_next.extend(unflagged_neighbors().map(|(pos, _)| CheckCell(pos.clone())));
+                    check_next.extend(unflagged_neighbors().map(|(pos, _)| pos.clone()));
                 }
                 checking.set_state(MineCellState::FoundEmpty(count_mine_neighbors));
             }
@@ -131,7 +131,7 @@ pub fn reveal_cell(
             }
             MineCellState::FoundEmpty(x) => {
                 if flagged_neighbors().count() == *x as usize {
-                    check_next.extend(unmarked().map(|(pos, _)| CheckCell(pos.clone())));
+                    check_next.extend(unmarked().map(|(pos, _)| pos.clone()));
                 }
             }
             _ => (), // ignore marked cells
