@@ -63,18 +63,25 @@ fn translate_components(
 ) {
     let (mut cursor_transform, Cursor(position)) = cursor.single_mut();
     let cursor_translation = &mut cursor_transform.translation;
-    // let mut camera_transform = camera.single_mut();
-
-    // println!("seconds passed since last tick: {}", time.delta_seconds());
+    let camera_translation = &mut camera.single_mut().translation;
 
     let target_translation = position.absolute(32.0, 32.0);
-    println!("with target {target_translation:?}");
-    let diff = target_translation - cursor_translation.clone().truncate();
-    println!("diff is {diff:?}");
+    let cursor_diff = target_translation - cursor_translation.truncate();
+    let camera_diff = (*cursor_translation - *camera_translation).truncate();
 
-    if diff.length() > 0.01 {
-        let scale = 10.0;
-        *cursor_translation += (diff * time.delta_seconds() * scale).extend(0.0);
+    // tranlate camera
+    const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
+    let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
+    if transform_magnitude > 0.0 {
+        let scale = 0.4;
+        *camera_translation +=
+            dbg!((camera_diff * time.delta_seconds() * scale).extend(0.0));
+    }
+
+    // translate cursor
+    if cursor_diff.length_squared() > 0.0001 {
+    let scale = 10.0;
+        *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend(0.0);
     } else {
         *cursor_translation = target_translation.extend(3.0);
     }
