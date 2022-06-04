@@ -5,6 +5,7 @@ use bevy::{math::XY, prelude::*};
 use tap::Tap;
 
 use crate::{common::Position, textures::MineTextures};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Debug)]
 pub struct MineCell {
@@ -87,8 +88,25 @@ pub enum MineCellState {
 #[derive(Component)]
 struct Mine(Position);
 
-#[derive(Deref, DerefMut, Component)]
-pub struct Minefield(pub(super) Array2D<MineCell>);
+#[derive(Component)]
+pub struct Minefield {
+    pub(super) field: Array2D<MineCell>,
+    pub(super) remaining_blank: usize,
+}
+
+impl Deref for Minefield {
+    type Target = Array2D<MineCell>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.field
+    }
+}
+
+impl DerefMut for Minefield {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.field
+    }
+}
 
 impl Minefield {
     pub fn iter_neighbors_enumerated(

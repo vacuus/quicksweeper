@@ -22,11 +22,10 @@ pub fn create_minefield(
         MineCell::new_empty(&mut commands, Position::new(x as u32, y as u32), &textures)
     });
 
-    let minefield = Minefield(Array2D::from_iter_row_major(
-        minefield_iter,
-        rows as usize,
-        cols as usize,
-    ));
+    let minefield = Minefield {
+        field: Array2D::from_iter_row_major(minefield_iter, rows as usize, cols as usize),
+        remaining_blank: len as usize * 8 / 10,
+    };
     commands.spawn().insert(minefield);
 
     commands.insert_resource(NextState(AppState::PreGame));
@@ -63,14 +62,11 @@ pub fn generate_minefield(
                     1.0 / (len - neighbors.len()) as f32
                 }
             },
-            len * 2 / 10,
+            len - minefield.remaining_blank,
         )
         .unwrap()
         .into_iter()
         .map(|x| Position::new((x % cols) as u32, (x / cols) as u32))
-        .inspect(|pos| {
-            dbg!(pos);
-        })
         .for_each(|pos| {
             minefield[pos].set_state(MineCellState::Mine);
         });
