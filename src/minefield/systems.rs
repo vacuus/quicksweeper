@@ -86,7 +86,7 @@ pub fn reveal_cell(
 
     while let Some(position) = check_next.pop_front() {
         let neighbors = field
-            .iter_neighbors_enumerated(position.clone())
+            .iter_neighbors_enumerated(position)
             .map(|(a, b)| (a, b.clone()))
             .collect_vec();
 

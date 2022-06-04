@@ -20,7 +20,7 @@ impl Iterator for PositionNeighborsIter {
     fn next(&mut self) -> Option<Self::Item> {
         (self.size != 0).then(|| {
             self.size -= 1;
-            self.items[self.size as usize].clone()
+            self.items[self.size as usize]
         })
     }
 }
