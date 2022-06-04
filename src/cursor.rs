@@ -9,6 +9,98 @@ use bevy::math::XY;
 use bevy::{prelude::*, render::camera::Camera2d};
 use derive_more::Deref;
 use iyes_loopless::prelude::*;
+use tap::Tap;
+
+struct KeyTimers {
+    key_left: HoldTimer,
+    key_right: HoldTimer,
+    key_up: HoldTimer,
+    key_down: HoldTimer,
+}
+
+struct Activations {
+    left: bool,
+    right: bool,
+    up: bool,
+    down: bool,
+}
+
+impl Default for KeyTimers {
+    fn default() -> Self {
+        Self::init(0.25, 0.05)
+    }
+}
+
+struct HoldTimer {
+    key: KeyCode,
+    activate_timer: Timer,
+    hold_timer: Timer,
+}
+
+impl HoldTimer {
+    fn init(key: KeyCode, activate_duration: f32, hold_delay: f32) -> Self {
+        Self {
+            key,
+            activate_timer: Timer::from_seconds(activate_duration, false).tap_mut(|x| x.pause()),
+            hold_timer: Timer::from_seconds(hold_delay, true),
+        }
+    }
+
+    fn tick(&mut self, time: &Res<Time>) {
+        self.activate_timer.tick(time.delta());
+        self.hold_timer.tick(time.delta());
+    }
+
+    fn tick_input(&mut self, time: &Res<Time>, input: &Res<Input<KeyCode>>) -> bool {
+        self.tick(time);
+
+        if input.just_released(self.key) {
+            self.activate_timer.pause();
+            self.activate_timer.reset();
+        }
+
+        let just_activated = input
+            .just_pressed(self.key)
+            .then(|| {
+                self.activate_timer.reset();
+                self.activate_timer.unpause();
+
+                self.hold_timer.reset();
+            })
+            .is_some();
+
+        self.activate_timer.finished() && self.hold_timer.just_finished() || just_activated
+    }
+}
+
+impl KeyTimers {
+    fn init(activate_duration: f32, hold_delay: f32) -> Self {
+        Self {
+            key_left: HoldTimer::init(KeyCode::A, activate_duration, hold_delay),
+            key_right: HoldTimer::init(KeyCode::D, activate_duration, hold_delay),
+            key_up: HoldTimer::init(KeyCode::W, activate_duration, hold_delay),
+            key_down: HoldTimer::init(KeyCode::S, activate_duration, hold_delay),
+        }
+    }
+
+    fn tick(&mut self, time: &Res<Time>) {
+        self.key_left.tick(time);
+        self.key_right.tick(time);
+        self.key_up.tick(time);
+        self.key_down.tick(time);
+    }
+
+    fn tick_input(&mut self, time: &Res<Time>, input: &Res<Input<KeyCode>>) -> Activations {
+        self.tick(time);
+
+        Activations {
+            left: self.key_left.tick_input(time, input),
+            right: self.key_right.tick_input(time, input),
+            up: self.key_up.tick_input(time, input),
+            down: self.key_down.tick_input(time, input),
+        }
+    }
+}
 
 #[derive(Deref)]
 struct CursorTexture(Handle<Image>);
@@ -46,6 +138,8 @@ fn create_cursor(
 fn move_cursor(
     mut cursor: Query<&mut Cursor>,
     kb: Res<Input<KeyCode>>,
+    mut key_timers: Local<KeyTimers>,
+    time: Res<Time>,
     minefield: Query<&Minefield>,
 ) {
     let minefield = minefield.iter().next().unwrap();
@@ -58,15 +152,17 @@ fn move_cursor(
         ref mut y,
     })) = *cursor;
 
-    if kb.just_pressed(KeyCode::A) {
+    let activated = key_timers.tick_input(&time, &kb);
+
+    if activated.left {
         *x = x.saturating_sub(1);
-    } else if kb.just_pressed(KeyCode::D) && *x < max_x as u32 {
+    } else if activated.right && *x < max_x as u32 {
         *x += 1;
     }
 
-    if kb.just_pressed(KeyCode::S) {
+    if activated.down {
         *y = y.saturating_sub(1);
-    } else if kb.just_pressed(KeyCode::W) && *y < max_y as u32 {
+    } else if activated.up && *y < max_y as u32 {
         *y += 1;
     }
 }
