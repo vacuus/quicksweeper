@@ -120,6 +120,6 @@ impl Plugin for QuicksweeperTypes {
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>()
             // temporary addition
-            .insert_resource(GameInitData { rows: 30, cols: 50 });
+            .insert_resource(GameInitData { rows: 10, cols: 20 });
     }
 }

@@ -116,6 +116,8 @@ pub fn reveal_cell(
                 .filter(|(_, cell)| matches!(cell.state(), Mine | Empty))
         };
 
+        let mut found = false;
+
         let checking = &mut field[position.clone()];
         match checking.state() {
             MineCellState::Empty => {
@@ -123,6 +125,7 @@ pub fn reveal_cell(
                 if count_mine_neighbors == 0 {
                     check_next.extend(unflagged_neighbors().map(|(pos, _)| pos.clone()));
                 }
+                found = true;
                 checking.set_state(MineCellState::FoundEmpty(count_mine_neighbors));
             }
             MineCellState::Mine => {
@@ -134,6 +137,15 @@ pub fn reveal_cell(
                 }
             }
             _ => (), // ignore marked cells
+        }
+
+        if found {
+            field.remaining_blank -= 1;
+        }
+
+        if dbg!(field.remaining_blank) == 0 {
+            println!("Success!");
+            commands.insert_resource(NextState(AppState::GameSuccess));
         }
     }
 }

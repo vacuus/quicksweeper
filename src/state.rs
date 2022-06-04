@@ -10,6 +10,7 @@ pub enum AppState {
     PreGame,
     Game,
     GameFailed,
+    GameSuccess,
 }
 
 pub trait ConditionalHelpersExt: ConditionHelpers {
