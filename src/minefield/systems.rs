@@ -157,7 +157,7 @@ pub fn flag_cell(mut ev: EventReader<FlagCell>, mut field: Query<&mut Minefield>
             MineCellState::FlaggedEmpty => cell.set_state(MineCellState::Empty),
             MineCellState::Mine => cell.set_state(MineCellState::FlaggedMine),
             MineCellState::FlaggedMine => cell.set_state(MineCellState::Mine),
-            _ => (), // ignore marked cells
+            _ => (), // ignore revealed cells
         }
     }
 }
