@@ -143,8 +143,7 @@ pub fn reveal_cell(
             field.remaining_blank -= 1;
         }
 
-        if dbg!(field.remaining_blank) == 0 {
-            println!("Success!");
+        if field.remaining_blank == 0 {
             commands.insert_resource(NextState(AppState::GameSuccess));
         }
     }
@@ -152,7 +151,6 @@ pub fn reveal_cell(
 
 pub fn flag_cell(mut ev: EventReader<FlagCell>, mut field: Query<&mut Minefield>) {
     for FlagCell(pos) in ev.iter() {
-        println!("flag event received with position {pos:?}");
         let cell = &mut field.get_single_mut().unwrap()[pos.clone()];
         match cell.state() {
             MineCellState::Empty => cell.set_state(MineCellState::FlaggedEmpty),
