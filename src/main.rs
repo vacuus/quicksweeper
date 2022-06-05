@@ -8,7 +8,7 @@ mod textures;
 
 use bevy::prelude::*;
 
-pub use state::AppState;
+pub use state::SingleplayerState;
 
 fn main() {
     App::new()

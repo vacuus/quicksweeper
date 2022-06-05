@@ -1,6 +1,6 @@
 use super::field::*;
 use crate::common::{CheckCell, FlagCell, GameInitData, InitCheckCell, Position};
-use crate::state::AppState;
+use crate::state::SingleplayerState;
 use crate::textures::MineTextures;
 use array2d::Array2D;
 use bevy::prelude::*;
@@ -28,7 +28,7 @@ pub fn create_minefield(
     };
     commands.spawn().insert(minefield);
 
-    commands.insert_resource(NextState(AppState::PreGame));
+    commands.insert_resource(NextState(SingleplayerState::PreGame));
 }
 
 pub fn generate_minefield(
@@ -71,7 +71,7 @@ pub fn generate_minefield(
             minefield[pos].set_state(MineCellState::Mine);
         });
 
-        commands.insert_resource(NextState(AppState::Game));
+        commands.insert_resource(NextState(SingleplayerState::Game));
     }
 }
 
@@ -129,7 +129,7 @@ pub fn reveal_cell(
                 checking.set_state(MineCellState::FoundEmpty(count_mine_neighbors));
             }
             MineCellState::Mine => {
-                commands.insert_resource(NextState(AppState::GameFailed));
+                commands.insert_resource(NextState(SingleplayerState::GameFailed));
             }
             MineCellState::FoundEmpty(x) => {
                 if flagged_neighbors().count() == *x as usize {
@@ -144,7 +144,7 @@ pub fn reveal_cell(
         }
 
         if field.remaining_blank == 0 {
-            commands.insert_resource(NextState(AppState::GameSuccess));
+            commands.insert_resource(NextState(SingleplayerState::GameSuccess));
         }
     }
 }

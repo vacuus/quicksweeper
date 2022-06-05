@@ -4,8 +4,8 @@ use iyes_loopless::prelude::*;
 use iyes_loopless::condition::ConditionalSystemDescriptor;
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum AppState {
-    Menu,
+pub enum SingleplayerState {
+    Inactive,
     Loading,
     PreGame,
     Game,

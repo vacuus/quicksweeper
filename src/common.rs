@@ -4,7 +4,7 @@ use iyes_loopless::prelude::*;
 use rand::{prelude::StdRng, SeedableRng};
 use std::mem::MaybeUninit;
 
-use crate::AppState;
+use crate::SingleplayerState;
 
 #[derive(PartialEq, Clone, Copy, Debug, Deref, DerefMut)]
 pub struct Position(pub XY<u32>);
@@ -114,7 +114,7 @@ pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(AppState::Loading)
+        app.add_loopless_state(SingleplayerState::Loading)
             .insert_resource(StdRng::from_entropy())
             .add_event::<CheckCell>()
             .add_event::<FlagCell>()

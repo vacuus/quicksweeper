@@ -1,4 +1,4 @@
-use crate::AppState;
+use crate::SingleplayerState;
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
@@ -12,15 +12,15 @@ pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(create_minefield.run_in_state(AppState::Loading))
-            .add_system(generate_minefield.run_in_state(AppState::PreGame))
-            .add_system(flag_cell.run_in_state(AppState::Game))
-            .add_system(reveal_cell.run_in_state(AppState::Game))
+        app.add_system(create_minefield.run_in_state(SingleplayerState::Loading))
+            .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
+            .add_system(flag_cell.run_in_state(SingleplayerState::Game))
+            .add_system(reveal_cell.run_in_state(SingleplayerState::Game))
             .add_system(
-                field::render_mines.run_if(|state: Res<CurrentState<AppState>>| {
-                    [AppState::PreGame, AppState::Game].contains(&state.0)
+                field::render_mines.run_if(|state: Res<CurrentState<SingleplayerState>>| {
+                    [SingleplayerState::PreGame, SingleplayerState::Game].contains(&state.0)
                 }),
             )
-            .add_enter_system(AppState::GameFailed, field::display_mines);
+            .add_enter_system(SingleplayerState::GameFailed, field::display_mines);
     }
 }

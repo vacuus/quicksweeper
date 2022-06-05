@@ -3,7 +3,7 @@ use crate::state::ConditionalHelpersExt;
 use crate::{
     common::{CheckCell, FlagCell, InitCheckCell, Position},
     minefield::Minefield,
-    AppState,
+    SingleplayerState,
 };
 use bevy::math::XY;
 use bevy::{prelude::*, render::camera::Camera2d};
@@ -226,18 +226,18 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
-            .add_enter_system(AppState::PreGame, create_cursor)
+            .add_enter_system(SingleplayerState::PreGame, create_cursor)
             .add_system(
                 move_cursor
                     .into_conditional()
-                    .run_in_states([AppState::PreGame, AppState::Game]),
+                    .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game]),
             )
             .add_system(translate_components.into_conditional().run_in_states([
-                AppState::PreGame,
-                AppState::Game,
-                AppState::GameFailed,
+                SingleplayerState::PreGame,
+                SingleplayerState::Game,
+                SingleplayerState::GameFailed,
             ]))
-            .add_system(init_check_cell.run_in_state(AppState::PreGame))
-            .add_system(check_cell.run_in_state(AppState::Game));
+            .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
+            .add_system(check_cell.run_in_state(SingleplayerState::Game));
     }
 }
