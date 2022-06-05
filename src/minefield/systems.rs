@@ -98,17 +98,8 @@ pub fn reveal_cell(
                 .filter(|(_, cell)| matches!(cell.state(), Mine | FlaggedMine))
         };
 
-        let unflagged_neighbors = || {
-            neighbors
-                .iter()
-                .filter(|(_, cell)| !matches!(cell.state(), FlaggedMine | FlaggedEmpty))
-        };
-
-        let flagged_neighbors = || {
-            neighbors
-                .iter()
-                .filter(|(_, cell)| matches!(cell.state(), FlaggedMine | FlaggedEmpty))
-        };
+        let unflagged_neighbors = || neighbors.iter().filter(|(_, cell)| !cell.is_flagged());
+        let flagged_neighbors = || neighbors.iter().filter(|(_, cell)| cell.is_flagged());
 
         let unmarked = || {
             neighbors

@@ -86,9 +86,6 @@ pub enum MineCellState {
 }
 
 #[derive(Component)]
-struct Mine(Position);
-
-#[derive(Component)]
 pub struct Minefield {
     pub(super) field: Array2D<MineCell>,
     pub(super) remaining_blank: usize,

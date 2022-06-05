@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 mod common;
 mod cursor;
 mod minefield;
