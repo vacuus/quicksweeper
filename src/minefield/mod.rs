@@ -15,7 +15,7 @@ impl Plugin for MinefieldPlugin {
         app.add_system(create_minefield.run_in_state(SingleplayerState::Loading))
             .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
             .add_system(flag_cell.run_in_state(SingleplayerState::Game))
-            // .add_system(reveal_cell.run_in_state(SingleplayerState::Game))
+            .add_system(reveal_cell.run_in_state(SingleplayerState::Game))
             .add_system(
                 field::render_mines.run_if(|state: Res<CurrentState<SingleplayerState>>| {
                     [SingleplayerState::PreGame, SingleplayerState::Game].contains(&state.0)

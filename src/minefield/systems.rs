@@ -97,61 +97,75 @@ pub fn generate_minefield(
     }
 }
 
-// pub fn reveal_cell(
-//     mut commands: Commands,
-//     mut field: Query<&mut Minefield>,
-//     mut states: Query<&mut MineCellState>,
-//     mut ev: EventReader<CheckCell>,
-//     mut check_next: Local<VecDeque<Position>>,
-// ) {
-//     check_next.extend(ev.iter().map(|CheckCell(x)| x).cloned());
-//     let mut field = field.single_mut();
+pub fn reveal_cell(
+    mut commands: Commands,
+    mut field: Query<&mut Minefield>,
+    mut states: Query<&mut MineCellState>,
+    mut ev: EventReader<CheckCell>,
+    mut check_next: Local<VecDeque<Position>>,
+) {
+    check_next.extend(ev.iter().map(|CheckCell(x)| x).cloned());
+    let mut field = field.single_mut();
 
-//     while let Some(position) = check_next.pop_front() {
-//         let neighbors = field
-//             .iter_neighbors_enumerated(position)
-//             .map(|(a, b)| (a, b))
-//             .collect_vec();
+    while let Some(position) = check_next.pop_front() {
+        let neighbors = field
+            .iter_neighbors_enumerated(position)
+            .map(|(a, b)| (a, b))
+            .collect_vec();
 
-//         let get_ref = |state: Entity| { states.get_mut(state).unwrap()};
+        let mut found = None;
 
-//         let mine_neighbors = || neighbors.iter().filter(|(_, state)| get_ref(*state).is_mine());
-//         let unflagged_neighbors = || neighbors.iter().filter(|(_, state)| get_ref(*state).is_flagged());
-//         let flagged_neighbors = || neighbors.iter().filter(|(_, state)| get_ref(*state).is_flagged());
-//         let unmarked = || neighbors.iter().filter(|(_, state)| !get_ref(*state).is_marked());
+        let checking = states.get(field[position]).unwrap();
+        match *checking {
+            MineCellState::Empty => {
+                let count_mine_neighbors = neighbors
+                    .iter()
+                    .filter(|(_, state)| states.get(*state).unwrap().is_mine())
+                    .count() as u8;
+                if count_mine_neighbors == 0 {
+                    check_next.extend(
+                        neighbors
+                            .into_iter()
+                            .filter(|(_, state)| !states.get(*state).unwrap().is_flagged())
+                            .map(|(pos, _)| pos.clone()),
+                    );
+                }
+                found = Some(count_mine_neighbors);
+                // *checking = MineCellState::FoundEmpty(count_mine_neighbors);
+            }
+            MineCellState::Mine => {
+                commands.insert_resource(NextState(SingleplayerState::GameFailed));
+            }
+            MineCellState::FoundEmpty(x) => {
+                if neighbors
+                    .iter()
+                    .filter(|(_, state)| states.get_mut(*state).unwrap().is_flagged())
+                    .count()
+                    == x as usize
+                {
+                    check_next.extend(
+                        neighbors
+                            .into_iter()
+                            .filter(|(_, state)| !states.get(*state).unwrap().is_marked())
+                            .map(|(pos, _)| pos.clone()),
+                    );
+                }
+            }
+            _ => (), // ignore marked cells
+        }
 
-//         let mut found = false;
+        if let Some(num) = found {
+            *states.get_mut(field[position]).unwrap() = MineCellState::FoundEmpty(num);
+            field.remaining_blank -= 1;
+        }
 
-//         let checking = states.get_mut(field[position]).unwrap();
-//         match *checking {
-//             MineCellState::Empty => {
-//                 let count_mine_neighbors = mine_neighbors().count() as u8;
-//                 if count_mine_neighbors == 0 {
-//                     check_next.extend(unflagged_neighbors().map(|(pos, _)| pos.clone()));
-//                 }
-//                 found = true;
-//                 *checking = MineCellState::FoundEmpty(count_mine_neighbors);
-//             }
-//             MineCellState::Mine => {
-//                 commands.insert_resource(NextState(SingleplayerState::GameFailed));
-//             }
-//             MineCellState::FoundEmpty(x) => {
-//                 if flagged_neighbors().count() == x as usize {
-//                     check_next.extend(unmarked().map(|(pos, _)| pos.clone()));
-//                 }
-//             }
-//             _ => (), // ignore marked cells
-//         }
-
-//         if found {
-//             field.remaining_blank -= 1;
-//         }
-
-//         if field.remaining_blank == 0 {
-//             commands.insert_resource(NextState(SingleplayerState::GameSuccess));
-//         }
-//     }
-// }
+        if field.remaining_blank == 0 {
+            commands.insert_resource(NextState(SingleplayerState::GameSuccess));
+        } else {
+            println!("remaining: {}", field.remaining_blank)
+        }
+    }
+}
 
 pub fn flag_cell(
     mut ev: EventReader<FlagCell>,
@@ -168,7 +182,7 @@ pub fn flag_cell(
             MineCellState::Mine => MineCellState::FlaggedMine,
             MineCellState::FlaggedMine => MineCellState::Mine,
             _ => state.clone(), // ignore revealed cells
-            // TODO: move assignment inside match
+                                // TODO: move assignment inside match
         }
     }
 }

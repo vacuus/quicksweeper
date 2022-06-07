@@ -147,7 +147,7 @@ impl Minefield {
         pos: Position,
     ) -> impl Iterator<Item = (Position, Entity)> + '_ {
         pos.iter_neighbors(u32::MAX, u32::MAX)
-            .filter_map(move |neighbor| self.get(&pos).map(|entity| (pos, entity.clone())))
+            .filter_map(move |neighbor| self.get(&neighbor).map(|entity| (neighbor, entity.clone())))
     }
 
     pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> + '_ {
