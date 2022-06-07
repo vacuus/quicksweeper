@@ -2,12 +2,20 @@ use bevy::{math::XY, prelude::*};
 use derive_more::{Deref, DerefMut};
 use iyes_loopless::prelude::*;
 use rand::{prelude::StdRng, SeedableRng};
-use std::mem::MaybeUninit;
+use std::{hash::Hash, mem::MaybeUninit};
 
 use crate::SingleplayerState;
 
-#[derive(PartialEq, Clone, Copy, Debug, Deref, DerefMut)]
+#[derive(PartialEq, Clone, Copy, Debug, Deref, DerefMut, Component)]
 pub struct Position(pub XY<u32>);
+
+impl Eq for Position {}
+impl Hash for Position {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.x.hash(state);
+        self.y.hash(state);
+    }
+}
 
 pub struct PositionNeighborsIter {
     items: [Position; 8],

@@ -140,11 +140,12 @@ fn move_cursor(
     kb: Res<Input<KeyCode>>,
     mut key_timers: Local<KeyTimers>,
     time: Res<Time>,
-    minefield: Query<&Minefield>,
+    // minefield: Query<&Minefield>,
 ) {
-    let minefield = minefield.iter().next().unwrap();
-    let max_x = minefield.num_columns() - 1;
-    let max_y = minefield.num_rows() - 1;
+    // let minefield = minefield.iter().next().unwrap();
+    // let max_x = minefield.num_columns() - 1;
+    // let max_y = minefield.num_rows() - 1;
+    let (max_x, max_y) = (u32::MAX, u32::MAX);
 
     let mut cursor = cursor.single_mut(); // assume single cursor
     let Cursor(Position(XY {
