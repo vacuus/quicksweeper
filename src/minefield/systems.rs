@@ -2,7 +2,6 @@ use super::field::*;
 use crate::common::{CheckCell, FlagCell, GameInitData, InitCheckCell, Position};
 use crate::state::SingleplayerState;
 use crate::textures::MineTextures;
-use array2d::Array2D;
 use bevy::prelude::*;
 use itertools::Itertools;
 use iyes_loopless::prelude::*;
@@ -47,8 +46,6 @@ pub fn generate_minefield(
         write_back.send(CheckCell(pos.clone()));
 
         let minefield = minefield.single();
-        // let cols = minefield.num_columns();
-        // let len = minefield.num_elements();
 
         let len = minefield.len();
         let minefield_vec = minefield.iter().collect_vec();
@@ -66,32 +63,6 @@ pub fn generate_minefield(
             .for_each(|(_, cell)| {
                 *states.get_mut(**cell).unwrap() = MineCellState::Mine;
             });
-
-        // let neighbors = minefield
-        //     .iter_neighbor_positions(pos.clone())
-        //     .chain(std::iter::once(pos.clone()))
-        //     .map(|pos| pos.y * cols as u32 + pos.x)
-        //     .collect_vec();
-
-        // generate mines with density 3/10
-        // rand::seq::index::sample_weighted(
-        //     &mut *rng,
-        //     len,
-        //     |pos| {
-        //         if neighbors.contains(&(pos as u32)) {
-        //             0.0
-        //         } else {
-        //             1.0 / (len - neighbors.len()) as f32
-        //         }
-        //     },
-        //     len - minefield.remaining_blank,
-        // )
-        // .unwrap()
-        // .into_iter()
-        // .map(|x| Position::new((x % cols) as u32, (x / cols) as u32))
-        // .for_each(|pos| {
-        //     minefield[pos].set_state(MineCellState::Mine);
-        // });
 
         commands.insert_resource(NextState(SingleplayerState::Game));
     }
@@ -131,7 +102,6 @@ pub fn reveal_cell(
                     );
                 }
                 found = Some(count_mine_neighbors);
-                // *checking = MineCellState::FoundEmpty(count_mine_neighbors);
             }
             MineCellState::Mine => {
                 commands.insert_resource(NextState(SingleplayerState::GameFailed));

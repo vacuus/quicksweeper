@@ -16,11 +16,11 @@ impl Plugin for MinefieldPlugin {
             .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
             .add_system(flag_cell.run_in_state(SingleplayerState::Game))
             .add_system(reveal_cell.run_in_state(SingleplayerState::Game))
-            .add_system(
-                field::render_mines.run_if(|state: Res<CurrentState<SingleplayerState>>| {
+            .add_system(field::render_mines.run_if(
+                |state: Res<CurrentState<SingleplayerState>>| {
                     [SingleplayerState::PreGame, SingleplayerState::Game].contains(&state.0)
-                }),
-            )
+                },
+            ))
             .add_enter_system(SingleplayerState::GameFailed, field::display_mines);
     }
 }

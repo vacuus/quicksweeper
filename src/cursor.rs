@@ -2,11 +2,9 @@ use crate::common::GameInitData;
 use crate::state::ConditionalHelpersExt;
 use crate::{
     common::{CheckCell, FlagCell, InitCheckCell, Position},
-    minefield::Minefield,
     SingleplayerState,
 };
-use bevy::math::XY;
-use bevy::{prelude::*, render::camera::Camera2d};
+use bevy::{math::XY, prelude::*, render::camera::Camera2d};
 use derive_more::Deref;
 use iyes_loopless::prelude::*;
 use tap::Tap;
@@ -140,7 +138,6 @@ fn move_cursor(
     kb: Res<Input<KeyCode>>,
     mut key_timers: Local<KeyTimers>,
     time: Res<Time>,
-    // minefield: Query<&Minefield>,
 ) {
     // let minefield = minefield.iter().next().unwrap();
     // let max_x = minefield.num_columns() - 1;

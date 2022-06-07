@@ -1,7 +1,7 @@
 use bevy::ecs::schedule::StateData;
 use bevy::prelude::*;
-use iyes_loopless::prelude::*;
 use iyes_loopless::condition::ConditionalSystemDescriptor;
+use iyes_loopless::prelude::*;
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SingleplayerState {
