@@ -139,13 +139,13 @@ pub fn flag_cell(
         let mut state = states
             .get_mut(field.get_single_mut().unwrap()[*pos])
             .unwrap();
-        *state = match *state {
-            MineCellState::Empty => MineCellState::FlaggedEmpty,
-            MineCellState::FlaggedEmpty => MineCellState::Empty,
-            MineCellState::Mine => MineCellState::FlaggedMine,
-            MineCellState::FlaggedMine => MineCellState::Mine,
-            _ => state.clone(), // ignore revealed cells
-                                // TODO: move assignment inside match
+        match *state {
+            MineCellState::Empty => Some(MineCellState::FlaggedEmpty),
+            MineCellState::FlaggedEmpty => Some(MineCellState::Empty),
+            MineCellState::Mine => Some(MineCellState::FlaggedMine),
+            MineCellState::FlaggedMine => Some(MineCellState::Mine),
+            _ => None, // ignore revealed cells
         }
+        .map(|x| *state = x);
     }
 }
