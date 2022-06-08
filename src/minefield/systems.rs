@@ -81,27 +81,27 @@ pub fn reveal_cell(
     while let Some(position) = check_next.pop_front() {
         let neighbors = field
             .iter_neighbors_enumerated(position)
-            .map(|(a, b)| (a, b))
+            .map(|(a, b)| (a, states.get(b).unwrap().clone()))
             .collect_vec();
 
-        let mut found = None;
-
-        let checking = states.get(field[position]).unwrap();
+        let mut checking = states.get_mut(field[position]).unwrap();
         match *checking {
             MineCellState::Empty => {
                 let count_mine_neighbors = neighbors
                     .iter()
-                    .filter(|(_, state)| states.get(*state).unwrap().is_mine())
+                    .filter(|(_, state)| state.is_mine())
                     .count() as u8;
                 if count_mine_neighbors == 0 {
                     check_next.extend(
                         neighbors
                             .into_iter()
-                            .filter(|(_, state)| !states.get(*state).unwrap().is_flagged())
+                            .filter(|(_, state)| !state.is_flagged())
                             .map(|(pos, _)| pos.clone()),
                     );
                 }
-                found = Some(count_mine_neighbors);
+                *checking = MineCellState::FoundEmpty(count_mine_neighbors);
+
+                field.remaining_blank -= 1;
             }
             MineCellState::Mine => {
                 commands.insert_resource(NextState(SingleplayerState::GameFailed));
@@ -109,24 +109,19 @@ pub fn reveal_cell(
             MineCellState::FoundEmpty(x) => {
                 if neighbors
                     .iter()
-                    .filter(|(_, state)| states.get_mut(*state).unwrap().is_flagged())
+                    .filter(|(_, state)| state.is_flagged())
                     .count()
                     == x as usize
                 {
                     check_next.extend(
                         neighbors
                             .into_iter()
-                            .filter(|(_, state)| !states.get(*state).unwrap().is_marked())
+                            .filter(|(_, state)| !state.is_marked())
                             .map(|(pos, _)| pos.clone()),
                     );
                 }
             }
             _ => (), // ignore marked cells
-        }
-
-        if let Some(num) = found {
-            *states.get_mut(field[position]).unwrap() = MineCellState::FoundEmpty(num);
-            field.remaining_blank -= 1;
         }
 
         if field.remaining_blank == 0 {
