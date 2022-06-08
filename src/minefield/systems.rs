@@ -131,8 +131,6 @@ pub fn reveal_cell(
 
         if field.remaining_blank == 0 {
             commands.insert_resource(NextState(SingleplayerState::GameSuccess));
-        } else {
-            println!("remaining: {}", field.remaining_blank)
         }
     }
 }
