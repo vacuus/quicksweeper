@@ -1,4 +1,5 @@
 use crate::common::GameInitData;
+use crate::minefield::Minefield;
 use crate::state::ConditionalHelpersExt;
 use crate::{
     common::{CheckCell, FlagCell, InitCheckCell, Position},
@@ -21,6 +22,49 @@ struct Activations {
     right: bool,
     up: bool,
     down: bool,
+}
+
+enum Direction {
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+    NorthWest,
+}
+
+impl TryFrom<Activations> for Direction {
+    type Error = ();
+
+    fn try_from(value: Activations) -> Result<Self, Self::Error> {
+        if value.up && value.down || value.left && value.right {
+            Err(())
+        } else {
+            Ok(if value.up {
+                if value.left {
+                    Direction::NorthWest
+                } else if value.right {
+                    Direction::NorthEast
+                } else {
+                    Direction::North
+                }
+            } else if value.down {
+                if value.left {
+                    Direction::SouthWest
+                } else if value.right {
+                    Direction::SouthEast
+                } else {
+                    Direction::South
+                }
+            } else if value.left {
+                Direction::West
+            } else {
+                Direction::East
+            })
+        }
+    }
 }
 
 impl Default for KeyTimers {
@@ -135,6 +179,7 @@ fn create_cursor(
 
 fn move_cursor(
     mut cursor: Query<&mut Cursor>,
+    field: Query<&Minefield>,
     kb: Res<Input<KeyCode>>,
     mut key_timers: Local<KeyTimers>,
     time: Res<Time>,
