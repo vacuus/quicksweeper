@@ -20,3 +20,5 @@ rand = "0.8"
 iyes_loopless = "0.5"
 strum = "0.24"
 strum_macros = "0.24"
+
+anyhow = "*" # bound by bevy
