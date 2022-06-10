@@ -104,6 +104,18 @@ pub struct InitCheckCell(pub Position);
 #[derive(Clone, Debug)]
 pub struct FlagCell(pub Position);
 
+#[derive(Clone, Debug)]
+pub enum Direction {
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+    NorthWest,
+}
+
 pub struct GameInitData {
     pub rows: u32,
     pub cols: u32,

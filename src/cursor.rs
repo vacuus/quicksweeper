@@ -2,7 +2,7 @@ use crate::common::GameInitData;
 use crate::minefield::Minefield;
 use crate::state::ConditionalHelpersExt;
 use crate::{
-    common::{CheckCell, FlagCell, InitCheckCell, Position},
+    common::{CheckCell, Direction, FlagCell, InitCheckCell, Position},
     SingleplayerState,
 };
 use bevy::{math::XY, prelude::*, render::camera::Camera2d};
@@ -22,17 +22,6 @@ struct Activations {
     right: bool,
     up: bool,
     down: bool,
-}
-
-enum Direction {
-    North,
-    NorthEast,
-    East,
-    SouthEast,
-    South,
-    SouthWest,
-    West,
-    NorthWest,
 }
 
 impl TryFrom<Activations> for Direction {
