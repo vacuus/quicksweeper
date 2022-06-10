@@ -5,7 +5,7 @@ use crate::{
     common::{CheckCell, Direction, FlagCell, InitCheckCell, Position},
     SingleplayerState,
 };
-use bevy::{math::XY, prelude::*, render::camera::Camera2d};
+use bevy::{prelude::*, render::camera::Camera2d};
 use derive_more::Deref;
 use iyes_loopless::prelude::*;
 use tap::Tap;
