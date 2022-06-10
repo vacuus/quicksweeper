@@ -5,7 +5,7 @@ use tap::Tap;
 #[derive(Deref)]
 pub struct MineTextures(Handle<TextureAtlas>);
 
-pub fn load_textures(
+pub fn load_assets(
     mut commands: Commands,
     mut assets: ResMut<Assets<TextureAtlas>>,
     asset_server: ResMut<AssetServer>,
@@ -18,6 +18,9 @@ pub fn load_textures(
 
     let texture: Handle<Image> = asset_server.load("textures.png");
     let atlas = assets.add(TextureAtlas::from_grid(texture, Vec2::splat(32.0), 4, 3));
+
+    // load field
+    let _ = asset_server.load_untyped("test.field");
 
     commands.insert_resource(MineTextures(atlas));
 }

@@ -3,7 +3,7 @@ use std::{collections::HashMap, ops::Index};
 use bevy::{math::XY, prelude::*};
 use tap::Tap;
 
-use crate::{common::Position, textures::MineTextures};
+use crate::{common::Position, load::MineTextures};
 use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Bundle)]
