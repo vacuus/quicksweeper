@@ -3,6 +3,8 @@ use derive_more::{Deref, DerefMut};
 use iyes_loopless::prelude::*;
 use rand::{prelude::StdRng, SeedableRng};
 use std::{hash::Hash, mem::MaybeUninit};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 use crate::SingleplayerState;
 
@@ -38,52 +40,44 @@ impl Position {
         Self(XY { x, y })
     }
 
-    pub fn iter_neighbors(&self, max_x: u32, max_y: u32) -> PositionNeighborsIter {
-        let (max_x, max_y) = (max_x - 1, max_y - 1);
-        let mut size = 0;
+    pub fn neighbor_direction(&self, direction: Direction) -> Option<Position> {
+        match direction {
+            Direction::North => self.y.checked_add(1).map(|y| Position::new(self.x, y)),
+            Direction::NorthEast => self
+                .x
+                .checked_add(1)
+                .zip(self.y.checked_add(1))
+                .map(|(x, y)| Position::new(x, y)),
+            Direction::East => self.x.checked_add(1).map(|x| Position::new(x, self.y)),
+            Direction::SouthEast => self
+                .x
+                .checked_add(1)
+                .zip(self.y.checked_sub(1))
+                .map(|(x, y)| Position::new(x, y)),
+            Direction::South => self.y.checked_sub(1).map(|y| Position::new(self.x, y)),
+            Direction::SouthWest => self
+                .x
+                .checked_sub(1)
+                .zip(self.y.checked_sub(1))
+                .map(|(x, y)| Position::new(x, y)),
+            Direction::West => self.x.checked_sub(1).map(|x| Position::new(x, self.y)),
+            Direction::NorthWest => self
+                .x
+                .checked_sub(1)
+                .zip(self.y.checked_add(1))
+                .map(|(x, y)| Position::new(x, y)),
+        }
+    }
+
+    pub fn iter_neighbors(&self) -> PositionNeighborsIter {
         let mut items: [Position; 8] = unsafe { MaybeUninit::uninit().assume_init() };
-
-        // left
-        if self.x != 0 {
-            // lower left
-            if self.y != 0 {
-                items[size] = Self::new(self.x - 1, self.y - 1);
+        let mut size = 0;
+        Direction::iter().for_each(|direction| {
+            if let Some(pos) = self.neighbor_direction(direction) {
+                items[size as usize] = pos;
                 size += 1;
             }
-            // upper left
-            if self.y != max_y {
-                items[size] = Self::new(self.x - 1, self.y + 1);
-                size += 1;
-            }
-            items[size] = Self::new(self.x - 1, self.y);
-            size += 1;
-        }
-        // right
-        if self.x != max_x {
-            // lower right
-            if self.y != 0 {
-                items[size] = Self::new(self.x + 1, self.y - 1);
-                size += 1;
-            }
-            // upper right
-            if self.y != max_y {
-                items[size] = Self::new(self.x + 1, self.y + 1);
-                size += 1;
-            }
-            items[size] = Self::new(self.x + 1, self.y);
-            size += 1;
-        }
-        // bottom
-        if self.y != 0 {
-            items[size] = Self::new(self.x, self.y - 1);
-            size += 1;
-        }
-        // top
-        if self.y != max_y {
-            items[size] = Self::new(self.x, self.y + 1);
-            size += 1;
-        }
-
+        });
         PositionNeighborsIter {
             items,
             size: size as u8,
@@ -104,7 +98,7 @@ pub struct InitCheckCell(pub Position);
 #[derive(Clone, Debug)]
 pub struct FlagCell(pub Position);
 
-#[derive(Clone, Debug)]
+#[derive(EnumIter, Clone, Debug)]
 pub enum Direction {
     North,
     NorthEast,
