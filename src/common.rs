@@ -2,7 +2,11 @@ use bevy::{math::XY, prelude::*};
 use derive_more::{Deref, DerefMut};
 use iyes_loopless::prelude::*;
 use rand::{prelude::StdRng, SeedableRng};
-use std::{hash::Hash, mem::MaybeUninit};
+use std::{
+    hash::Hash,
+    mem::MaybeUninit,
+    ops::{Add, Div, Sub},
+};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -16,6 +20,30 @@ impl Hash for Position {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.x.hash(state);
         self.y.hash(state);
+    }
+}
+
+impl Add<Self> for Position {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Position::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+
+impl Sub<Self> for Position {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Position::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
+impl Div<u32> for Position {
+    type Output = Self;
+
+    fn div(self, rhs: u32) -> Self::Output {
+        Position::new(self.x / rhs, self.y / rhs)
     }
 }
 

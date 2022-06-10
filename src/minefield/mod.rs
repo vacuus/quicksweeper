@@ -7,6 +7,7 @@ mod load;
 mod systems;
 
 pub use field::*;
+pub use load::BlankField;
 use systems::*;
 
 pub struct MinefieldPlugin;
