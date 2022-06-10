@@ -17,6 +17,7 @@ struct KeyTimers {
     key_down: HoldTimer,
 }
 
+#[derive(Clone, Debug)]
 struct Activations {
     left: bool,
     right: bool,
@@ -29,6 +30,8 @@ impl TryFrom<Activations> for Direction {
 
     fn try_from(value: Activations) -> Result<Self, Self::Error> {
         if value.up && value.down || value.left && value.right {
+            Err(())
+        } else if !(value.up || value.down || value.left || value.right) {
             Err(())
         } else {
             Ok(if value.up {
@@ -173,29 +176,15 @@ fn move_cursor(
     mut key_timers: Local<KeyTimers>,
     time: Res<Time>,
 ) {
-    // let minefield = minefield.iter().next().unwrap();
-    // let max_x = minefield.num_columns() - 1;
-    // let max_y = minefield.num_rows() - 1;
-    let (max_x, max_y) = (u32::MAX, u32::MAX);
-
     let mut cursor = cursor.single_mut(); // assume single cursor
-    let Cursor(Position(XY {
-        ref mut x,
-        ref mut y,
-    })) = *cursor;
-
     let activated = key_timers.tick_input(&time, &kb);
 
-    if activated.left {
-        *x = x.saturating_sub(1);
-    } else if activated.right && *x < max_x as u32 {
-        *x += 1;
-    }
-
-    if activated.down {
-        *y = y.saturating_sub(1);
-    } else if activated.up && *y < max_y as u32 {
-        *y += 1;
+    let Cursor(pos) = *cursor;
+    if let Some(next) = activated.try_into().ok().and_then(|direction| {
+        pos.neighbor_direction(direction)
+            .and_then(|neighbor| field.single().contains_key(&neighbor).then(|| neighbor))
+    }) {
+        cursor.0 = next;
     }
 }
 
