@@ -19,20 +19,22 @@ pub fn create_minefield(
     let GameInitData { rows, cols, .. } = *init_data;
     let len = rows * cols;
 
-    let minefield_iter = assets.get("test.field").unwrap().iter().map(|pos| {
-        let entity = MineCell::new_empty(pos.clone(), &textures)
-            .pipe(|cell| commands.spawn_bundle(cell))
-            .id();
-        (pos.clone(), entity)
-    });
+    if let Some(field) = assets.get("test.field") {
+        let minefield_iter = field.iter().map(|pos| {
+            let entity = MineCell::new_empty(pos.clone(), &textures)
+                .pipe(|cell| commands.spawn_bundle(cell))
+                .id();
+            (pos.clone(), entity)
+        });
 
-    let minefield = Minefield {
-        field: minefield_iter.collect(),
-        remaining_blank: len as usize * 8 / 10,
-    };
-    commands.spawn().insert(minefield);
+        let minefield = Minefield {
+            field: minefield_iter.collect(),
+            remaining_blank: len as usize * 8 / 10,
+        };
+        commands.spawn().insert(minefield);
 
-    commands.insert_resource(NextState(SingleplayerState::PreGame));
+        commands.insert_resource(NextState(SingleplayerState::PreGame));
+    }
 }
 
 pub fn generate_minefield(
