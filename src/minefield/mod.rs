@@ -16,7 +16,7 @@ impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
         app.add_asset::<load::BlankField>()
             .add_asset_loader(load::FieldLoader)
-            .add_system(create_minefield.run_in_state(SingleplayerState::Loading))
+            .add_enter_system(SingleplayerState::PreGame, create_minefield)
             .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
             .add_system(flag_cell.run_in_state(SingleplayerState::Game))
             .add_system(reveal_cell.run_in_state(SingleplayerState::Game))

@@ -1,7 +1,7 @@
 use super::field::*;
 use super::load::BlankField;
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
-use crate::load::MineTextures;
+use crate::load::{MineTextures, Field};
 use crate::state::SingleplayerState;
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -13,9 +13,10 @@ use tap::Pipe;
 pub fn create_minefield(
     mut commands: Commands,
     textures: Res<MineTextures>,
+    field: Res<Field>,
     assets: Res<Assets<BlankField>>,
 ) {
-    if let Some(field) = assets.get("test.field") {
+    if let Some(field) = assets.get(field.field.clone()) {
         let minefield_iter = field.iter().map(|pos| {
             let entity = MineCell::new_empty(pos.clone(), &textures)
                 .pipe(|cell| commands.spawn_bundle(cell))
@@ -29,7 +30,6 @@ pub fn create_minefield(
         };
         commands.spawn().insert(minefield);
 
-        commands.insert_resource(NextState(SingleplayerState::PreGame));
     }
 }
 

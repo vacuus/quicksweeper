@@ -6,6 +6,7 @@ mod load;
 
 use bevy::prelude::*;
 
+use load::LoadPlugin;
 pub use state::SingleplayerState;
 
 fn main() {
@@ -16,7 +17,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(common::QuicksweeperTypes)
-        .add_startup_system(load::load_assets)
+        .add_plugin(LoadPlugin)
         .add_plugin(cursor::CursorPlugin)
         .add_plugin(minefield::MinefieldPlugin)
         .run();

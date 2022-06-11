@@ -1,3 +1,4 @@
+use crate::load::Field;
 use crate::minefield::{BlankField, Minefield};
 use crate::state::ConditionalHelpersExt;
 use crate::{
@@ -149,17 +150,21 @@ fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn create_cursor(
     mut commands: Commands,
     texture: Res<CursorTexture>,
-    mut camera_transform: Query<&mut Transform, With<Camera2d>>,
-    // init_data: Res<GameInitData>,
-    field: Res<Assets<BlankField>>,
+    field: Res<Field>,
+    fields: Res<Assets<BlankField>>,
 ) {
-    // let init_position = init_data.field_center();
-    let init_position = field.get("test.field").unwrap().center().unwrap_or(Position::new(0, 0));
-    println!("init position found at {init_position:?}");
-    camera_transform.single_mut().translation = init_position.absolute(32.0, 32.0).extend(3.0);
+    let init_position = fields
+        .get(field.field.clone())
+        .unwrap()
+        .center()
+        .unwrap_or(Position::new(0, 0));
 
-    // println!("{:?}", field.get("test.field").unwrap().center());
+    // create camera
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d().tap_mut(|bundle| {
+        bundle.transform.translation = init_position.absolute(32.0, 32.0).extend(100.0);
+    }));
 
+    // create cursor
     commands
         .spawn_bundle(SpriteBundle {
             texture: (*texture).clone(),
