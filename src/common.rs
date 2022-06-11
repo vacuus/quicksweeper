@@ -143,14 +143,14 @@ pub struct GameInitData {
     pub cols: u32,
 }
 
-impl GameInitData {
-    pub fn field_center(&self) -> Position {
-        Position(XY {
-            x: self.cols / 2,
-            y: self.rows / 2,
-        })
-    }
-}
+// impl GameInitData {
+//     pub fn field_center(&self) -> Position {
+//         Position(XY {
+//             x: self.cols / 2,
+//             y: self.rows / 2,
+//         })
+//     }
+// }
 
 pub struct QuicksweeperTypes;
 

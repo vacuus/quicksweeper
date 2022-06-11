@@ -45,7 +45,7 @@ impl AssetLoader for FieldLoader {
         ctx: &'a mut bevy::asset::LoadContext,
     ) -> bevy::asset::BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async {
-            let mut positions = Vec::new(); // TODO: calculate capacity
+            let mut positions = Vec::with_capacity(bytes.len()); // TODO: make loading consistent
 
             bytes
                 .rsplit(|&b| b == b'\n')

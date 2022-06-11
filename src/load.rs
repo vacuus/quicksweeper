@@ -22,6 +22,11 @@ pub fn load_assets(
     // load field
     let _ = asset_server.load_untyped("test.field");
 
+    // loop {
+    //     if asset_server.get_load_state(&field) == LoadState::Loaded {
+    //         break;
+    //     }
+    // }
     commands.insert_resource(MineTextures(atlas));
 }
 

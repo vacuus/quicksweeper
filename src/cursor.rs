@@ -1,5 +1,4 @@
-use crate::common::GameInitData;
-use crate::minefield::{Minefield, BlankField};
+use crate::minefield::{BlankField, Minefield};
 use crate::state::ConditionalHelpersExt;
 use crate::{
     common::{CheckCell, Direction, FlagCell, InitCheckCell, Position},
@@ -151,14 +150,15 @@ fn create_cursor(
     mut commands: Commands,
     texture: Res<CursorTexture>,
     mut camera_transform: Query<&mut Transform, With<Camera2d>>,
-    init_data: Res<GameInitData>,
+    // init_data: Res<GameInitData>,
     field: Res<Assets<BlankField>>,
 ) {
-    let init_position = init_data.field_center();
-
+    // let init_position = init_data.field_center();
+    let init_position = field.get("test.field").unwrap().center().unwrap_or(Position::new(0, 0));
+    println!("init position found at {init_position:?}");
     camera_transform.single_mut().translation = init_position.absolute(32.0, 32.0).extend(3.0);
 
-    println!("{:?}", field.get("test.field").unwrap().center());
+    // println!("{:?}", field.get("test.field").unwrap().center());
 
     commands
         .spawn_bundle(SpriteBundle {

@@ -1,8 +1,8 @@
 use super::field::*;
 use super::load::BlankField;
 use crate::common::{CheckCell, FlagCell, GameInitData, InitCheckCell, Position};
-use crate::state::SingleplayerState;
 use crate::load::MineTextures;
+use crate::state::SingleplayerState;
 use bevy::prelude::*;
 use itertools::Itertools;
 use iyes_loopless::prelude::*;
@@ -19,14 +19,11 @@ pub fn create_minefield(
     let GameInitData { rows, cols, .. } = *init_data;
     let len = rows * cols;
 
-    println!("{:?}", assets.get("test.field"));
-
-    let minefield_iter = (0..len).map(|ix| {
-        let pos = Position::new(ix % cols, ix / cols);
-        let entity = MineCell::new_empty(pos, &textures)
+    let minefield_iter = assets.get("test.field").unwrap().iter().map(|pos| {
+        let entity = MineCell::new_empty(pos.clone(), &textures)
             .pipe(|cell| commands.spawn_bundle(cell))
             .id();
-        (pos, entity)
+        (pos.clone(), entity)
     });
 
     let minefield = Minefield {
