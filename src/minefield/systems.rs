@@ -1,6 +1,6 @@
 use super::field::*;
 use super::load::BlankField;
-use crate::common::{CheckCell, FlagCell, GameInitData, InitCheckCell, Position};
+use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use crate::load::MineTextures;
 use crate::state::SingleplayerState;
 use bevy::prelude::*;
@@ -13,12 +13,8 @@ use tap::Pipe;
 pub fn create_minefield(
     mut commands: Commands,
     textures: Res<MineTextures>,
-    init_data: Res<GameInitData>,
     assets: Res<Assets<BlankField>>,
 ) {
-    let GameInitData { rows, cols, .. } = *init_data;
-    let len = rows * cols;
-
     if let Some(field) = assets.get("test.field") {
         let minefield_iter = field.iter().map(|pos| {
             let entity = MineCell::new_empty(pos.clone(), &textures)
@@ -29,7 +25,7 @@ pub fn create_minefield(
 
         let minefield = Minefield {
             field: minefield_iter.collect(),
-            remaining_blank: len as usize * 8 / 10,
+            remaining_blank: field.len() * 8 / 10,
         };
         commands.spawn().insert(minefield);
 
@@ -50,18 +46,21 @@ pub fn generate_minefield(
 
         let minefield = minefield.single();
 
-        let len = minefield.len();
         let minefield_vec = minefield.iter().collect_vec();
         let neighbors = minefield.iter_neighbor_positions(pos).collect_vec();
 
         minefield_vec
-            .choose_multiple_weighted(&mut *rng, len - minefield.remaining_blank, |(pos, _)| {
-                if neighbors.contains(pos) {
-                    0.0
-                } else {
-                    1.0 / (len - neighbors.len()) as f32
-                }
-            })
+            .choose_multiple_weighted(
+                &mut *rng,
+                minefield.len() - minefield.remaining_blank,
+                |(pos, _)| {
+                    if neighbors.contains(pos) {
+                        0.0
+                    } else {
+                        1.0 / (minefield.len() - neighbors.len()) as f32
+                    }
+                },
+            )
             .unwrap()
             .for_each(|(_, cell)| {
                 *states.get_mut(**cell).unwrap() = MineCellState::Mine;

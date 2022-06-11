@@ -138,20 +138,6 @@ pub enum Direction {
     NorthWest,
 }
 
-pub struct GameInitData {
-    pub rows: u32,
-    pub cols: u32,
-}
-
-// impl GameInitData {
-//     pub fn field_center(&self) -> Position {
-//         Position(XY {
-//             x: self.cols / 2,
-//             y: self.rows / 2,
-//         })
-//     }
-// }
-
 pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {
@@ -160,8 +146,6 @@ impl Plugin for QuicksweeperTypes {
             .insert_resource(StdRng::from_entropy())
             .add_event::<CheckCell>()
             .add_event::<FlagCell>()
-            .add_event::<InitCheckCell>()
-            // temporary addition
-            .insert_resource(GameInitData { rows: 10, cols: 20 });
+            .add_event::<InitCheckCell>();
     }
 }
