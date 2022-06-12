@@ -3,6 +3,7 @@ mod cursor;
 mod minefield;
 mod state;
 mod load;
+mod menus;
 
 use bevy::prelude::*;
 
@@ -16,6 +17,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(common::QuicksweeperTypes)
+        .add_plugin(menus::MenuPlugin)
         .add_plugin(load::LoadPlugin)
         .add_plugin(cursor::CursorPlugin)
         .add_plugin(minefield::MinefieldPlugin)
