@@ -255,7 +255,7 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
-            .add_enter_system(SingleplayerState::PreGame, create_cursor)
+            .add_exit_system(SingleplayerState::Loading, create_cursor)
             .add_system(
                 move_cursor
                     .into_conditional()

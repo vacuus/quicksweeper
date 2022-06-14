@@ -1,7 +1,7 @@
 use super::field::*;
 use super::load::BlankField;
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
-use crate::load::{MineTextures, Field};
+use crate::load::{Field, MineTextures};
 use crate::state::SingleplayerState;
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -29,8 +29,16 @@ pub fn create_minefield(
             remaining_blank: field.len() * 8 / 10,
         };
         commands.spawn().insert(minefield);
-
     }
+}
+
+pub fn destroy_minefield(
+    mut commands: Commands,
+    minefield: Query<Entity, With<Minefield>>,
+    states: Query<Entity, With<MineCellState>>,
+) {
+    minefield.for_each(|map| commands.entity(map).despawn());
+    states.for_each(|ent| commands.entity(ent).despawn());
 }
 
 pub fn generate_minefield(

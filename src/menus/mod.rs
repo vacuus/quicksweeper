@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use iyes_loopless::prelude::AppLooplessStateExt;
+use iyes_loopless::{
+    prelude::{AppLooplessStateExt, IntoConditionalSystem},
+    state::NextState,
+};
 
 use crate::{load::Textures, SingleplayerState};
 
@@ -18,6 +21,17 @@ fn fail_screen(mut commands: Commands, font_source: Res<Textures>) {
         "You failed with x% mines left".to_string(),
         RetryButton,
     );
+}
+
+fn retry(
+    mut commands: Commands,
+    ev: Query<&Interaction, (Changed<Interaction>, With<RetryButton>)>,
+    ui: Query<Entity, With<FailScreen>>,
+) {
+    if ev.iter().any(|x| *x == Interaction::Clicked) {
+        commands.insert_resource(NextState(SingleplayerState::PreGame));
+        commands.entity(ui.single()).despawn_recursive();
+    }
 }
 
 pub fn create_screen<T>(
@@ -89,6 +103,7 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(SingleplayerState::GameFailed, fail_screen);
+        app.add_enter_system(SingleplayerState::GameFailed, fail_screen)
+            .add_system(retry.run_in_state(SingleplayerState::GameFailed));
     }
 }
