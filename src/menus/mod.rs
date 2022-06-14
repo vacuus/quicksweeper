@@ -4,7 +4,7 @@ use iyes_loopless::{
     state::NextState,
 };
 
-use crate::{load::Textures, SingleplayerState};
+use crate::{load::Textures, minefield::Minefield, SingleplayerState};
 
 #[derive(Component)]
 struct FailScreen;
@@ -14,11 +14,14 @@ struct SuccessScreen;
 #[derive(Component)]
 pub struct RetryButton;
 
-fn fail_screen(mut commands: Commands, font_source: Res<Textures>) {
+fn fail_screen(mut commands: Commands, font_source: Res<Textures>, minefield: Query<&Minefield>) {
+
+    let remaining = minefield.single().remaining_blank();
+
     create_screen(
         &mut commands,
         &font_source,
-        "You failed with x% mines left".to_string(),
+        format!("You failed with {remaining} tiles left"),
         RetryButton,
     );
 }

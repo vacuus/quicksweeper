@@ -120,6 +120,10 @@ impl Minefield {
     pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> + '_ {
         self.iter_neighbors_enumerated(pos).map(|(pos, _)| pos)
     }
+
+    pub fn remaining_blank(&self) -> usize {
+        self.remaining_blank
+    }
 }
 
 impl Index<Position> for Minefield {
