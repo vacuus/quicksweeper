@@ -4,32 +4,38 @@ use iyes_loopless::{
     state::NextState,
 };
 
-use crate::{load::Textures, minefield::Minefield, SingleplayerState};
+use crate::{
+    load::Textures, minefield::Minefield, state::ConditionalHelpersExt, SingleplayerState,
+};
 
 #[derive(Component)]
-struct FailScreen;
-#[derive(Component)]
-struct SuccessScreen;
+struct CompleteScreen;
 
 #[derive(Component)]
 pub struct RetryButton;
 
 fn fail_screen(mut commands: Commands, font_source: Res<Textures>, minefield: Query<&Minefield>) {
-
     let remaining = minefield.single().remaining_blank();
 
     create_screen(
         &mut commands,
         &font_source,
         format!("You failed with {remaining} tiles left"),
-        RetryButton,
+    );
+}
+
+fn success_screen(mut commands: Commands, font_source: Res<Textures>) {
+    create_screen(
+        &mut commands,
+        &font_source,
+        format!("Congratulations!"), // TODO: Calculate score
     );
 }
 
 fn retry(
     mut commands: Commands,
     ev: Query<&Interaction, (Changed<Interaction>, With<RetryButton>)>,
-    ui: Query<Entity, With<FailScreen>>,
+    ui: Query<Entity, With<CompleteScreen>>,
 ) {
     if ev.iter().any(|x| *x == Interaction::Clicked) {
         commands.insert_resource(NextState(SingleplayerState::PreGame));
@@ -37,23 +43,12 @@ fn retry(
     }
 }
 
-pub fn create_screen<T>(
-    commands: &mut Commands,
-    font_source: &Res<Textures>,
-    message: String,
-    marker: T,
-) where
-    T: Component,
-{
-    commands.spawn_bundle(UiCameraBundle::default());
-
+pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, message: String) {
     let text_style = || TextStyle {
         font_size: 40.0,
         color: Color::RED.into(),
         font: font_source.font.clone(),
     };
-
-    // fail screen
 
     commands
         .spawn_bundle(NodeBundle {
@@ -66,7 +61,7 @@ pub fn create_screen<T>(
             color: Color::NONE.into(),
             ..default()
         })
-        .insert(FailScreen)
+        .insert(CompleteScreen)
         .with_children(|parent| {
             // text
             parent
@@ -92,7 +87,7 @@ pub fn create_screen<T>(
                     color: Color::MIDNIGHT_BLUE.into(),
                     ..default()
                 })
-                .insert(marker)
+                .insert(RetryButton)
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
                         text: Text::with_section("Button", text_style(), default()),
@@ -107,6 +102,13 @@ pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_enter_system(SingleplayerState::GameFailed, fail_screen)
-            .add_system(retry.run_in_state(SingleplayerState::GameFailed));
+            .add_enter_system(SingleplayerState::GameSuccess, success_screen)
+            .add_startup_system(|mut commands: Commands| {
+                commands.spawn_bundle(UiCameraBundle::default());
+            })
+            .add_system(retry.into_conditional().run_in_states([
+                SingleplayerState::GameFailed,
+                SingleplayerState::GameSuccess,
+            ]));
     }
 }
