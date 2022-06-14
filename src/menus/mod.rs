@@ -3,62 +3,68 @@ use iyes_loopless::prelude::AppLooplessStateExt;
 
 use crate::{load::Textures, SingleplayerState};
 
+pub mod actions;
+
 #[derive(Component)]
 struct FailScreen;
 #[derive(Component)]
 struct SuccessScreen;
 
-fn init(mut commands: Commands, font_source: Res<Textures>) {
+pub fn init(mut commands: Commands, font_source: Res<Textures>) {
     commands.spawn_bundle(UiCameraBundle::default());
+
+    let text_style = || TextStyle {
+        font_size: 40.0,
+        color: Color::RED.into(),
+        font: font_source.font.clone(),
+    };
 
     // fail screen
 
     commands
         .spawn_bundle(NodeBundle {
             style: Style {
-                flex_direction: FlexDirection::Row,
+                flex_direction: FlexDirection::ColumnReverse,
+                align_items: AlignItems::Center,
                 margin: Rect::all(Val::Auto),
                 ..default()
             },
-            visibility: Visibility { is_visible: false },
+            color: Color::NONE.into(),
             ..default()
         })
         .insert(FailScreen)
         .with_children(|parent| {
             // text
-            parent.spawn_bundle(TextBundle {
-                text: Text::with_section(
-                    "Failed with x% tiles left",
-                    TextStyle {
-                        font_size: 40.0,
-                        color: Color::rgb(0.1, 0.1, 0.1),
-                        font: font_source.font.clone(),
-                    },
-                    TextAlignment::default(),
-                ),
-                ..default()
-            });
-            // button
             parent
-                .spawn_bundle(ButtonBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
-                        ..default()
-                    },
-                    color: Color::rgb(0.1, 0.1, 0.1).into(),
+                .spawn_bundle(NodeBundle {
+                    color: Color::WHITE.into(),
                     ..default()
                 })
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
                         text: Text::with_section(
-                            "Button",
-                            TextStyle {
-                                font_size: 40.0,
-                                color: Color::rgb(0.9, 0.9, 0.9),
-                                font: font_source.font.clone(),
-                            },
-                            default(),
+                            "Failed with x% tiles left",
+                            text_style(),
+                            TextAlignment::default(),
                         ),
+                        ..default()
+                    });
+                });
+            // button
+            parent
+                .spawn_bundle(ButtonBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    color: Color::MIDNIGHT_BLUE.into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle {
+                        text: Text::with_section("Button", text_style(), default()),
                         ..default()
                     });
                 });
