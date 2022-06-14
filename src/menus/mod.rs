@@ -3,14 +3,31 @@ use iyes_loopless::prelude::AppLooplessStateExt;
 
 use crate::{load::Textures, SingleplayerState};
 
-pub mod actions;
-
 #[derive(Component)]
 struct FailScreen;
 #[derive(Component)]
 struct SuccessScreen;
 
-pub fn init(mut commands: Commands, font_source: Res<Textures>) {
+#[derive(Component)]
+pub struct RetryButton;
+
+fn fail_screen(mut commands: Commands, font_source: Res<Textures>) {
+    create_screen(
+        &mut commands,
+        &font_source,
+        "You failed with x% mines left".to_string(),
+        RetryButton,
+    );
+}
+
+pub fn create_screen<T>(
+    commands: &mut Commands,
+    font_source: &Res<Textures>,
+    message: String,
+    marker: T,
+) where
+    T: Component,
+{
     commands.spawn_bundle(UiCameraBundle::default());
 
     let text_style = || TextStyle {
@@ -42,11 +59,7 @@ pub fn init(mut commands: Commands, font_source: Res<Textures>) {
                 })
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(
-                            "Failed with x% tiles left",
-                            text_style(),
-                            TextAlignment::default(),
-                        ),
+                        text: Text::with_section(message, text_style(), TextAlignment::default()),
                         ..default()
                     });
                 });
@@ -62,6 +75,7 @@ pub fn init(mut commands: Commands, font_source: Res<Textures>) {
                     color: Color::MIDNIGHT_BLUE.into(),
                     ..default()
                 })
+                .insert(marker)
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
                         text: Text::with_section("Button", text_style(), default()),
@@ -75,6 +89,6 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(SingleplayerState::PreGame, init);
+        app.add_enter_system(SingleplayerState::GameFailed, fail_screen);
     }
 }
