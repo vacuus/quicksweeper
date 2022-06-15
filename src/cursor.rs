@@ -29,9 +29,10 @@ impl TryFrom<Activations> for Direction {
     type Error = ();
 
     fn try_from(value: Activations) -> Result<Self, Self::Error> {
-        if value.up && value.down || value.left && value.right {
-            Err(())
-        } else if !(value.up || value.down || value.left || value.right) {
+        if value.up && value.down
+            || value.left && value.right
+            || !(value.up || value.down || value.left || value.right)
+        {
             Err(())
         } else {
             Ok(if value.up {
@@ -153,6 +154,7 @@ fn create_cursor(
     field: Res<Field>,
     fields: Res<Assets<BlankField>>,
 ) {
+    #[allow(clippy::or_fun_call)]
     let init_position = fields
         .get(field.field.clone())
         .unwrap()
@@ -174,7 +176,7 @@ fn create_cursor(
             },
             ..Default::default()
         })
-        .insert(Cursor(init_position.clone()));
+        .insert(Cursor(init_position));
 }
 
 fn move_cursor(
@@ -234,9 +236,9 @@ fn check_cell(
 ) {
     let pos = &cursor.get_single().unwrap().0;
     if kb.just_pressed(KeyCode::Space) {
-        check.send(CheckCell(pos.clone()));
+        check.send(CheckCell(*pos));
     } else if kb.just_pressed(KeyCode::F) {
-        flag.send(FlagCell(pos.clone()));
+        flag.send(FlagCell(*pos));
     }
 }
 
@@ -246,7 +248,7 @@ fn init_check_cell(
     mut ev: EventWriter<InitCheckCell>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
-        ev.send(InitCheckCell(cursor.get_single().unwrap().0.clone()));
+        ev.send(InitCheckCell(cursor.single().0));
     }
 }
 

@@ -16,6 +16,9 @@ use crate::SingleplayerState;
 pub struct Position(pub XY<u32>);
 
 impl Eq for Position {}
+
+#[allow(clippy::derive_hash_xor_eq)]
+// cannot fix this for now, since XY doesn't allow for Hash impls
 impl Hash for Position {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.x.hash(state);
@@ -98,7 +101,7 @@ impl Position {
     }
 
     pub fn iter_neighbors(&self) -> PositionNeighborsIter {
-        let mut items: [Position; 8] = unsafe { MaybeUninit::uninit().assume_init() };
+        let mut items: [Position; 8] = unsafe { MaybeUninit::zeroed().assume_init() };
         let mut size = 0;
         Direction::iter().for_each(|direction| {
             if let Some(pos) = self.neighbor_direction(direction) {

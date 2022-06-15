@@ -18,10 +18,10 @@ pub fn create_minefield(
 ) {
     if let Some(field) = assets.get(field.field.clone()) {
         let minefield_iter = field.iter().map(|pos| {
-            let entity = MineCell::new_empty(pos.clone(), &textures)
+            let entity = MineCell::new_empty(*pos, &textures)
                 .pipe(|cell| commands.spawn_bundle(cell))
                 .id();
-            (pos.clone(), entity)
+            (*pos, entity)
         });
 
         let minefield = Minefield {
@@ -50,7 +50,7 @@ pub fn generate_minefield(
     mut rng: ResMut<StdRng>,
 ) {
     if let Some(InitCheckCell(pos)) = position.iter().next().cloned() {
-        write_back.send(CheckCell(pos.clone()));
+        write_back.send(CheckCell(pos));
 
         let minefield = minefield.single();
 
@@ -105,18 +105,17 @@ pub fn reveal_cell(
                     check_next.extend(
                         neighbors
                             .into_iter()
-                            .filter(|(_, state)| !state.is_flagged())
-                            .map(|(pos, _)| pos.clone()),
+                            .filter_map(|(pos, state)| (!state.is_flagged()).then(|| pos)),
                     );
                 }
-                *checking = MineCellState::FoundEmpty(count_mine_neighbors);
 
+                *checking = MineCellState::Revealed(count_mine_neighbors);
                 field.remaining_blank -= 1;
             }
             MineCellState::Mine => {
                 commands.insert_resource(NextState(SingleplayerState::GameFailed));
             }
-            MineCellState::FoundEmpty(x) => {
+            MineCellState::Revealed(x) => {
                 if neighbors
                     .iter()
                     .filter(|(_, state)| state.is_flagged())
@@ -126,8 +125,7 @@ pub fn reveal_cell(
                     check_next.extend(
                         neighbors
                             .into_iter()
-                            .filter(|(_, state)| !state.is_marked())
-                            .map(|(pos, _)| pos.clone()),
+                            .filter_map(|(pos, state)| (!state.is_marked()).then(|| pos)),
                     );
                 }
             }
@@ -156,6 +154,7 @@ pub fn flag_cell(
             MineCellState::FlaggedMine => Some(MineCellState::Mine),
             _ => None, // ignore revealed cells
         }
-        .map(|x| *state = x);
+        .into_iter()
+        .for_each(|x| *state = x);
     }
 }

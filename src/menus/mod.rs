@@ -28,7 +28,7 @@ fn success_screen(mut commands: Commands, font_source: Res<Textures>) {
     create_screen(
         &mut commands,
         &font_source,
-        format!("Congratulations!"), // TODO: Calculate score
+        "Congratulations!".to_string(), // TODO: Calculate score
     );
 }
 
@@ -46,7 +46,7 @@ fn retry(
 pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, message: String) {
     let text_style = || TextStyle {
         font_size: 40.0,
-        color: Color::RED.into(),
+        color: Color::RED,
         font: font_source.font.clone(),
     };
 

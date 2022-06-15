@@ -1,3 +1,6 @@
+#![warn(clippy::all)]
+#![allow(clippy::type_complexity)]
+
 mod common;
 mod cursor;
 mod minefield;

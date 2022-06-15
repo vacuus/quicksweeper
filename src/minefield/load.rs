@@ -51,7 +51,7 @@ impl AssetLoader for FieldLoader {
                 .rsplit(|&b| b == b'\n')
                 .enumerate()
                 .try_for_each(|(y, line)| {
-                    line.into_iter()
+                    line.iter()
                         .enumerate()
                         .try_for_each(|(x, char)| match char {
                             b'x' => {

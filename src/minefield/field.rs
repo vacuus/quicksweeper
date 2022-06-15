@@ -42,7 +42,7 @@ pub fn render_mines(
         *sprite = match state {
             MineCellState::Empty | MineCellState::Mine => TextureAtlasSprite::new(9),
             MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => TextureAtlasSprite::new(10),
-            MineCellState::FoundEmpty(x) => TextureAtlasSprite::new(*x as usize),
+            MineCellState::Revealed(x) => TextureAtlasSprite::new(*x as usize),
         };
     })
 }
@@ -59,31 +59,22 @@ pub fn display_mines(mut cells: Query<(&mut TextureAtlasSprite, &MineCellState)>
 pub enum MineCellState {
     Empty,
     Mine,
-    FoundEmpty(u8),
+    Revealed(u8),
     FlaggedEmpty,
     FlaggedMine,
 }
 
 impl MineCellState {
     pub fn is_flagged(&self) -> bool {
-        match self {
-            MineCellState::FlaggedEmpty | MineCellState::FlaggedMine => true,
-            _ => false,
-        }
+        matches!(self, MineCellState::FlaggedEmpty | MineCellState::FlaggedMine)
     }
 
     pub fn is_mine(&self) -> bool {
-        match self {
-            MineCellState::Mine | MineCellState::FlaggedMine => true,
-            _ => false,
-        }
+        matches!(self, MineCellState::Mine | MineCellState::FlaggedMine)
     }
 
     pub fn is_marked(&self) -> bool {
-        match self {
-            MineCellState::Mine | MineCellState::Empty => false,
-            _ => true,
-        }
+        !matches!(self, MineCellState::Mine | MineCellState::Empty)
     }
 }
 
@@ -113,7 +104,7 @@ impl Minefield {
         pos: Position,
     ) -> impl Iterator<Item = (Position, Entity)> + '_ {
         pos.iter_neighbors().filter_map(move |neighbor| {
-            self.get(&neighbor).map(|entity| (neighbor, entity.clone()))
+            self.get(&neighbor).map(|entity| (neighbor, *entity))
         })
     }
 
