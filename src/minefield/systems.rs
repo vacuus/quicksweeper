@@ -49,13 +49,16 @@ pub fn generate_minefield(
     mut states: Query<&mut MineCellState>,
     mut rng: ResMut<StdRng>,
 ) {
-    if let Some(InitCheckCell(pos)) = position.iter().next().cloned() {
-        write_back.send(CheckCell(pos));
+    if let Some(InitCheckCell(pos)) = position.iter().next() {
+        write_back.send(CheckCell(*pos));
 
         let minefield = minefield.single();
 
         let minefield_vec = minefield.iter().collect_vec();
-        let neighbors = minefield.iter_neighbor_positions(pos).collect_vec();
+        let neighbors = minefield
+            .iter_neighbor_positions(*pos)
+            .chain(std::iter::once(*pos))
+            .collect_vec();
 
         minefield_vec
             .choose_multiple_weighted(
