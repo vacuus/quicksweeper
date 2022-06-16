@@ -6,7 +6,7 @@ use crate::state::SingleplayerState;
 use bevy::prelude::*;
 use itertools::Itertools;
 use iyes_loopless::prelude::*;
-use rand::prelude::{SliceRandom, StdRng};
+use rand::prelude::{SliceRandom};
 use std::collections::VecDeque;
 use tap::Pipe;
 
@@ -47,7 +47,6 @@ pub fn generate_minefield(
     mut write_back: EventWriter<CheckCell>,
     minefield: Query<&Minefield>,
     mut states: Query<&mut MineCellState>,
-    mut rng: ResMut<StdRng>,
 ) {
     if let Some(InitCheckCell(pos)) = position.iter().next() {
         write_back.send(CheckCell(*pos));
@@ -62,7 +61,7 @@ pub fn generate_minefield(
 
         minefield_vec
             .choose_multiple_weighted(
-                &mut *rng,
+                &mut rand::thread_rng(),
                 minefield.len() - minefield.remaining_blank,
                 |(pos, _)| {
                     if neighbors.contains(pos) {

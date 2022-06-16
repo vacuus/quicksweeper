@@ -1,7 +1,7 @@
 use bevy::{math::XY, prelude::*};
 use derive_more::{Deref, DerefMut};
 use iyes_loopless::prelude::*;
-use rand::{prelude::StdRng, SeedableRng};
+
 use std::{
     hash::Hash,
     mem::MaybeUninit,
@@ -146,7 +146,7 @@ pub struct QuicksweeperTypes;
 impl Plugin for QuicksweeperTypes {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(SingleplayerState::Loading)
-            .insert_resource(StdRng::from_entropy())
+            // .insert_resource(StdRng::from_entropy())
             .add_event::<CheckCell>()
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>();
