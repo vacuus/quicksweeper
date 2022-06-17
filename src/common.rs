@@ -121,13 +121,15 @@ impl Position {
 }
 
 #[derive(Clone, Debug)]
-pub struct CheckCell(pub Position);
+pub struct CheckCell(pub Position, pub Entity);
 
 #[derive(Clone, Debug)]
-pub struct InitCheckCell(pub Position);
+pub struct InitCheckCell(pub Position, pub Entity);
 
 #[derive(Clone, Debug)]
-pub struct FlagCell(pub Position);
+pub struct FlagCell(pub Position, pub Entity);
+
+pub struct CurrentMinefield(pub Entity);
 
 #[derive(EnumIter, Clone, Debug)]
 pub enum Direction {

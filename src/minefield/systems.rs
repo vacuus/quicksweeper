@@ -1,12 +1,12 @@
 use super::field::*;
 use super::load::BlankField;
-use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
+use crate::common::{CheckCell, CurrentMinefield, FlagCell, InitCheckCell, Position};
 use crate::load::{Field, MineTextures};
 use crate::state::SingleplayerState;
 use bevy::prelude::*;
 use itertools::Itertools;
 use iyes_loopless::prelude::*;
-use rand::prelude::{SliceRandom};
+use rand::prelude::SliceRandom;
 use std::collections::VecDeque;
 use tap::Pipe;
 
@@ -28,11 +28,13 @@ pub fn create_minefield(
             field: minefield_iter.collect(),
             remaining_blank: field.len() * 8 / 10,
         };
-        commands.spawn().insert(minefield);
+
+        let ent = commands.spawn().insert(minefield).id();
+        commands.insert_resource(CurrentMinefield(ent));
     }
 }
 
-pub fn destroy_minefield(
+pub fn destroy_minefields(
     mut commands: Commands,
     minefield: Query<Entity, With<Minefield>>,
     states: Query<Entity, With<MineCellState>>,
@@ -48,10 +50,10 @@ pub fn generate_minefield(
     minefield: Query<&Minefield>,
     mut states: Query<&mut MineCellState>,
 ) {
-    if let Some(InitCheckCell(pos)) = position.iter().next() {
-        write_back.send(CheckCell(*pos));
+    for InitCheckCell(pos, field) in position.iter() {
+        write_back.send(CheckCell(*pos, *field));
 
-        let minefield = minefield.single();
+        let minefield = minefield.get(*field).unwrap();
 
         let minefield_vec = minefield.iter().collect_vec();
         let neighbors = minefield
@@ -82,15 +84,16 @@ pub fn generate_minefield(
 
 pub fn reveal_cell(
     mut commands: Commands,
-    mut field: Query<&mut Minefield>,
+    mut fields: Query<&mut Minefield>,
     mut states: Query<&mut MineCellState>,
     mut ev: EventReader<CheckCell>,
-    mut check_next: Local<VecDeque<Position>>,
+    mut check_next: Local<VecDeque<(Position, Entity)>>,
 ) {
-    check_next.extend(ev.iter().map(|CheckCell(x)| x).cloned());
-    let mut field = field.single_mut();
+    check_next.extend(ev.iter().map(|CheckCell(pos, ent)| (*pos, *ent)));
 
-    while let Some(position) = check_next.pop_front() {
+    while let Some((position, ent)) = check_next.pop_front() {
+        let mut field = fields.get_mut(ent).unwrap();
+
         let neighbors = field
             .iter_neighbors_enumerated(position)
             .map(|(a, b)| (a, states.get(b).unwrap().clone()))
@@ -107,7 +110,7 @@ pub fn reveal_cell(
                     check_next.extend(
                         neighbors
                             .into_iter()
-                            .filter_map(|(pos, state)| (!state.is_flagged()).then(|| pos)),
+                            .filter_map(|(pos, state)| (!state.is_flagged()).then(|| (pos, ent))),
                     );
                 }
 
@@ -127,7 +130,7 @@ pub fn reveal_cell(
                     check_next.extend(
                         neighbors
                             .into_iter()
-                            .filter_map(|(pos, state)| (!state.is_marked()).then(|| pos)),
+                            .filter_map(|(pos, state)| (!state.is_marked()).then(|| (pos, ent))),
                     );
                 }
             }
@@ -142,12 +145,12 @@ pub fn reveal_cell(
 
 pub fn flag_cell(
     mut ev: EventReader<FlagCell>,
-    mut field: Query<&mut Minefield>,
+    mut fields: Query<&mut Minefield>,
     mut states: Query<&mut MineCellState>,
 ) {
-    for FlagCell(pos) in ev.iter() {
+    for FlagCell(pos, field) in ev.iter() {
         let mut state = states
-            .get_mut(field.get_single_mut().unwrap()[*pos])
+            .get_mut(fields.get_mut(*field).unwrap()[*pos])
             .unwrap();
         match *state {
             MineCellState::Empty => Some(MineCellState::FlaggedEmpty),

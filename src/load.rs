@@ -25,7 +25,6 @@ pub struct MineTextures(Handle<TextureAtlas>);
 
 impl FromWorld for MineTextures {
     fn from_world(world: &mut World) -> Self {
-        println!("init minetextures");
         let atlas = TextureAtlas::from_grid(
             world.resource::<Textures>().mines.clone(),
             Vec2::splat(32.0),
@@ -33,7 +32,6 @@ impl FromWorld for MineTextures {
             3,
         );
         let handle = world.resource_mut::<Assets<TextureAtlas>>().add(atlas);
-        println!("init done!");
         MineTextures(handle)
     }
 }

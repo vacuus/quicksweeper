@@ -140,8 +140,9 @@ impl KeyTimers {
 #[derive(Deref)]
 struct CursorTexture(Handle<Image>);
 
+/// The entity field describes the minefield which it is placed on
 #[derive(Component, Debug)]
-struct Cursor(Position);
+struct Cursor(Position, Entity);
 
 fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
     let tex: Handle<Image> = asset_server.load("cursor.png");
@@ -151,37 +152,35 @@ fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn create_cursor(
     mut commands: Commands,
     texture: Res<CursorTexture>,
-    field: Res<Field>,
-    fields: Res<Assets<BlankField>>,
+    field_template: Res<Field>,
+    field_templates: Res<Assets<BlankField>>,
+    fields: Query<Entity, Added<Minefield>>,
 ) {
-    #[allow(clippy::or_fun_call)]
-    let init_position = fields
-        .get(field.field.clone())
-        .unwrap()
-        .center()
-        .unwrap_or(Position::new(0, 0));
+    if !fields.is_empty() {
+        #[allow(clippy::or_fun_call)]
+        let init_position = field_templates
+            .get(field_template.field.clone())
+            .unwrap()
+            .center()
+            .unwrap_or(Position::new(0, 0));
 
-    // create camera
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d().tap_mut(|bundle| {
-        bundle.transform.translation = init_position.absolute(32.0, 32.0).extend(100.0);
-    }));
-
-    // create cursor
-    commands
-        .spawn_bundle(SpriteBundle {
-            texture: (*texture).clone(),
-            transform: Transform {
-                translation: init_position.absolute(32.0, 32.0).extend(3.0),
+        // create cursor
+        commands
+            .spawn_bundle(SpriteBundle {
+                texture: (*texture).clone(),
+                transform: Transform {
+                    translation: init_position.absolute(32.0, 32.0).extend(3.0),
+                    ..Default::default()
+                },
                 ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Cursor(init_position));
+            })
+            .insert(Cursor(init_position, fields.single()));
+    }
 }
 
 fn move_cursor(
     mut cursor: Query<&mut Cursor>,
-    field: Query<&Minefield>,
+    fields: Query<&Minefield>,
     kb: Res<Input<KeyCode>>,
     mut key_timers: Local<KeyTimers>,
     time: Res<Time>,
@@ -189,13 +188,22 @@ fn move_cursor(
     let mut cursor = cursor.single_mut(); // assume single cursor
     let activated = key_timers.tick_input(&time, &kb);
 
-    let Cursor(pos) = *cursor;
+    let Cursor(pos, ent) = *cursor;
     if let Some(next) = activated.try_into().ok().and_then(|direction| {
-        pos.neighbor_direction(direction)
-            .and_then(|neighbor| field.single().contains_key(&neighbor).then(|| neighbor))
+        pos.neighbor_direction(direction).and_then(|neighbor| {
+            fields
+                .get(ent)
+                .unwrap()
+                .contains_key(&neighbor)
+                .then(|| neighbor)
+        })
     }) {
         cursor.0 = next;
     }
+}
+
+fn destroy_cursor(mut commands: Commands, cursor: Query<Entity, With<Cursor>>) {
+    commands.entity(cursor.single()).despawn();
 }
 
 fn translate_components(
@@ -203,7 +211,7 @@ fn translate_components(
     mut camera: Query<&mut Transform, With<Camera2d>>,
     time: Res<Time>,
 ) {
-    let (mut cursor_transform, Cursor(position)) = cursor.single_mut();
+    let (mut cursor_transform, Cursor(position, _)) = cursor.single_mut();
     let cursor_translation = &mut cursor_transform.translation;
     let camera_translation = &mut camera.single_mut().translation;
 
@@ -234,11 +242,11 @@ fn check_cell(
     mut check: EventWriter<CheckCell>,
     mut flag: EventWriter<FlagCell>,
 ) {
-    let pos = &cursor.get_single().unwrap().0;
+    let Cursor(pos, ent) = &cursor.get_single().unwrap();
     if kb.just_pressed(KeyCode::Space) {
-        check.send(CheckCell(*pos));
+        check.send(CheckCell(*pos, *ent));
     } else if kb.just_pressed(KeyCode::F) {
-        flag.send(FlagCell(*pos));
+        flag.send(FlagCell(*pos, *ent));
     }
 }
 
@@ -248,7 +256,8 @@ fn init_check_cell(
     mut ev: EventWriter<InitCheckCell>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
-        ev.send(InitCheckCell(cursor.single().0));
+        let Cursor(pos, ent) = cursor.single();
+        ev.send(InitCheckCell(*pos, *ent));
     }
 }
 
@@ -257,17 +266,29 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
-            .add_exit_system(SingleplayerState::Loading, create_cursor)
+            .add_enter_system(SingleplayerState::Loading, |mut commands: Commands| {
+                commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+            })
+            .add_system(create_cursor.run_in_state(SingleplayerState::PreGame))
             .add_system(
                 move_cursor
                     .into_conditional()
-                    .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game]),
+                    .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game])
+                    .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
             )
-            .add_system(translate_components.into_conditional().run_in_states([
-                SingleplayerState::PreGame,
-                SingleplayerState::Game,
-                SingleplayerState::GameFailed,
-            ]))
+            .add_system(
+                translate_components
+                    .into_conditional()
+                    .run_in_states([
+                        SingleplayerState::PreGame,
+                        SingleplayerState::Game,
+                        SingleplayerState::GameFailed,
+                        SingleplayerState::GameSuccess,
+                    ])
+                    .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
+            )
+            .add_exit_system(SingleplayerState::GameFailed, destroy_cursor)
+            .add_exit_system(SingleplayerState::GameSuccess, destroy_cursor)
             .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
             .add_system(check_cell.run_in_state(SingleplayerState::Game));
     }
