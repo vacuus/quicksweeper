@@ -31,8 +31,8 @@ fn advance_to_end(mut commands: Commands, mut game_outcome: EventReader<GameOutc
     }
 }
 
-fn advance_to_game(mut commands: Commands, mut init_move: EventReader<InitCheckCell>) {
-    if let Some(_) = init_move.iter().next() {
+fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>) {
+    if !init_move.is_empty() {
         commands.insert_resource(NextState(SingleplayerState::Game))
     }
 }
