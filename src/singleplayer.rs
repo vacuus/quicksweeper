@@ -77,7 +77,7 @@ impl Plugin for SingleplayerMode {
     fn build(&self, app: &mut App) {
         app
             // state
-            .add_loopless_state(SingleplayerState::Loading)
+            .add_loopless_state(SingleplayerState::Inactive)
             // menu
             .add_plugin(menu::MenuPlugin)
             // state change startup and cleanup

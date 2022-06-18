@@ -7,9 +7,12 @@ mod minefield;
 mod state;
 mod load;
 mod singleplayer;
+mod main_menu;
 
 use bevy::prelude::*;
 
+use bevy_egui::EguiPlugin;
+use main_menu::MainMenuPlugin;
 pub use singleplayer::SingleplayerState;
 
 fn main() {
@@ -18,8 +21,10 @@ fn main() {
             title: "Quicksweeper".to_string(),
             ..Default::default()
         })
-        .add_plugin(singleplayer::SingleplayerMode)
         .add_plugins(DefaultPlugins)
+        .add_plugin(EguiPlugin)
+        .add_plugin(singleplayer::SingleplayerMode)
+        .add_plugin(MainMenuPlugin)
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(load::LoadPlugin)
         .add_plugin(minefield::MinefieldPlugin)

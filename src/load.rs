@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_asset_loader::{AssetCollection, AssetLoader};
 use derive_more::Deref;
 
-use crate::{minefield::BlankField, SingleplayerState};
+use crate::{minefield::BlankField, SingleplayerState, main_menu::MenuState};
 
 #[derive(AssetCollection)]
 pub struct Textures {
@@ -51,13 +51,11 @@ pub struct LoadPlugin;
 
 impl Plugin for LoadPlugin {
     fn build(&self, app: &mut App) {
-        
-        AssetLoader::new(SingleplayerState::Loading)
-            .continue_to_state(SingleplayerState::PreGame)
+        AssetLoader::new(MenuState::Loading)
+            .continue_to_state(MenuState::MainMenu)
             .with_collection::<Textures>()
             .with_collection::<Field>()
             .init_resource::<MineTextures>()
             .build(app);
-
     }
 }
