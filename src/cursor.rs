@@ -1,15 +1,9 @@
+use crate::common::{CheckCell, Direction, FlagCell, InitCheckCell, Position};
 use crate::minefield::Minefield;
-use crate::state::ConditionalHelpersExt;
-use crate::{
-    common::{CheckCell, Direction, FlagCell, InitCheckCell, Position},
-    SingleplayerState,
-};
 use bevy::{prelude::*, render::camera::Camera2d};
-// use derive_more::Deref;
-use iyes_loopless::prelude::*;
 use tap::Tap;
 
-struct KeyTimers {
+pub struct KeyTimers {
     key_left: HoldTimer,
     key_right: HoldTimer,
     key_up: HoldTimer,
@@ -146,7 +140,7 @@ impl Cursor {
     }
 }
 
-fn move_cursor(
+pub fn move_cursor(
     mut cursor: Query<&mut Cursor>,
     fields: Query<&Minefield>,
     kb: Res<Input<KeyCode>>,
@@ -170,7 +164,7 @@ fn move_cursor(
     }
 }
 
-fn translate_components(
+pub fn translate_components(
     mut cursor: Query<(&mut Transform, &Cursor), Without<Camera2d>>,
     mut camera: Query<&mut Transform, With<Camera2d>>,
     time: Res<Time>,
@@ -200,7 +194,7 @@ fn translate_components(
     }
 }
 
-fn check_cell(
+pub fn check_cell(
     cursor: Query<&Cursor>,
     kb: Res<Input<KeyCode>>,
     mut check: EventWriter<CheckCell>,
@@ -214,7 +208,7 @@ fn check_cell(
     }
 }
 
-fn init_check_cell(
+pub fn init_check_cell(
     cursor: Query<&Cursor>,
     kb: Res<Input<KeyCode>>,
     mut ev: EventWriter<InitCheckCell>,
@@ -222,31 +216,5 @@ fn init_check_cell(
     if kb.just_pressed(KeyCode::Space) {
         let Cursor(pos, ent) = cursor.single();
         ev.send(InitCheckCell(*pos, *ent));
-    }
-}
-
-pub struct CursorPlugin;
-
-impl Plugin for CursorPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(
-            move_cursor
-                .into_conditional()
-                .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game])
-                .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
-        )
-        .add_system(
-            translate_components
-                .into_conditional()
-                .run_in_states([
-                    SingleplayerState::PreGame,
-                    SingleplayerState::Game,
-                    SingleplayerState::GameFailed,
-                    SingleplayerState::GameSuccess,
-                ])
-                .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
-        )
-        .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
-        .add_system(check_cell.run_in_state(SingleplayerState::Game));
     }
 }

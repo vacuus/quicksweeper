@@ -24,7 +24,6 @@ fn main() {
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(menus::MenuPlugin)
         .add_plugin(load::LoadPlugin)
-        .add_plugin(cursor::CursorPlugin)
         .add_plugin(minefield::MinefieldPlugin)
         .run();
 }

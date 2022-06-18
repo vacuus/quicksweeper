@@ -1,8 +1,9 @@
 use crate::{
     common::{InitCheckCell, Position},
-    cursor::Cursor,
+    cursor::*,
     load::{Field, MineTextures, Textures},
     minefield::{systems::*, BlankField, GameOutcome, Minefield},
+    state::ConditionalHelpersExt,
 };
 use bevy::prelude::*;
 use iyes_loopless::{
@@ -85,6 +86,19 @@ impl Plugin for SingleplayerMode {
             .add_enter_system(SingleplayerState::GameFailed, display_mines)
             // in-game logic
             .add_system(flag_cell.run_in_state(SingleplayerState::Game))
-            .add_system(reveal_cell.run_in_state(SingleplayerState::Game));
+            .add_system(reveal_cell.run_in_state(SingleplayerState::Game))
+            .add_system(
+                move_cursor
+                    .into_conditional()
+                    .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game]),
+            )
+            .add_system(translate_components.into_conditional().run_in_states([
+                SingleplayerState::PreGame,
+                SingleplayerState::Game,
+                SingleplayerState::GameFailed,
+                SingleplayerState::GameSuccess,
+            ]))
+            .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
+            .add_system(check_cell.run_in_state(SingleplayerState::Game));
     }
 }
