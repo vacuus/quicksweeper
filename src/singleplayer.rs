@@ -1,6 +1,8 @@
 use crate::{
-    common::InitCheckCell,
-    minefield::{systems::*, GameOutcome},
+    common::{InitCheckCell, Position},
+    cursor::Cursor,
+    load::{Field, MineTextures, Textures},
+    minefield::{systems::*, BlankField, GameOutcome, Minefield},
 };
 use bevy::prelude::*;
 use iyes_loopless::{
@@ -37,6 +39,35 @@ fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>
     }
 }
 
+fn create_entities(
+    mut commands: Commands,
+    field_templates: Res<Assets<BlankField>>,
+    field_template: Res<Field>,
+    mine_textures: Res<MineTextures>,
+    textures: Res<Textures>,
+) {
+    // create minefield
+    let field_template = field_templates.get(field_template.field.clone()).unwrap();
+    let minefield = Minefield::new_blank_shaped(&mut commands, &mine_textures, field_template);
+    let minefield_entity = commands.spawn().insert(minefield).id();
+
+    // get center of minefield
+    #[allow(clippy::or_fun_call)]
+    let init_position = field_template.center().unwrap_or(Position::new(0, 0));
+
+    // create cursor
+    commands
+        .spawn_bundle(SpriteBundle {
+            texture: textures.cursor.clone(),
+            transform: Transform {
+                translation: init_position.absolute(32.0, 32.0).extend(3.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(Cursor::new(init_position, minefield_entity));
+}
+
 pub struct SingleplayerMode;
 
 impl Plugin for SingleplayerMode {
@@ -45,14 +76,14 @@ impl Plugin for SingleplayerMode {
             // state
             .add_loopless_state(SingleplayerState::Loading)
             // state change startup and cleanup
-            .add_enter_system(SingleplayerState::PreGame, create_minefield)
-            .add_exit_system(SingleplayerState::GameFailed, destroy_minefields)
-            .add_exit_system(SingleplayerState::GameSuccess, destroy_minefields)
+            .add_exit_system(SingleplayerState::Loading, create_entities)
+            .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
+            .add_exit_system(SingleplayerState::GameFailed, wipe_minefields)
+            .add_exit_system(SingleplayerState::GameSuccess, wipe_minefields)
             .add_system(advance_to_game.run_in_state(SingleplayerState::PreGame))
             .add_system(advance_to_end.run_in_state(SingleplayerState::Game))
             .add_enter_system(SingleplayerState::GameFailed, display_mines)
             // in-game logic
-            .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
             .add_system(flag_cell.run_in_state(SingleplayerState::Game))
             .add_system(reveal_cell.run_in_state(SingleplayerState::Game));
     }

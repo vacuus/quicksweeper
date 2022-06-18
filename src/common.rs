@@ -126,8 +126,6 @@ pub struct InitCheckCell(pub Position, pub Entity);
 #[derive(Clone, Debug)]
 pub struct FlagCell(pub Position, pub Entity);
 
-pub struct CurrentMinefield(pub Entity);
-
 #[derive(EnumIter, Clone, Debug)]
 pub enum Direction {
     North,

@@ -1,38 +1,9 @@
-use super::load::BlankField;
 use super::{field::*, GameOutcome};
-use crate::common::{CheckCell, CurrentMinefield, FlagCell, InitCheckCell, Position};
-use crate::load::{Field, MineTextures};
-// use crate::state::SingleplayerState;
+use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use bevy::prelude::*;
 use itertools::Itertools;
-// use iyes_loopless::prelude::*;
 use rand::prelude::SliceRandom;
 use std::collections::VecDeque;
-use tap::Pipe;
-
-pub fn create_minefield(
-    mut commands: Commands,
-    textures: Res<MineTextures>,
-    field: Res<Field>,
-    assets: Res<Assets<BlankField>>,
-) {
-    if let Some(field) = assets.get(field.field.clone()) {
-        let minefield_iter = field.iter().map(|pos| {
-            let entity = MineCell::new_empty(*pos, &textures)
-                .pipe(|cell| commands.spawn_bundle(cell))
-                .id();
-            (*pos, entity)
-        });
-
-        let minefield = Minefield {
-            field: minefield_iter.collect(),
-            remaining_blank: field.len() * 8 / 10,
-        };
-
-        let ent = commands.spawn().insert(minefield).id();
-        commands.insert_resource(CurrentMinefield(ent));
-    }
-}
 
 pub fn destroy_minefields(
     mut commands: Commands,
@@ -41,6 +12,10 @@ pub fn destroy_minefields(
 ) {
     minefield.for_each(|map| commands.entity(map).despawn());
     states.for_each(|ent| commands.entity(ent).despawn());
+}
+
+pub fn wipe_minefields(mut states: Query<&mut MineCellState>) {
+    states.for_each_mut(|mut state| *state = MineCellState::Empty)
 }
 
 pub fn generate_minefield(

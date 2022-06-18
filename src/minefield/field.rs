@@ -6,6 +6,8 @@ use tap::Tap;
 use crate::{common::Position, load::MineTextures};
 use std::ops::{Deref, DerefMut};
 
+use super::BlankField;
+
 #[derive(Clone, Bundle)]
 pub struct MineCell {
     #[bundle]
@@ -58,7 +60,10 @@ pub enum MineCellState {
 
 impl MineCellState {
     pub fn is_flagged(&self) -> bool {
-        matches!(self, MineCellState::FlaggedEmpty | MineCellState::FlaggedMine)
+        matches!(
+            self,
+            MineCellState::FlaggedEmpty | MineCellState::FlaggedMine
+        )
     }
 
     pub fn is_mine(&self) -> bool {
@@ -91,13 +96,33 @@ impl DerefMut for Minefield {
 }
 
 impl Minefield {
+    pub fn new_blank_shaped(
+        commands: &mut Commands,
+        textures: &Res<MineTextures>,
+        template: &BlankField,
+    ) -> Self {
+        let field = template
+            .iter()
+            .map(|pos| {
+                let entity = commands
+                    .spawn_bundle(MineCell::new_empty(*pos, textures))
+                    .id();
+                (*pos, entity)
+            })
+            .collect::<HashMap<_, _>>();
+
+        Self {
+            remaining_blank: field.len() * 8 / 10,
+            field,
+        }
+    }
+
     pub fn iter_neighbors_enumerated(
         &self,
         pos: Position,
     ) -> impl Iterator<Item = (Position, Entity)> + '_ {
-        pos.iter_neighbors().filter_map(move |neighbor| {
-            self.get(&neighbor).map(|entity| (neighbor, *entity))
-        })
+        pos.iter_neighbors()
+            .filter_map(move |neighbor| self.get(&neighbor).map(|entity| (neighbor, *entity)))
     }
 
     pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> + '_ {

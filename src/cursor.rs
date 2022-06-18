@@ -1,11 +1,11 @@
-use crate::load::{Field, Textures};
-use crate::minefield::{BlankField, Minefield};
+use crate::minefield::Minefield;
 use crate::state::ConditionalHelpersExt;
 use crate::{
     common::{CheckCell, Direction, FlagCell, InitCheckCell, Position},
     SingleplayerState,
 };
 use bevy::{prelude::*, render::camera::Camera2d};
+// use derive_more::Deref;
 use iyes_loopless::prelude::*;
 use tap::Tap;
 
@@ -138,34 +138,11 @@ impl KeyTimers {
 
 /// The entity field describes the minefield which it is placed on
 #[derive(Component, Debug)]
-struct Cursor(Position, Entity);
+pub struct Cursor(Position, Entity);
 
-fn create_cursor(
-    mut commands: Commands,
-    texture: Res<Textures>,
-    field_template: Res<Field>,
-    field_templates: Res<Assets<BlankField>>,
-    fields: Query<Entity, Added<Minefield>>,
-) {
-    if !fields.is_empty() {
-        #[allow(clippy::or_fun_call)]
-        let init_position = field_templates
-            .get(field_template.field.clone())
-            .unwrap()
-            .center()
-            .unwrap_or(Position::new(0, 0));
-
-        // create cursor
-        commands
-            .spawn_bundle(SpriteBundle {
-                texture: texture.cursor.clone(),
-                transform: Transform {
-                    translation: init_position.absolute(32.0, 32.0).extend(3.0),
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .insert(Cursor(init_position, fields.single()));
+impl Cursor {
+    pub fn new(p: Position, e: Entity) -> Self {
+        Cursor(p, e)
     }
 }
 
@@ -191,10 +168,6 @@ fn move_cursor(
     }) {
         cursor.0 = next;
     }
-}
-
-fn destroy_cursor(mut commands: Commands, cursor: Query<Entity, With<Cursor>>) {
-    commands.entity(cursor.single()).despawn();
 }
 
 fn translate_components(
@@ -256,27 +229,24 @@ pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(create_cursor.run_in_state(SingleplayerState::PreGame))
-            .add_system(
-                move_cursor
-                    .into_conditional()
-                    .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game])
-                    .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
-            )
-            .add_system(
-                translate_components
-                    .into_conditional()
-                    .run_in_states([
-                        SingleplayerState::PreGame,
-                        SingleplayerState::Game,
-                        SingleplayerState::GameFailed,
-                        SingleplayerState::GameSuccess,
-                    ])
-                    .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
-            )
-            .add_exit_system(SingleplayerState::GameFailed, destroy_cursor)
-            .add_exit_system(SingleplayerState::GameSuccess, destroy_cursor)
-            .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
-            .add_system(check_cell.run_in_state(SingleplayerState::Game));
+        app.add_system(
+            move_cursor
+                .into_conditional()
+                .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game])
+                .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
+        )
+        .add_system(
+            translate_components
+                .into_conditional()
+                .run_in_states([
+                    SingleplayerState::PreGame,
+                    SingleplayerState::Game,
+                    SingleplayerState::GameFailed,
+                    SingleplayerState::GameSuccess,
+                ])
+                .run_if(|q: Query<Entity, With<Cursor>>| !q.is_empty()),
+        )
+        .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
+        .add_system(check_cell.run_in_state(SingleplayerState::Game));
     }
 }
