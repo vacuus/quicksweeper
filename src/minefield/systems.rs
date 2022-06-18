@@ -44,7 +44,6 @@ pub fn destroy_minefields(
 }
 
 pub fn generate_minefield(
-    mut commands: Commands,
     mut position: EventReader<InitCheckCell>,
     mut write_back: EventWriter<CheckCell>,
     minefield: Query<&Minefield>,
@@ -77,14 +76,10 @@ pub fn generate_minefield(
             .for_each(|(_, cell)| {
                 *states.get_mut(**cell).unwrap() = MineCellState::Mine;
             });
-
-        // TODO: Handle state advancement outside of minefield systems
-        // commands.insert_resource(NextState(SingleplayerState::Game));
     }
 }
 
 pub fn reveal_cell(
-    mut commands: Commands,
     mut fields: Query<&mut Minefield>,
     mut states: Query<&mut MineCellState>,
     mut ev: EventReader<CheckCell>,
