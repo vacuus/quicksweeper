@@ -12,7 +12,7 @@ use crate::{
 struct CompleteScreen;
 
 #[derive(Component)]
-pub struct RetryButton;
+struct RetryButton;
 
 fn fail_screen(mut commands: Commands, font_source: Res<Textures>, minefield: Query<&Minefield>) {
     let remaining = minefield.single().remaining_blank();

@@ -11,6 +11,8 @@ use iyes_loopless::{
     state::NextState,
 };
 
+mod menu;
+
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SingleplayerState {
     Inactive,
@@ -76,6 +78,8 @@ impl Plugin for SingleplayerMode {
         app
             // state
             .add_loopless_state(SingleplayerState::Loading)
+            // menu
+            .add_plugin(menu::MenuPlugin)
             // state change startup and cleanup
             .add_exit_system(SingleplayerState::Loading, create_entities)
             .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))

@@ -6,7 +6,6 @@ mod cursor;
 mod minefield;
 mod state;
 mod load;
-mod menus;
 mod singleplayer;
 
 use bevy::prelude::*;
@@ -22,7 +21,6 @@ fn main() {
         .add_plugin(singleplayer::SingleplayerMode)
         .add_plugins(DefaultPlugins)
         .add_plugin(common::QuicksweeperTypes)
-        .add_plugin(menus::MenuPlugin)
         .add_plugin(load::LoadPlugin)
         .add_plugin(minefield::MinefieldPlugin)
         .run();
