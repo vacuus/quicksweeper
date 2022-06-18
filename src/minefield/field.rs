@@ -47,14 +47,6 @@ pub fn render_mines(
     })
 }
 
-pub fn display_mines(mut cells: Query<(&mut TextureAtlasSprite, &MineCellState)>) {
-    cells.for_each_mut(|(mut sprite, state)| {
-        if *state == MineCellState::Mine {
-            *sprite = TextureAtlasSprite::new(11)
-        }
-    });
-}
-
 #[derive(Clone, Debug, PartialEq, Component)]
 pub enum MineCellState {
     Empty,

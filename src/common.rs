@@ -1,6 +1,5 @@
 use bevy::{math::XY, prelude::*};
 use derive_more::{Deref, DerefMut};
-use iyes_loopless::prelude::*;
 
 use std::{
     hash::Hash,
@@ -9,8 +8,6 @@ use std::{
 };
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-
-use crate::SingleplayerState;
 
 #[derive(PartialEq, Clone, Copy, Debug, Deref, DerefMut, Component)]
 pub struct Position(pub XY<u32>);
@@ -147,9 +144,7 @@ pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(SingleplayerState::Loading)
-            // .insert_resource(StdRng::from_entropy())
-            .add_event::<CheckCell>()
+        app.add_event::<CheckCell>()
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>();
     }

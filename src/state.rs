@@ -3,16 +3,6 @@ use bevy::prelude::*;
 use iyes_loopless::condition::ConditionalSystemDescriptor;
 use iyes_loopless::prelude::*;
 
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SingleplayerState {
-    Inactive,
-    Loading,
-    PreGame,
-    Game,
-    GameFailed,
-    GameSuccess,
-}
-
 pub trait ConditionalHelpersExt: ConditionHelpers {
     fn run_in_states<State, const N: usize>(self, states: [State; N]) -> Self
     where

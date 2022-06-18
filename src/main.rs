@@ -7,10 +7,11 @@ mod minefield;
 mod state;
 mod load;
 mod menus;
+mod singleplayer;
 
 use bevy::prelude::*;
 
-pub use state::SingleplayerState;
+pub use singleplayer::SingleplayerState;
 
 fn main() {
     App::new()
@@ -24,5 +25,6 @@ fn main() {
         .add_plugin(load::LoadPlugin)
         .add_plugin(cursor::CursorPlugin)
         .add_plugin(minefield::MinefieldPlugin)
+        .add_plugin(singleplayer::SingleplayerMode)
         .run();
 }

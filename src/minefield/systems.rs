@@ -1,11 +1,11 @@
-use super::field::*;
 use super::load::BlankField;
+use super::{field::*, GameOutcome};
 use crate::common::{CheckCell, CurrentMinefield, FlagCell, InitCheckCell, Position};
 use crate::load::{Field, MineTextures};
-use crate::state::SingleplayerState;
+// use crate::state::SingleplayerState;
 use bevy::prelude::*;
 use itertools::Itertools;
-use iyes_loopless::prelude::*;
+// use iyes_loopless::prelude::*;
 use rand::prelude::SliceRandom;
 use std::collections::VecDeque;
 use tap::Pipe;
@@ -78,7 +78,8 @@ pub fn generate_minefield(
                 *states.get_mut(**cell).unwrap() = MineCellState::Mine;
             });
 
-        commands.insert_resource(NextState(SingleplayerState::Game));
+        // TODO: Handle state advancement outside of minefield systems
+        // commands.insert_resource(NextState(SingleplayerState::Game));
     }
 }
 
@@ -88,6 +89,7 @@ pub fn reveal_cell(
     mut states: Query<&mut MineCellState>,
     mut ev: EventReader<CheckCell>,
     mut check_next: Local<VecDeque<(Position, Entity)>>,
+    mut finish_state: EventWriter<GameOutcome>,
 ) {
     check_next.extend(ev.iter().map(|CheckCell(pos, ent)| (*pos, *ent)));
 
@@ -118,7 +120,7 @@ pub fn reveal_cell(
                 field.remaining_blank -= 1;
             }
             MineCellState::Mine => {
-                commands.insert_resource(NextState(SingleplayerState::GameFailed));
+                finish_state.send(GameOutcome::Failed);
             }
             MineCellState::Revealed(x) => {
                 if neighbors
@@ -138,7 +140,7 @@ pub fn reveal_cell(
         }
 
         if field.remaining_blank == 0 {
-            commands.insert_resource(NextState(SingleplayerState::GameSuccess));
+            finish_state.send(GameOutcome::Succeeded);
         }
     }
 }
@@ -162,4 +164,12 @@ pub fn flag_cell(
         .into_iter()
         .for_each(|x| *state = x);
     }
+}
+
+pub fn display_mines(mut cells: Query<(&mut TextureAtlasSprite, &MineCellState)>) {
+    cells.for_each_mut(|(mut sprite, state)| {
+        if *state == MineCellState::Mine {
+            *sprite = TextureAtlasSprite::new(11)
+        }
+    });
 }
