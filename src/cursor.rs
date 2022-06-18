@@ -1,4 +1,4 @@
-use crate::load::Field;
+use crate::load::{Field, Textures};
 use crate::minefield::{BlankField, Minefield};
 use crate::state::ConditionalHelpersExt;
 use crate::{
@@ -6,7 +6,6 @@ use crate::{
     SingleplayerState,
 };
 use bevy::{prelude::*, render::camera::Camera2d};
-use derive_more::Deref;
 use iyes_loopless::prelude::*;
 use tap::Tap;
 
@@ -137,21 +136,13 @@ impl KeyTimers {
     }
 }
 
-#[derive(Deref)]
-struct CursorTexture(Handle<Image>);
-
 /// The entity field describes the minefield which it is placed on
 #[derive(Component, Debug)]
 struct Cursor(Position, Entity);
 
-fn load_cursor_texture(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let tex: Handle<Image> = asset_server.load("cursor.png");
-    commands.insert_resource(CursorTexture(tex));
-}
-
 fn create_cursor(
     mut commands: Commands,
-    texture: Res<CursorTexture>,
+    texture: Res<Textures>,
     field_template: Res<Field>,
     field_templates: Res<Assets<BlankField>>,
     fields: Query<Entity, Added<Minefield>>,
@@ -167,7 +158,7 @@ fn create_cursor(
         // create cursor
         commands
             .spawn_bundle(SpriteBundle {
-                texture: (*texture).clone(),
+                texture: texture.cursor.clone(),
                 transform: Transform {
                     translation: init_position.absolute(32.0, 32.0).extend(3.0),
                     ..Default::default()
@@ -265,8 +256,7 @@ pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(load_cursor_texture)
-            .add_system(create_cursor.run_in_state(SingleplayerState::PreGame))
+        app.add_system(create_cursor.run_in_state(SingleplayerState::PreGame))
             .add_system(
                 move_cursor
                     .into_conditional()
