@@ -19,12 +19,12 @@ fn main() {
             title: "Quicksweeper".to_string(),
             ..Default::default()
         })
+        .add_plugin(singleplayer::SingleplayerMode)
         .add_plugins(DefaultPlugins)
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(menus::MenuPlugin)
         .add_plugin(load::LoadPlugin)
         .add_plugin(cursor::CursorPlugin)
         .add_plugin(minefield::MinefieldPlugin)
-        .add_plugin(singleplayer::SingleplayerMode)
         .run();
 }

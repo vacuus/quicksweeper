@@ -103,9 +103,6 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_enter_system(SingleplayerState::GameFailed, fail_screen)
             .add_enter_system(SingleplayerState::GameSuccess, success_screen)
-            .add_startup_system(|mut commands: Commands| {
-                commands.spawn_bundle(UiCameraBundle::default());
-            })
             .add_system(retry.into_conditional().run_in_states([
                 SingleplayerState::GameFailed,
                 SingleplayerState::GameSuccess,

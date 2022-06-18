@@ -266,9 +266,6 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_cursor_texture)
-            .add_enter_system(SingleplayerState::Loading, |mut commands: Commands| {
-                commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-            })
             .add_system(create_cursor.run_in_state(SingleplayerState::PreGame))
             .add_system(
                 move_cursor
