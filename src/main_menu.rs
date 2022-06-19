@@ -1,15 +1,24 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
 use egui::vec2;
-use iyes_loopless::prelude::{AppLooplessStateExt, IntoConditionalSystem};
+use iyes_loopless::{prelude::{AppLooplessStateExt, IntoConditionalSystem}, state::NextState};
+
+use crate::SingleplayerState;
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MenuState {
     Loading,
     MainMenu,
+    InGame,
 }
 
-fn create_main_menu(mut ctx: ResMut<EguiContext>, window_props: Res<WindowDescriptor>) {
+fn create_main_menu(
+    mut commands: Commands,
+    mut ctx: ResMut<EguiContext>,
+    window_props: Res<WindowDescriptor>,
+) {
+    println!("{}, {}", window_props.width, window_props.height);
+
     egui::Area::new("main_menu")
         .fixed_pos([window_props.width/2.0, window_props.height/2.0])
         .show(ctx.ctx_mut(), |ui| {
@@ -17,8 +26,11 @@ fn create_main_menu(mut ctx: ResMut<EguiContext>, window_props: Res<WindowDescri
                 ui.label("Quicksweeper");
                 if ui.button("Singleplayer mode").clicked() {
                     // TODO: Transition to singleplayer mode
+                    commands.insert_resource(NextState(SingleplayerState::PreGame));
+                    commands.insert_resource(NextState(MenuState::InGame));
                 }
-            })
+                ui.shrink_height_to_current();
+            });
         });
 
     dbg!(ctx.ctx_mut().used_size());

@@ -16,7 +16,6 @@ mod menu;
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SingleplayerState {
     Inactive,
-    Loading,
     PreGame,
     Game,
     GameFailed,
@@ -81,7 +80,7 @@ impl Plugin for SingleplayerMode {
             // menu
             .add_plugin(menu::MenuPlugin)
             // state change startup and cleanup
-            .add_exit_system(SingleplayerState::Loading, create_entities)
+            .add_exit_system(SingleplayerState::Inactive, create_entities)
             .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
             .add_exit_system(SingleplayerState::GameFailed, wipe_minefields)
             .add_exit_system(SingleplayerState::GameSuccess, wipe_minefields)
@@ -96,12 +95,7 @@ impl Plugin for SingleplayerMode {
                     .into_conditional()
                     .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game]),
             )
-            .add_system(translate_components.into_conditional().run_in_states([
-                SingleplayerState::PreGame,
-                SingleplayerState::Game,
-                SingleplayerState::GameFailed,
-                SingleplayerState::GameSuccess,
-            ]))
+            .add_system(translate_components.run_not_in_state(SingleplayerState::Inactive))
             .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
             .add_system(check_cell.run_in_state(SingleplayerState::Game));
     }
