@@ -3,7 +3,8 @@ use crate::minefield::Minefield;
 use bevy::{prelude::*, render::camera::Camera2d};
 use tap::Tap;
 
-pub struct KeyTimers {
+#[derive(Debug)]
+struct KeyTimers {
     key_left: HoldTimer,
     key_right: HoldTimer,
     key_up: HoldTimer,
@@ -59,6 +60,7 @@ impl Default for KeyTimers {
     }
 }
 
+#[derive(Debug)]
 struct HoldTimer {
     key: KeyCode,
     activate_timer: Timer,
@@ -132,11 +134,20 @@ impl KeyTimers {
 
 /// The entity field describes the minefield which it is placed on
 #[derive(Component, Debug)]
-pub struct Cursor(Position, Entity);
+// pub struct Cursor(Position, Entity);
+pub struct Cursor {
+    position: Position,
+    minefield: Entity,
+    timers: KeyTimers,
+}
 
 impl Cursor {
     pub fn new(p: Position, e: Entity) -> Self {
-        Cursor(p, e)
+        Cursor {
+            position: p,
+            minefield: e,
+            timers: KeyTimers::default(),
+        }
     }
 }
 
@@ -144,23 +155,26 @@ pub fn move_cursor(
     mut cursor: Query<&mut Cursor>,
     fields: Query<&Minefield>,
     kb: Res<Input<KeyCode>>,
-    mut key_timers: Local<KeyTimers>,
     time: Res<Time>,
 ) {
     let mut cursor = cursor.single_mut(); // assume single cursor
-    let activated = key_timers.tick_input(&time, &kb);
+    let activated = cursor.timers.tick_input(&time, &kb);
 
-    let Cursor(pos, ent) = *cursor;
+    let Cursor {
+        position,
+        minefield,
+        ..
+    } = *cursor;
     if let Some(next) = activated.try_into().ok().and_then(|direction| {
-        pos.neighbor_direction(direction).and_then(|neighbor| {
+        position.neighbor_direction(direction).and_then(|neighbor| {
             fields
-                .get(ent)
+                .get(minefield)
                 .unwrap()
                 .contains_key(&neighbor)
                 .then(|| neighbor)
         })
     }) {
-        cursor.0 = next;
+        cursor.position = next;
     }
 }
 
@@ -169,7 +183,7 @@ pub fn translate_components(
     mut camera: Query<&mut Transform, With<Camera2d>>,
     time: Res<Time>,
 ) {
-    let (mut cursor_transform, Cursor(position, _)) = cursor.single_mut();
+    let (mut cursor_transform, Cursor { position, .. }) = cursor.single_mut();
     let cursor_translation = &mut cursor_transform.translation;
     let camera_translation = &mut camera.single_mut().translation;
 
@@ -200,11 +214,11 @@ pub fn check_cell(
     mut check: EventWriter<CheckCell>,
     mut flag: EventWriter<FlagCell>,
 ) {
-    let Cursor(pos, ent) = &cursor.get_single().unwrap();
+    let Cursor {position, minefield, ..} = &cursor.get_single().unwrap();
     if kb.just_pressed(KeyCode::Space) {
-        check.send(CheckCell(*pos, *ent));
+        check.send(CheckCell(*position, *minefield));
     } else if kb.just_pressed(KeyCode::F) {
-        flag.send(FlagCell(*pos, *ent));
+        flag.send(FlagCell(*position, *minefield));
     }
 }
 
@@ -214,7 +228,7 @@ pub fn init_check_cell(
     mut ev: EventWriter<InitCheckCell>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
-        let Cursor(pos, ent) = cursor.single();
-        ev.send(InitCheckCell(*pos, *ent));
+        let Cursor {position, minefield, ..} = cursor.single();
+        ev.send(InitCheckCell(*position, *minefield));
     }
 }
