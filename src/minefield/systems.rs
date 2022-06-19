@@ -1,5 +1,8 @@
 use super::{field::*, GameOutcome};
-use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
+use crate::{
+    common::{CheckCell, FlagCell, InitCheckCell},
+    cursor::CursorPosition,
+};
 use bevy::prelude::*;
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
@@ -24,8 +27,8 @@ pub fn generate_minefield(
     minefield: Query<&Minefield>,
     mut states: Query<&mut MineCellState>,
 ) {
-    for InitCheckCell(pos, field) in position.iter() {
-        write_back.send(CheckCell(*pos, *field));
+    for InitCheckCell(position @ CursorPosition(pos, field)) in position.iter() {
+        write_back.send(CheckCell(position.clone()));
 
         let minefield = minefield.get(*field).unwrap();
 
@@ -58,12 +61,12 @@ pub fn reveal_cell(
     mut fields: Query<&mut Minefield>,
     mut states: Query<&mut MineCellState>,
     mut ev: EventReader<CheckCell>,
-    mut check_next: Local<VecDeque<(Position, Entity)>>,
+    mut check_next: Local<VecDeque<CursorPosition>>,
     mut finish_state: EventWriter<GameOutcome>,
 ) {
-    check_next.extend(ev.iter().map(|CheckCell(pos, ent)| (*pos, *ent)));
+    check_next.extend(ev.iter().map(|CheckCell(pos)| pos.clone()));
 
-    while let Some((position, ent)) = check_next.pop_front() {
+    while let Some(CursorPosition(position, ent)) = check_next.pop_front() {
         let mut field = fields.get_mut(ent).unwrap();
 
         let neighbors = field
@@ -79,11 +82,9 @@ pub fn reveal_cell(
                     .filter(|(_, state)| state.is_mine())
                     .count() as u8;
                 if count_mine_neighbors == 0 {
-                    check_next.extend(
-                        neighbors
-                            .into_iter()
-                            .filter_map(|(pos, state)| (!state.is_flagged()).then(|| (pos, ent))),
-                    );
+                    check_next.extend(neighbors.into_iter().filter_map(|(pos, state)| {
+                        (!state.is_flagged()).then(|| CursorPosition(pos, ent))
+                    }));
                 }
 
                 *checking = MineCellState::Revealed(count_mine_neighbors);
@@ -99,11 +100,9 @@ pub fn reveal_cell(
                     .count()
                     == x as usize
                 {
-                    check_next.extend(
-                        neighbors
-                            .into_iter()
-                            .filter_map(|(pos, state)| (!state.is_marked()).then(|| (pos, ent))),
-                    );
+                    check_next.extend(neighbors.into_iter().filter_map(|(pos, state)| {
+                        (!state.is_marked()).then(|| CursorPosition(pos, ent))
+                    }));
                 }
             }
             _ => (), // ignore marked cells
@@ -120,7 +119,7 @@ pub fn flag_cell(
     mut fields: Query<&mut Minefield>,
     mut states: Query<&mut MineCellState>,
 ) {
-    for FlagCell(pos, field) in ev.iter() {
+    for FlagCell(CursorPosition(pos, field)) in ev.iter() {
         let mut state = states
             .get_mut(fields.get_mut(*field).unwrap()[*pos])
             .unwrap();

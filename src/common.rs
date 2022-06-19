@@ -9,6 +9,8 @@ use std::{
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use crate::cursor::CursorPosition;
+
 #[derive(PartialEq, Clone, Copy, Debug, Deref, DerefMut, Component)]
 pub struct Position(pub XY<u32>);
 
@@ -118,13 +120,13 @@ impl Position {
 }
 
 #[derive(Clone, Debug)]
-pub struct CheckCell(pub Position, pub Entity);
+pub struct CheckCell(pub CursorPosition);
 
 #[derive(Clone, Debug)]
-pub struct InitCheckCell(pub Position, pub Entity);
+pub struct InitCheckCell(pub CursorPosition);
 
 #[derive(Clone, Debug)]
-pub struct FlagCell(pub Position, pub Entity);
+pub struct FlagCell(pub CursorPosition);
 
 #[derive(EnumIter, Clone, Debug)]
 pub enum Direction {

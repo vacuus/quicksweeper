@@ -132,20 +132,21 @@ impl KeyTimers {
     }
 }
 
+#[derive(Debug, Clone)]
 /// The entity field describes the minefield which it is placed on
+pub struct CursorPosition(pub Position, pub Entity);
+
 #[derive(Component, Debug)]
 // pub struct Cursor(Position, Entity);
 pub struct Cursor {
-    position: Position,
-    minefield: Entity,
+    position: CursorPosition,
     timers: KeyTimers,
 }
 
 impl Cursor {
     pub fn new(p: Position, e: Entity) -> Self {
         Cursor {
-            position: p,
-            minefield: e,
+            position: CursorPosition(p, e),
             timers: KeyTimers::default(),
         }
     }
@@ -161,8 +162,7 @@ pub fn move_cursor(
     let activated = cursor.timers.tick_input(&time, &kb);
 
     let Cursor {
-        position,
-        minefield,
+        position: CursorPosition(position, minefield),
         ..
     } = *cursor;
     if let Some(next) = activated.try_into().ok().and_then(|direction| {
@@ -174,7 +174,7 @@ pub fn move_cursor(
                 .then(|| neighbor)
         })
     }) {
-        cursor.position = next;
+        cursor.position.0 = next;
     }
 }
 
@@ -183,7 +183,14 @@ pub fn translate_components(
     mut camera: Query<&mut Transform, With<Camera2d>>,
     time: Res<Time>,
 ) {
-    let (mut cursor_transform, Cursor { position, .. }) = cursor.single_mut();
+    // TODO: Get offset from minefield
+    let (
+        mut cursor_transform,
+        Cursor {
+            position: CursorPosition(position, _),
+            ..
+        },
+    ) = cursor.single_mut();
     let cursor_translation = &mut cursor_transform.translation;
     let camera_translation = &mut camera.single_mut().translation;
 
@@ -214,11 +221,11 @@ pub fn check_cell(
     mut check: EventWriter<CheckCell>,
     mut flag: EventWriter<FlagCell>,
 ) {
-    let Cursor {position, minefield, ..} = &cursor.get_single().unwrap();
+    let Cursor { position, .. } = &cursor.get_single().unwrap();
     if kb.just_pressed(KeyCode::Space) {
-        check.send(CheckCell(*position, *minefield));
+        check.send(CheckCell(position.clone()));
     } else if kb.just_pressed(KeyCode::F) {
-        flag.send(FlagCell(*position, *minefield));
+        flag.send(FlagCell(position.clone()));
     }
 }
 
@@ -228,7 +235,7 @@ pub fn init_check_cell(
     mut ev: EventWriter<InitCheckCell>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
-        let Cursor {position, minefield, ..} = cursor.single();
-        ev.send(InitCheckCell(*position, *minefield));
+        let Cursor { position, .. } = cursor.single();
+        ev.send(InitCheckCell(position.clone()));
     }
 }
