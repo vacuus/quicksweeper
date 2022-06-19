@@ -180,10 +180,9 @@ pub fn move_cursor(
 
 pub fn translate_components(
     mut cursor: Query<(&mut Transform, &Cursor), Without<Camera2d>>,
-    mut camera: Query<&mut Transform, With<Camera2d>>,
+    // mut camera: Query<&mut Transform, With<Camera2d>>,
     time: Res<Time>,
 ) {
-    // TODO: Get offset from minefield
     let (
         mut cursor_transform,
         Cursor {
@@ -192,19 +191,20 @@ pub fn translate_components(
         },
     ) = cursor.single_mut();
     let cursor_translation = &mut cursor_transform.translation;
-    let camera_translation = &mut camera.single_mut().translation;
+    // let camera_translation = &mut camera.single_mut().translation;
 
+    // TODO: Use the offset of minefield to calculate `target_translation`
     let target_translation = position.absolute(32.0, 32.0);
     let cursor_diff = target_translation - cursor_translation.truncate();
-    let camera_diff = (*cursor_translation - *camera_translation).truncate();
 
+    // let camera_diff = (*cursor_translation - *camera_translation).truncate();
     // tranlate camera
-    const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
-    let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
-    if transform_magnitude > 0.0 {
-        let scale = 0.4;
-        *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
-    }
+    // const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
+    // let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
+    // if transform_magnitude > 0.0 {
+    //     let scale = 0.4;
+    //     *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
+    // }
 
     // translate cursor
     if cursor_diff.length_squared() > 0.0001 {
