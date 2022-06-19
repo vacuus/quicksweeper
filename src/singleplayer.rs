@@ -77,7 +77,7 @@ impl Plugin for SingleplayerMode {
         app
             // state
             .add_loopless_state(SingleplayerState::Inactive)
-            // menu
+            // menu after game complete
             .add_plugin(menu::MenuPlugin)
             // state change startup and cleanup
             .add_exit_system(SingleplayerState::Inactive, create_entities)
@@ -87,6 +87,9 @@ impl Plugin for SingleplayerMode {
             .add_system(advance_to_game.run_in_state(SingleplayerState::PreGame))
             .add_system(advance_to_end.run_in_state(SingleplayerState::Game))
             .add_enter_system(SingleplayerState::GameFailed, display_mines)
+            // logic for leaving game
+            .add_enter_system(SingleplayerState::Inactive, destroy_cursors)
+            .add_enter_system(SingleplayerState::Inactive, destroy_minefields)
             // in-game logic
             .add_system(flag_cell.run_in_state(SingleplayerState::Game))
             .add_system(reveal_cell.run_in_state(SingleplayerState::Game))

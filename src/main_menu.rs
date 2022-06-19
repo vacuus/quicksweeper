@@ -24,7 +24,6 @@ fn create_main_menu(
             ui.vertical_centered(|ui| {
                 ui.label("Quicksweeper");
                 if ui.button("Singleplayer mode").clicked() {
-                    // TODO: Transition to singleplayer mode
                     commands.insert_resource(NextState(SingleplayerState::PreGame));
                     commands.insert_resource(NextState(MenuState::InGame));
                 }

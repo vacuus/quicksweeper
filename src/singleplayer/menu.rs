@@ -1,18 +1,18 @@
 use bevy::prelude::*;
 use iyes_loopless::{
-    prelude::{AppLooplessStateExt, IntoConditionalSystem},
-    state::NextState,
+    prelude::{AppLooplessStateExt, ConditionSet},
+    state::{CurrentState, NextState},
 };
 
-use crate::{
-    load::Textures, minefield::Minefield, state::ConditionalHelpersExt, SingleplayerState,
-};
+use crate::{load::Textures, main_menu::MenuState, minefield::Minefield, SingleplayerState};
 
 #[derive(Component)]
 struct CompleteScreen;
 
 #[derive(Component)]
 struct RetryButton;
+#[derive(Component)]
+struct MainMenuButton;
 
 fn fail_screen(mut commands: Commands, font_source: Res<Textures>, minefield: Query<&Minefield>) {
     let remaining = minefield.single().remaining_blank();
@@ -35,12 +35,26 @@ fn success_screen(mut commands: Commands, font_source: Res<Textures>) {
 fn retry(
     mut commands: Commands,
     ev: Query<&Interaction, (Changed<Interaction>, With<RetryButton>)>,
-    ui: Query<Entity, With<CompleteScreen>>,
+    // ui: Query<Entity, With<CompleteScreen>>,
 ) {
     if ev.iter().any(|x| *x == Interaction::Clicked) {
         commands.insert_resource(NextState(SingleplayerState::PreGame));
-        commands.entity(ui.single()).despawn_recursive();
+        // commands.entity(ui.single()).despawn_recursive();
     }
+}
+
+fn main_menu(
+    mut commands: Commands,
+    ev: Query<&Interaction, (Changed<Interaction>, With<MainMenuButton>)>,
+) {
+    if ev.iter().any(|x| *x == Interaction::Clicked) {
+        commands.insert_resource(NextState(SingleplayerState::Inactive));
+        commands.insert_resource(NextState(MenuState::MainMenu));
+    }
+}
+
+fn close_menu(mut commands: Commands, ui: Query<Entity, With<CompleteScreen>>) {
+    ui.for_each(|x| commands.entity(x).despawn_recursive())
 }
 
 pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, message: String) {
@@ -90,7 +104,25 @@ pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, messa
                 .insert(RetryButton)
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
-                        text: Text::with_section("Button", text_style(), default()),
+                        text: Text::with_section("Retry", text_style(), default()),
+                        ..default()
+                    });
+                });
+            parent
+                .spawn_bundle(ButtonBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    color: Color::MIDNIGHT_BLUE.into(),
+                    ..default()
+                })
+                .insert(MainMenuButton)
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle {
+                        text: Text::with_section("Main Menu", text_style(), default()),
                         ..default()
                     });
                 });
@@ -103,9 +135,20 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_enter_system(SingleplayerState::GameFailed, fail_screen)
             .add_enter_system(SingleplayerState::GameSuccess, success_screen)
-            .add_system(retry.into_conditional().run_in_states([
-                SingleplayerState::GameFailed,
-                SingleplayerState::GameSuccess,
-            ]));
+            .add_system_set(
+                ConditionSet::new()
+                    .run_if(|state: Res<CurrentState<SingleplayerState>>| {
+                        [
+                            SingleplayerState::GameFailed,
+                            SingleplayerState::GameSuccess,
+                        ]
+                        .contains(&state.0)
+                    })
+                    .with_system(retry)
+                    .with_system(main_menu)
+                    .into(),
+            )
+            .add_exit_system(SingleplayerState::GameFailed, close_menu)
+            .add_exit_system(SingleplayerState::GameSuccess, close_menu);
     }
 }

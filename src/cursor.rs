@@ -156,6 +156,12 @@ impl Cursor {
     }
 }
 
+pub fn destroy_cursors(mut commands: Commands, cursors: Query<Entity, With<Cursor>>) {
+    cursors
+        .iter()
+        .for_each(|cursor| commands.entity(cursor).despawn())
+}
+
 pub fn move_cursor(
     mut cursor: Query<&mut Cursor>,
     fields: Query<&Minefield>,
