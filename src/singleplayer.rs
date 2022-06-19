@@ -67,7 +67,7 @@ fn create_entities(
             },
             ..Default::default()
         })
-        .insert(Cursor::new(init_position, minefield_entity));
+        .insert(Cursor::new(init_position, minefield_entity, KeyCode::Space, KeyCode::F));
 }
 
 pub struct SingleplayerMode;

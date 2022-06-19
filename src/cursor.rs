@@ -141,13 +141,17 @@ pub struct CursorPosition(pub Position, pub Entity);
 pub struct Cursor {
     position: CursorPosition,
     timers: KeyTimers,
+    check_key: KeyCode,
+    flag_key: KeyCode,
 }
 
 impl Cursor {
-    pub fn new(p: Position, e: Entity) -> Self {
+    pub fn new(pos: Position, field: Entity, check_key: KeyCode, flag_key: KeyCode) -> Self {
         Cursor {
-            position: CursorPosition(p, e),
+            position: CursorPosition(pos, field),
             timers: KeyTimers::default(),
+            check_key,
+            flag_key,
         }
     }
 }
@@ -158,23 +162,24 @@ pub fn move_cursor(
     kb: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let mut cursor = cursor.single_mut(); // assume single cursor
-    let activated = cursor.timers.tick_input(&time, &kb);
+    for mut cursor in cursor.iter_mut() {
+        let activated = cursor.timers.tick_input(&time, &kb);
 
-    let Cursor {
-        position: CursorPosition(position, minefield),
-        ..
-    } = *cursor;
-    if let Some(next) = activated.try_into().ok().and_then(|direction| {
-        position.neighbor_direction(direction).and_then(|neighbor| {
-            fields
-                .get(minefield)
-                .unwrap()
-                .contains_key(&neighbor)
-                .then(|| neighbor)
-        })
-    }) {
-        cursor.position.0 = next;
+        let Cursor {
+            position: CursorPosition(position, minefield),
+            ..
+        } = *cursor;
+        if let Some(next) = activated.try_into().ok().and_then(|direction| {
+            position.neighbor_direction(direction).and_then(|neighbor| {
+                fields
+                    .get(minefield)
+                    .unwrap()
+                    .contains_key(&neighbor)
+                    .then(|| neighbor)
+            })
+        }) {
+            cursor.position.0 = next;
+        }
     }
 }
 
@@ -183,35 +188,37 @@ pub fn translate_components(
     // mut camera: Query<&mut Transform, With<Camera2d>>,
     time: Res<Time>,
 ) {
-    let (
+    for (
         mut cursor_transform,
         Cursor {
             position: CursorPosition(position, _),
             ..
         },
-    ) = cursor.single_mut();
-    let cursor_translation = &mut cursor_transform.translation;
-    // let camera_translation = &mut camera.single_mut().translation;
+    ) in cursor.iter_mut()
+    {
+        let cursor_translation = &mut cursor_transform.translation;
+        // let camera_translation = &mut camera.single_mut().translation;
 
-    // TODO: Use the offset of minefield to calculate `target_translation`
-    let target_translation = position.absolute(32.0, 32.0);
-    let cursor_diff = target_translation - cursor_translation.truncate();
+        // TODO: Use the offset of minefield to calculate `target_translation`
+        let target_translation = position.absolute(32.0, 32.0);
+        let cursor_diff = target_translation - cursor_translation.truncate();
 
-    // let camera_diff = (*cursor_translation - *camera_translation).truncate();
-    // tranlate camera
-    // const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
-    // let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
-    // if transform_magnitude > 0.0 {
-    //     let scale = 0.4;
-    //     *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
-    // }
+        // let camera_diff = (*cursor_translation - *camera_translation).truncate();
+        // tranlate camera
+        // const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
+        // let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
+        // if transform_magnitude > 0.0 {
+        //     let scale = 0.4;
+        //     *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
+        // }
 
-    // translate cursor
-    if cursor_diff.length_squared() > 0.0001 {
-        let scale = 10.0;
-        *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend(0.0);
-    } else {
-        *cursor_translation = target_translation.extend(3.0);
+        // translate cursor
+        if cursor_diff.length_squared() > 0.0001 {
+            let scale = 10.0;
+            *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend(0.0);
+        } else {
+            *cursor_translation = target_translation.extend(3.0);
+        }
     }
 }
 
@@ -221,11 +228,18 @@ pub fn check_cell(
     mut check: EventWriter<CheckCell>,
     mut flag: EventWriter<FlagCell>,
 ) {
-    let Cursor { position, .. } = &cursor.get_single().unwrap();
-    if kb.just_pressed(KeyCode::Space) {
-        check.send(CheckCell(position.clone()));
-    } else if kb.just_pressed(KeyCode::F) {
-        flag.send(FlagCell(position.clone()));
+    for Cursor {
+        position,
+        check_key,
+        flag_key,
+        ..
+    } in cursor.iter()
+    {
+        if kb.just_pressed(*check_key) {
+            check.send(CheckCell(position.clone()));
+        } else if kb.just_pressed(*flag_key) {
+            flag.send(FlagCell(position.clone()));
+        }
     }
 }
 
@@ -235,7 +249,7 @@ pub fn init_check_cell(
     mut ev: EventWriter<InitCheckCell>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
-        let Cursor { position, .. } = cursor.single();
+        let Cursor { position, .. } = cursor.iter().next().unwrap();
         ev.send(InitCheckCell(position.clone()));
     }
 }
