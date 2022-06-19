@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_asset_loader::{AssetCollection, AssetLoader};
 use derive_more::Deref;
 
-use crate::{minefield::BlankField, SingleplayerState, main_menu::MenuState};
+use crate::{minefield::BlankField, main_menu::MenuState};
 
 #[derive(AssetCollection)]
 pub struct Textures {

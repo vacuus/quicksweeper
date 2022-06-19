@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
-use egui::vec2;
 use iyes_loopless::{prelude::{AppLooplessStateExt, IntoConditionalSystem}, state::NextState};
 
 use crate::SingleplayerState;
