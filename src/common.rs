@@ -123,7 +123,10 @@ impl Position {
 pub struct CheckCell(pub CursorPosition);
 
 #[derive(Clone, Debug)]
-pub struct InitCheckCell(pub CursorPosition);
+pub struct InitCheckCell {
+    pub minefield: Entity,
+    pub positions: Vec<Position>
+}
 
 #[derive(Clone, Debug)]
 pub struct FlagCell(pub CursorPosition);

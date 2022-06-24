@@ -22,37 +22,56 @@ pub fn wipe_minefields(mut states: Query<&mut MineCellState>) {
 }
 
 pub fn generate_minefield(
-    mut position: EventReader<InitCheckCell>,
+    mut check: EventReader<InitCheckCell>,
     mut write_back: EventWriter<CheckCell>,
-    minefield: Query<&Minefield>,
+    minefields: Query<(Entity, &Minefield)>,
     mut states: Query<&mut MineCellState>,
 ) {
-    for InitCheckCell(position @ CursorPosition(pos, field)) in position.iter() {
-        write_back.send(CheckCell(position.clone()));
+    if let Some(ev) = check.iter().next().map(|x| x.clone()) {
+        let exclude = ev.positions;
+        for position in exclude.iter() {
+            // TODO: Synchronize with system `check_cell`
+            write_back.send(CheckCell(CursorPosition(*position, ev.minefield)));
 
-        let minefield = minefield.get(*field).unwrap();
+            // let minefield = minefields.get(*field).unwrap();
+            // let minefield_vec = minefield.iter().collect_vec();
 
-        let minefield_vec = minefield.iter().collect_vec();
-        let neighbors = minefield
-            .iter_neighbor_positions(*pos)
-            .chain(std::iter::once(*pos))
-            .collect_vec();
+            // let neighbors = minefield
+            //     .iter_neighbor_positions(*pos)
+            //     .chain(std::iter::once(*pos))
+            //     .collect_vec();
+            // TODO calculate neighbors or move calculation off system
+            // exclude.extend(
+            //     position
+            //         .iter_neighbors(minefields.iter())
+            //         .unwrap()
+            //         .chain(std::iter::once(position.clone())),
+            // );
+        }
 
-        minefield_vec
-            .choose_multiple_weighted(
-                &mut rand::thread_rng(),
-                minefield.len() - minefield.remaining_blank,
-                |(pos, _)| {
-                    if neighbors.contains(pos) {
-                        0.0
-                    } else {
-                        1.0 / (minefield.len() - neighbors.len()) as f32
-                    }
-                },
-            )
-            .unwrap()
-            .for_each(|(_, cell)| {
-                *states.get_mut(**cell).unwrap() = MineCellState::Mine;
+        minefields
+            .iter()
+            .find(|(field, _)| *field == ev.minefield)
+            .map(|(_, field)| {
+                let minefield_vec = field.iter().collect_vec();
+
+                minefield_vec
+                    .choose_multiple_weighted(
+                        &mut rand::thread_rng(),
+                        field.len() - field.remaining_blank,
+                        |(pos, _)| {
+                            if exclude.contains(pos) {
+                                0.0
+                            } else {
+                                1.0 / (field.len() - exclude.len())
+                                    as f32
+                            }
+                        },
+                    )
+                    .unwrap()
+                    .for_each(|(_, cell)| {
+                        *states.get_mut(**cell).unwrap() = MineCellState::Mine;
+                    });
             });
     }
 }

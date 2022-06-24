@@ -132,12 +132,27 @@ impl KeyTimers {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 /// The entity field describes the minefield which it is placed on
 pub struct CursorPosition(pub Position, pub Entity);
 
+impl CursorPosition {
+    pub fn iter_neighbors<'a>(
+        &'a self,
+        minefields: impl IntoIterator<Item = (Entity, &'a Minefield)>,
+    ) -> Option<impl Iterator<Item = Self> + 'a> {
+        minefields
+            .into_iter()
+            .find(|(ent, _)| *ent == self.1)
+            .map(|(_, field)| {
+                field
+                    .iter_neighbor_positions(self.0)
+                    .map(|pos| CursorPosition(pos, self.1))
+            })
+    }
+}
+
 #[derive(Component, Debug)]
-// pub struct Cursor(Position, Entity);
 pub struct Cursor {
     position: CursorPosition,
     timers: KeyTimers,
@@ -250,12 +265,25 @@ pub fn check_cell(
 }
 
 pub fn init_check_cell(
-    cursor: Query<&Cursor>,
+    cursors: Query<&Cursor>,
     kb: Res<Input<KeyCode>>,
     mut ev: EventWriter<InitCheckCell>,
+    fields: Query<(Entity, &Minefield)>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
-        let Cursor { position, .. } = cursor.iter().next().unwrap();
-        ev.send(InitCheckCell(position.clone()));
+        for Cursor {
+            position: cursor_position @ CursorPosition(_, minefield),
+            ..
+        } in cursors.iter()
+        {
+            ev.send(InitCheckCell {
+                minefield: *minefield,
+                positions: cursor_position
+                    .iter_neighbors(fields.iter())
+                    .unwrap()
+                    .map(|CursorPosition(pos, _)| pos)
+                    .collect(),
+            })
+        }
     }
 }
