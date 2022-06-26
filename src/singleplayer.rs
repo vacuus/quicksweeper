@@ -67,39 +67,45 @@ fn create_entities(
             },
             ..Default::default()
         })
-        .insert(Cursor::new(init_position, minefield_entity, KeyCode::Space, KeyCode::F));
+        .insert(Cursor::new(
+            init_position,
+            minefield_entity,
+            KeyCode::Space,
+            KeyCode::F,
+        ));
 }
 
 pub struct SingleplayerMode;
 
 impl Plugin for SingleplayerMode {
     fn build(&self, app: &mut App) {
+        use SingleplayerState::*;
         app
             // state
-            .add_loopless_state(SingleplayerState::Inactive)
+            .add_loopless_state(Inactive)
             // menu after game complete
             .add_plugin(menu::MenuPlugin)
             // state change startup and cleanup
-            .add_exit_system(SingleplayerState::Inactive, create_entities)
-            .add_system(generate_minefield.run_in_state(SingleplayerState::PreGame))
-            .add_exit_system(SingleplayerState::GameFailed, wipe_minefields)
-            .add_exit_system(SingleplayerState::GameSuccess, wipe_minefields)
-            .add_system(advance_to_game.run_in_state(SingleplayerState::PreGame))
-            .add_system(advance_to_end.run_in_state(SingleplayerState::Game))
-            .add_enter_system(SingleplayerState::GameFailed, display_mines)
+            .add_exit_system(Inactive, create_entities)
+            .add_system(generate_minefield.run_in_state(PreGame))
+            .add_exit_system(GameFailed, wipe_minefields)
+            .add_exit_system(GameSuccess, wipe_minefields)
+            .add_system(advance_to_game.run_in_state(PreGame))
+            .add_system(advance_to_end.run_in_state(Game))
+            .add_enter_system(GameFailed, display_mines)
             // logic for leaving game
-            .add_enter_system(SingleplayerState::Inactive, destroy_cursors)
-            .add_enter_system(SingleplayerState::Inactive, destroy_minefields)
+            .add_enter_system(Inactive, destroy_cursors)
+            .add_enter_system(Inactive, destroy_minefields)
             // in-game logic
-            .add_system(flag_cell.run_in_state(SingleplayerState::Game))
-            .add_system(reveal_cell.run_in_state(SingleplayerState::Game))
+            .add_system(flag_cell.run_in_state(Game))
+            .add_system(reveal_cell.run_in_state(Game))
             .add_system(
                 move_cursor
                     .into_conditional()
-                    .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game]),
+                    .run_in_states([PreGame, Game]),
             )
-            .add_system(translate_components.run_not_in_state(SingleplayerState::Inactive))
-            .add_system(init_check_cell.run_in_state(SingleplayerState::PreGame))
-            .add_system(check_cell.run_in_state(SingleplayerState::Game));
+            .add_system(translate_components.run_not_in_state(Inactive))
+            .add_system(init_check_cell.run_in_state(PreGame))
+            .add_system(check_cell.run_in_state(Game));
     }
 }
