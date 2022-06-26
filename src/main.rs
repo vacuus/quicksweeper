@@ -7,6 +7,7 @@ mod minefield;
 mod state;
 mod load;
 mod singleplayer;
+mod multiplayer;
 mod main_menu;
 
 use bevy::prelude::*;
@@ -25,6 +26,7 @@ fn main() {
         .add_plugin(EguiPlugin)
         .add_plugin(MainMenuPlugin)
         .add_plugin(singleplayer::SingleplayerMode)
+        .add_plugin(multiplayer::MultiplayerMode)
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(load::LoadPlugin)
         .add_plugin(minefield::MinefieldPlugin)

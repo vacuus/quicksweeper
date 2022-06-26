@@ -21,10 +21,6 @@ impl Plugin for MinefieldPlugin {
         app.add_asset::<load::BlankField>()
             .add_asset_loader(load::FieldLoader)
             .add_event::<GameOutcome>()
-            .add_system(
-                field::render_mines
-                    .into_conditional()
-                    .run_in_states([SingleplayerState::PreGame, SingleplayerState::Game]),
-            );
+            .add_system(field::render_mines);
     }
 }

@@ -11,6 +11,17 @@ struct KeyTimers {
     key_down: HoldTimer,
 }
 
+impl KeyTimers {
+    fn with_bindings(activate_duration: f32, hold_delay: f32, bindings: &Bindings) -> Self {
+        Self {
+            key_left: HoldTimer::init(bindings.left, activate_duration, hold_delay),
+            key_right: HoldTimer::init(bindings.right, activate_duration, hold_delay),
+            key_up: HoldTimer::init(bindings.up, activate_duration, hold_delay),
+            key_down: HoldTimer::init(bindings.down, activate_duration, hold_delay),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 struct Activations {
     left: bool,
@@ -152,6 +163,28 @@ impl CursorPosition {
     }
 }
 
+pub struct Bindings {
+    pub left: KeyCode,
+    pub right: KeyCode,
+    pub up: KeyCode,
+    pub down: KeyCode,
+    pub flag: KeyCode,
+    pub check: KeyCode,
+}
+
+impl Default for Bindings {
+    fn default() -> Self {
+        Self {
+            left: KeyCode::A,
+            right: KeyCode::D,
+            up: KeyCode::W,
+            down: KeyCode::S,
+            flag: KeyCode::F,
+            check: KeyCode::Space,
+        }
+    }
+}
+
 #[derive(Component, Debug)]
 pub struct Cursor {
     position: CursorPosition,
@@ -161,12 +194,16 @@ pub struct Cursor {
 }
 
 impl Cursor {
-    pub fn new(pos: Position, field: Entity, check_key: KeyCode, flag_key: KeyCode) -> Self {
+    pub fn new(position: CursorPosition) -> Self {
+        Self::new_with_keybindings(position, default())
+    }
+
+    pub fn new_with_keybindings(position: CursorPosition, bindings: Bindings) -> Self {
         Cursor {
-            position: CursorPosition(pos, field),
-            timers: KeyTimers::default(),
-            check_key,
-            flag_key,
+            position,
+            timers: KeyTimers::with_bindings(0.25, 0.25, &bindings),
+            check_key: bindings.check,
+            flag_key: bindings.flag,
         }
     }
 }
@@ -257,6 +294,7 @@ pub fn check_cell(
     } in cursor.iter()
     {
         if kb.just_pressed(*check_key) {
+            println!("checking cell {position:?}");
             check.send(CheckCell(position.clone()));
         } else if kb.just_pressed(*flag_key) {
             flag.send(FlagCell(position.clone()));
@@ -271,6 +309,7 @@ pub fn init_check_cell(
     fields: Query<(Entity, &Minefield)>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
+        println!("sending init check event");
         for Cursor {
             position: cursor_position @ CursorPosition(_, minefield),
             ..

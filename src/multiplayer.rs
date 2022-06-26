@@ -1,44 +1,26 @@
-use crate::{
-    common::{InitCheckCell, Position},
-    cursor::*,
-    load::{Field, MineTextures, Textures},
-    minefield::{systems::*, BlankField, GameOutcome, Minefield},
-    state::ConditionalHelpersExt,
-};
 use bevy::prelude::*;
 use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
 
-mod menu;
+use crate::{
+    common::{InitCheckCell, Position},
+    cursor::*,
+    load::{Field, MineTextures, Textures},
+    minefield::{systems::*, Minefield},
+    minefield::{BlankField, GameOutcome},
+    state::ConditionalHelpersExt,
+};
+pub struct MultiplayerMode;
 
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SingleplayerState {
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub enum MultiplayerState {
     Inactive,
-    PreGame,
-    Game,
     GameFailed,
     GameSuccess,
-}
-
-fn advance_to_end(mut commands: Commands, mut game_outcome: EventReader<GameOutcome>) {
-    if let Some(outcome) = game_outcome.iter().next() {
-        match outcome {
-            GameOutcome::Failed => {
-                commands.insert_resource(NextState(SingleplayerState::GameFailed))
-            }
-            GameOutcome::Succeeded => {
-                commands.insert_resource(NextState(SingleplayerState::GameSuccess))
-            }
-        }
-    }
-}
-
-fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>) {
-    if !init_move.is_empty() {
-        commands.insert_resource(NextState(SingleplayerState::Game))
-    }
+    PreGame,
+    Game,
 }
 
 fn create_entities(
@@ -48,16 +30,14 @@ fn create_entities(
     mine_textures: Res<MineTextures>,
     textures: Res<Textures>,
 ) {
-    // create minefield
     let field_template = field_templates.get(field_template.field.clone()).unwrap();
     let minefield = Minefield::new_blank_shaped(&mut commands, &mine_textures, field_template);
     let minefield_entity = commands.spawn().insert(minefield).id();
 
-    // get center of minefield
     #[allow(clippy::or_fun_call)]
     let init_position = field_template.center().unwrap_or(Position::new(0, 0));
 
-    // create cursor
+    // player1
     commands
         .spawn_bundle(SpriteBundle {
             texture: textures.cursor.clone(),
@@ -67,20 +47,58 @@ fn create_entities(
             },
             ..Default::default()
         })
-        .insert(Cursor::new(CursorPosition(init_position, minefield_entity)));
+        .insert(Cursor::new_with_keybindings(
+            CursorPosition(init_position, minefield_entity),
+            Bindings::default(),
+        ));
+    // player2
+    commands
+        .spawn_bundle(SpriteBundle {
+            texture: textures.cursor.clone(),
+            transform: Transform {
+                translation: init_position.absolute(32.0, 32.0).extend(3.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(Cursor::new_with_keybindings(
+            CursorPosition(init_position, minefield_entity),
+            Bindings {
+                left: KeyCode::Left,
+                right: KeyCode::Right,
+                up: KeyCode::Up,
+                down: KeyCode::Down,
+                flag: KeyCode::Slash,
+                check: KeyCode::Return,
+            }
+        ));
 }
 
-pub struct SingleplayerMode;
+fn advance_to_end(mut commands: Commands, mut game_outcome: EventReader<GameOutcome>) {
+    if let Some(outcome) = game_outcome.iter().next() {
+        match outcome {
+            GameOutcome::Failed => {
+                commands.insert_resource(NextState(MultiplayerState::GameFailed))
+            }
+            GameOutcome::Succeeded => {
+                commands.insert_resource(NextState(MultiplayerState::GameSuccess))
+            }
+        }
+    }
+}
 
-impl Plugin for SingleplayerMode {
+fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>) {
+    if !init_move.is_empty() {
+        println!("moving to ingame mode");
+        commands.insert_resource(NextState(MultiplayerState::Game))
+    }
+}
+
+impl Plugin for MultiplayerMode {
     fn build(&self, app: &mut App) {
-        use SingleplayerState::*;
-        app
-            // state
-            .add_loopless_state(Inactive)
-            // menu after game complete
-            .add_plugin(menu::MenuPlugin)
-            // state change startup and cleanup
+        use MultiplayerState::*;
+        app.add_loopless_state(MultiplayerState::Inactive)
+            // state transitions
             .add_exit_system(Inactive, create_entities)
             .add_system(generate_minefield.run_in_state(PreGame))
             .add_exit_system(GameFailed, wipe_minefields)

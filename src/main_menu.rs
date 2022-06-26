@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::EguiContext;
 use iyes_loopless::{prelude::{AppLooplessStateExt, IntoConditionalSystem}, state::NextState};
 
-use crate::SingleplayerState;
+use crate::{SingleplayerState, multiplayer::MultiplayerState};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MenuState {
@@ -25,6 +25,10 @@ fn create_main_menu(
                 ui.label("Quicksweeper");
                 if ui.button("Singleplayer mode").clicked() {
                     commands.insert_resource(NextState(SingleplayerState::PreGame));
+                    commands.insert_resource(NextState(MenuState::InGame));
+                }
+                if ui.button("Multiplayer mode").clicked() {
+                    commands.insert_resource(NextState(MultiplayerState::PreGame));
                     commands.insert_resource(NextState(MenuState::InGame));
                 }
                 ui.shrink_height_to_current();
