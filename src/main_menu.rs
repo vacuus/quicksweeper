@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
-use iyes_loopless::{prelude::{AppLooplessStateExt, IntoConditionalSystem}, state::NextState};
+use iyes_loopless::{
+    prelude::{AppLooplessStateExt, IntoConditionalSystem},
+    state::NextState,
+};
 
-use crate::{SingleplayerState, multiplayer::MultiplayerState};
+use crate::{multiplayer::MultiplayerState, SingleplayerState};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MenuState {
@@ -19,7 +22,7 @@ fn create_main_menu(
     println!("{}, {}", window_props.width, window_props.height);
 
     egui::Area::new("main_menu")
-        .fixed_pos([window_props.width/2.0, window_props.height/2.0])
+        .fixed_pos([window_props.width / 2.0, window_props.height / 2.0])
         .show(ctx.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {
                 ui.label("Quicksweeper");

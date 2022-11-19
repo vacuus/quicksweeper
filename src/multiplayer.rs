@@ -70,7 +70,7 @@ fn create_entities(
                 down: KeyCode::Down,
                 flag: KeyCode::Slash,
                 check: KeyCode::Return,
-            }
+            },
         ));
 }
 

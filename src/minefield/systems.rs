@@ -63,8 +63,7 @@ pub fn generate_minefield(
                             if exclude.contains(pos) {
                                 0.0
                             } else {
-                                1.0 / (field.len() - exclude.len())
-                                    as f32
+                                1.0 / (field.len() - exclude.len()) as f32
                             }
                         },
                     )

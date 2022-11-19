@@ -3,12 +3,12 @@
 
 mod common;
 mod cursor;
-mod minefield;
-mod state;
 mod load;
-mod singleplayer;
-mod multiplayer;
 mod main_menu;
+mod minefield;
+mod multiplayer;
+mod singleplayer;
+mod state;
 
 use bevy::prelude::*;
 
