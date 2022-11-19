@@ -41,7 +41,7 @@ pub fn render_mines(
         *sprite = match state {
             MineCellState::Empty | MineCellState::Mine => TextureAtlasSprite::new(9),
             MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => TextureAtlasSprite::new(10),
-            MineCellState::Revealed(x) => TextureAtlasSprite::new(*x as usize),
+            &MineCellState::Revealed(x) => TextureAtlasSprite::new(x as usize),
         };
     })
 }
