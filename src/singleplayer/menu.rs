@@ -69,7 +69,7 @@ pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, messa
             style: Style {
                 flex_direction: FlexDirection::ColumnReverse,
                 align_items: AlignItems::Center,
-                margin: Rect::all(Val::Auto),
+                margin: UiRect::all(Val::Auto),
                 ..default()
             },
             color: Color::NONE.into(),
@@ -85,7 +85,7 @@ pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, messa
                 })
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(message, text_style(), TextAlignment::default()),
+                        text: Text::from_section(message, text_style()),
                         ..default()
                     });
                 });
@@ -104,7 +104,7 @@ pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, messa
                 .insert(RetryButton)
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
-                        text: Text::with_section("Retry", text_style(), default()),
+                        text: Text::from_section("Retry", text_style()),
                         ..default()
                     });
                 });
@@ -122,7 +122,7 @@ pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, messa
                 .insert(MainMenuButton)
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
-                        text: Text::with_section("Main Menu", text_style(), default()),
+                        text: Text::from_section("Main Menu", text_style()),
                         ..default()
                     });
                 });

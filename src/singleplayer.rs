@@ -49,7 +49,7 @@ fn create_entities(
     textures: Res<Textures>,
 ) {
     // create minefield
-    let field_template = field_templates.get(field_template.field.clone()).unwrap();
+    let field_template = field_templates.get(&field_template.field).unwrap();
     let minefield = Minefield::new_blank_shaped(&mut commands, &mine_textures, field_template);
     let minefield_entity = commands.spawn().insert(minefield).id();
 

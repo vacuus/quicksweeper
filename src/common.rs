@@ -1,5 +1,4 @@
-use bevy::{math::XY, prelude::*};
-use derive_more::{Deref, DerefMut};
+use bevy::prelude::*;
 
 use std::{
     hash::Hash,
@@ -11,18 +10,10 @@ use strum_macros::EnumIter;
 
 use crate::cursor::CursorPosition;
 
-#[derive(PartialEq, Clone, Copy, Debug, Deref, DerefMut, Component)]
-pub struct Position(pub XY<u32>);
-
-impl Eq for Position {}
-
-#[allow(clippy::derive_hash_xor_eq)]
-// cannot fix this for now, since XY doesn't allow for Hash impls
-impl Hash for Position {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.x.hash(state);
-        self.y.hash(state);
-    }
+#[derive(PartialEq, Clone, Copy, Debug, Component, Eq, Hash)]
+pub struct Position {
+    pub x: u32,
+    pub y: u32,
 }
 
 impl Add<Self> for Position {
@@ -67,7 +58,7 @@ impl Iterator for PositionNeighborsIter {
 
 impl Position {
     pub fn new(x: u32, y: u32) -> Self {
-        Self(XY { x, y })
+        Self { x, y }
     }
 
     pub fn neighbor_direction(&self, direction: Direction) -> Option<Position> {
@@ -125,7 +116,7 @@ pub struct CheckCell(pub CursorPosition);
 #[derive(Clone, Debug)]
 pub struct InitCheckCell {
     pub minefield: Entity,
-    pub positions: Vec<Position>
+    pub positions: Vec<Position>,
 }
 
 #[derive(Clone, Debug)]
@@ -144,8 +135,7 @@ pub enum Direction {
 }
 
 fn init_cameras(mut commands: Commands) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn_bundle(Camera2dBundle::default());
 }
 
 pub struct QuicksweeperTypes;

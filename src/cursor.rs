@@ -1,6 +1,6 @@
 use crate::common::{CheckCell, Direction, FlagCell, InitCheckCell, Position};
 use crate::minefield::Minefield;
-use bevy::{prelude::*, render::camera::Camera2d};
+use bevy::{prelude::*, render::camera::Camera};
 use tap::Tap;
 
 #[derive(Debug)]
@@ -242,8 +242,8 @@ pub fn move_cursor(
 }
 
 pub fn translate_components(
-    mut cursor: Query<(&mut Transform, &Cursor), Without<Camera2d>>,
-    // mut camera: Query<&mut Transform, With<Camera2d>>,
+    mut cursor: Query<(&mut Transform, &Cursor), Without<Camera>>,
+    // mut camera: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
 ) {
     for (

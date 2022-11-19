@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Index};
 
-use bevy::{math::XY, prelude::*};
+use bevy::prelude::*;
 use tap::Tap;
 
 use crate::{common::Position, load::MineTextures};
@@ -17,10 +17,7 @@ pub struct MineCell {
 }
 
 impl MineCell {
-    pub fn new_empty(
-        position @ Position(XY { x, y }): Position,
-        textures: &Res<MineTextures>,
-    ) -> Self {
+    pub fn new_empty(position @ Position { x, y }: Position, textures: &Res<MineTextures>) -> Self {
         MineCell {
             sprite: textures.empty().tap_mut(|b| {
                 b.transform = Transform {

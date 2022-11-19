@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use bevy_asset_loader::{AssetCollection, AssetLoader};
+use bevy_asset_loader::prelude::*;
 use derive_more::Deref;
 
-use crate::{minefield::BlankField, main_menu::MenuState};
+use crate::{main_menu::MenuState, minefield::BlankField};
 
 #[derive(AssetCollection)]
 pub struct Textures {
@@ -36,7 +36,6 @@ impl FromWorld for MineTextures {
     }
 }
 
-
 impl MineTextures {
     pub fn empty(&self) -> SpriteSheetBundle {
         SpriteSheetBundle {
@@ -51,11 +50,13 @@ pub struct LoadPlugin;
 
 impl Plugin for LoadPlugin {
     fn build(&self, app: &mut App) {
-        AssetLoader::new(MenuState::Loading)
-            .continue_to_state(MenuState::MainMenu)
-            .with_collection::<Textures>()
-            .with_collection::<Field>()
-            .init_resource::<MineTextures>()
-            .build(app);
+        // AssetLoader::new(MenuState::Loading)
+        app.add_loading_state(
+            LoadingState::new(MenuState::Loading)
+                .continue_to_state(MenuState::MainMenu)
+                .with_collection::<Textures>()
+                .with_collection::<Field>()
+                .init_resource::<MineTextures>(),
+        );
     }
 }
