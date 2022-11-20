@@ -55,7 +55,7 @@ impl AssetLoader for FieldLoader {
                         .enumerate()
                         .try_for_each(|(x, char)| match char {
                             b'x' => {
-                                positions.push(Position::new(x as u32, y as u32));
+                                positions.push(Position::new(x as isize, y as isize));
                                 Ok(())
                             }
                             b'o' => Ok(()),

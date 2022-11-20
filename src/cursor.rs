@@ -1,6 +1,7 @@
 use crate::common::{CheckCell, Direction, FlagCell, InitCheckCell, Position};
 use crate::minefield::Minefield;
 use bevy::{prelude::*, render::camera::Camera};
+use gridly::prelude::*;
 use tap::Tap;
 
 #[derive(Debug)]
@@ -229,11 +230,8 @@ pub fn move_cursor(
         } = *cursor;
         if let Some(next) = activated.try_into().ok().and_then(|direction| {
             position.neighbor_direction(direction).and_then(|neighbor| {
-                fields
-                    .get(minefield)
-                    .unwrap()
-                    .contains_key(&neighbor)
-                    .then(|| neighbor)
+                let ent = fields.get(minefield).unwrap().get(&neighbor);
+                matches!(ent, Ok(x) if x.is_some()).then(|| neighbor)
             })
         }) {
             cursor.position.0 = next;

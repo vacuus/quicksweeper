@@ -1,5 +1,6 @@
 use arrayvec::ArrayVec;
 use bevy::prelude::*;
+use gridly::prelude::*;
 
 use std::{
     hash::Hash,
@@ -12,8 +13,27 @@ use crate::cursor::CursorPosition;
 
 #[derive(PartialEq, Clone, Copy, Debug, Component, Eq, Hash)]
 pub struct Position {
-    pub x: u32,
-    pub y: u32,
+    pub x: isize,
+    pub y: isize,
+}
+
+impl From<Location> for Position {
+    fn from(loc: Location) -> Self {
+        Position {
+            x: loc.column.0,
+            y: loc.row.0,
+        }
+    }
+}
+
+impl LocationLike for Position {
+    fn row(&self) -> Row {
+        Row(self.y)
+    }
+
+    fn column(&self) -> Column {
+        Column(self.x)
+    }
 }
 
 impl Add<Self> for Position {
@@ -32,16 +52,16 @@ impl Sub<Self> for Position {
     }
 }
 
-impl Div<u32> for Position {
+impl Div<isize> for Position {
     type Output = Self;
 
-    fn div(self, rhs: u32) -> Self::Output {
+    fn div(self, rhs: isize) -> Self::Output {
         Position::new(self.x / rhs, self.y / rhs)
     }
 }
 
 impl Position {
-    pub fn new(x: u32, y: u32) -> Self {
+    pub fn new(x: isize, y: isize) -> Self {
         Self { x, y }
     }
 

@@ -32,44 +32,32 @@ pub fn generate_minefield(
         for position in exclude.iter() {
             // TODO: Synchronize with system `check_cell`
             write_back.send(CheckCell(CursorPosition(*position, ev.minefield)));
-
-            // let minefield = minefields.get(*field).unwrap();
-            // let minefield_vec = minefield.iter().collect_vec();
-
-            // let neighbors = minefield
-            //     .iter_neighbor_positions(*pos)
-            //     .chain(std::iter::once(*pos))
-            //     .collect_vec();
-            // TODO calculate neighbors or move calculation off system
-            // exclude.extend(
-            //     position
-            //         .iter_neighbors(minefields.iter())
-            //         .unwrap()
-            //         .chain(std::iter::once(position.clone())),
-            // );
         }
 
         minefields
             .iter()
             .find(|(field, _)| *field == ev.minefield)
             .map(|(_, field)| {
-                let minefield_vec = field.iter().collect_vec();
+                let minefield_vec = field
+                    .occupied_entries()
+                    .filter_map(|(a, b)| b.map(|b| (a, b)))
+                    .collect_vec();
 
                 minefield_vec
                     .choose_multiple_weighted(
                         &mut rand::thread_rng(),
-                        field.len() - field.remaining_blank,
-                        |(pos, _)| {
-                            if exclude.contains(pos) {
+                        minefield_vec.len() - field.remaining_blank,
+                        |&(&pos, _)| {
+                            if exclude.contains(&pos.into()) {
                                 0.0
                             } else {
-                                1.0 / (field.len() - exclude.len()) as f32
+                                1.0 / (minefield_vec.len() - exclude.len()) as f32
                             }
                         },
                     )
                     .unwrap()
-                    .for_each(|(_, cell)| {
-                        *states.get_mut(**cell).unwrap() = MineCellState::Mine;
+                    .for_each(|&(_, cell)| {
+                        *states.get_mut(cell).unwrap() = MineCellState::Mine;
                     });
             });
     }
@@ -92,7 +80,7 @@ pub fn reveal_cell(
             .map(|(a, b)| (a, states.get(b).unwrap().clone()))
             .collect_vec();
 
-        let mut checking = states.get_mut(field[position]).unwrap();
+        let mut checking = states.get_mut(field[&position]).unwrap();
         match *checking {
             MineCellState::Empty => {
                 let count_mine_neighbors = neighbors
@@ -139,7 +127,7 @@ pub fn flag_cell(
 ) {
     for FlagCell(CursorPosition(pos, field)) in ev.iter() {
         let mut state = states
-            .get_mut(fields.get_mut(*field).unwrap()[*pos])
+            .get_mut(fields.get_mut(*field).unwrap()[pos])
             .unwrap();
         match *state {
             MineCellState::Empty => Some(MineCellState::FlaggedEmpty),

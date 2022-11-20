@@ -1,6 +1,11 @@
-use std::{collections::HashMap, ops::Index};
+use std::ops::Index;
 
 use bevy::prelude::*;
+use gridly::{
+    prelude::*,
+    vector::{Columns, Rows},
+};
+use gridly_grids::SparseGrid;
 use tap::Tap;
 
 use crate::{common::Position, load::MineTextures};
@@ -74,12 +79,12 @@ impl MineCellState {
 
 #[derive(Component)]
 pub struct Minefield {
-    pub(super) field: HashMap<Position, Entity>,
+    pub(super) field: SparseGrid<Option<Entity>>,
     pub(super) remaining_blank: usize,
 }
 
 impl Deref for Minefield {
-    type Target = HashMap<Position, Entity>;
+    type Target = SparseGrid<Option<Entity>>;
 
     fn deref(&self) -> &Self::Target {
         &self.field
@@ -98,18 +103,18 @@ impl Minefield {
         textures: &Res<MineTextures>,
         template: &BlankField,
     ) -> Self {
-        let field = template
-            .iter()
-            .map(|pos| {
-                let entity = commands
-                    .spawn_bundle(MineCell::new_empty(*pos, textures))
-                    .id();
-                (*pos, entity)
-            })
-            .collect::<HashMap<_, _>>();
+        let mut field = SparseGrid::new_default((Rows(10), Columns(10)), None); // TODO: Use less arbitrary numbers in init
+        for &pos in template.iter() {
+            let entity = commands
+                .spawn_bundle(MineCell::new_empty(pos, textures))
+                .id();
+            field.insert(pos, Some(entity));
+        }
+
+        let amnt_cells = field.occupied_entries().count();
 
         Self {
-            remaining_blank: field.len() * 8 / 10,
+            remaining_blank: amnt_cells * 8 / 10,
             field,
         }
     }
@@ -118,9 +123,12 @@ impl Minefield {
         &self,
         pos: Position,
     ) -> impl Iterator<Item = (Position, Entity)> + '_ {
-        pos.neighbors()
-            .into_iter()
-            .filter_map(move |neighbor| self.get(&neighbor).map(|entity| (neighbor, *entity)))
+        pos.neighbors().into_iter().filter_map(move |neighbor| {
+            self.get(&neighbor)
+                .ok()
+                .and_then(|&x| x)
+                .map(|entity| (neighbor, entity))
+        })
     }
 
     pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> + '_ {
@@ -132,10 +140,10 @@ impl Minefield {
     }
 }
 
-impl Index<Position> for Minefield {
+impl Index<&Position> for Minefield {
     type Output = Entity;
 
-    fn index(&self, pos: Position) -> &Self::Output {
-        &(**self)[&pos]
+    fn index(&self, pos: &Position) -> &Self::Output {
+        self.field[pos].as_ref().unwrap()
     }
 }
