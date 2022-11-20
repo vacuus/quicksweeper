@@ -25,6 +25,20 @@
 				"$rustc"
 			],
 			"label": "cargo run"
-		}
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": [
+				"--target",
+				"x86_64-pc-windows-gnu",
+				"--release"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "cargo release for Windows"
+		},
 	]
 }
