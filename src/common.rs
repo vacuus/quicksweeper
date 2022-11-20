@@ -122,16 +122,10 @@ pub struct InitCheckCell {
 #[derive(Clone, Debug)]
 pub struct FlagCell(pub CursorPosition);
 
+#[rustfmt::skip]
 #[derive(EnumIter, Clone, Debug)]
 pub enum Direction {
-    North,
-    NorthEast,
-    East,
-    SouthEast,
-    South,
-    SouthWest,
-    West,
-    NorthWest,
+    North, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest,
 }
 
 fn init_cameras(mut commands: Commands) {
