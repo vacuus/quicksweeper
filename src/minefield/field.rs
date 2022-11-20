@@ -118,7 +118,8 @@ impl Minefield {
         &self,
         pos: Position,
     ) -> impl Iterator<Item = (Position, Entity)> + '_ {
-        pos.iter_neighbors()
+        pos.neighbors()
+            .into_iter()
             .filter_map(move |neighbor| self.get(&neighbor).map(|entity| (neighbor, *entity)))
     }
 

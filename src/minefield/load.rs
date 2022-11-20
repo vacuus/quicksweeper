@@ -30,7 +30,7 @@ impl BlankField {
         let abs_center = min + (max - min) / 2;
 
         std::iter::once(abs_center)
-            .chain(abs_center.iter_neighbors())
+            .chain(abs_center.neighbors())
             .filter_map(|pos| self.contains(&pos).then(|| pos))
             .next()
     }

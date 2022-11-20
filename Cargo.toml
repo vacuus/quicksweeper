@@ -16,15 +16,17 @@ bevy_dylib = [ "bevy/dynamic" ]
 
 [dependencies]
 bevy = { version = "0.8" }
+bevy_asset_loader = { version = "0.13", features = ["stageless"] }
 bevy_egui = "0.16"
+iyes_loopless = "0.8"
+
 egui = "0.19"
 tap = "1.0"
 itertools = "0.10"
 derive_more = "0.99"
 rand = "0.8"
-iyes_loopless = "0.8"
 strum = "0.24"
 strum_macros = "0.24"
-bevy_asset_loader = { version = "0.13", features = ["stageless"] }
+arrayvec = "0.7"
 
 anyhow = "*" # bound by bevy

@@ -1,8 +1,8 @@
+use arrayvec::ArrayVec;
 use bevy::prelude::*;
 
 use std::{
     hash::Hash,
-    mem::MaybeUninit,
     ops::{Add, Div, Sub},
 };
 use strum::IntoEnumIterator;
@@ -40,22 +40,6 @@ impl Div<u32> for Position {
     }
 }
 
-pub struct PositionNeighborsIter {
-    items: [Position; 8],
-    size: u8,
-}
-
-impl Iterator for PositionNeighborsIter {
-    type Item = Position;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        (self.size != 0).then(|| {
-            self.size -= 1;
-            self.items[self.size as usize]
-        })
-    }
-}
-
 impl Position {
     pub fn new(x: u32, y: u32) -> Self {
         Self { x, y }
@@ -90,19 +74,10 @@ impl Position {
         }
     }
 
-    pub fn iter_neighbors(&self) -> PositionNeighborsIter {
-        let mut items: [Position; 8] = unsafe { MaybeUninit::zeroed().assume_init() };
-        let mut size = 0;
-        Direction::iter().for_each(|direction| {
-            if let Some(pos) = self.neighbor_direction(direction) {
-                items[size as usize] = pos;
-                size += 1;
-            }
-        });
-        PositionNeighborsIter {
-            items,
-            size: size as u8,
-        }
+    pub fn neighbors(&self) -> ArrayVec<Position, 8> {
+        Direction::iter()
+            .filter_map(|direction| self.neighbor_direction(direction))
+            .collect()
     }
 
     pub fn absolute(&self, size_x: f32, size_y: f32) -> Vec2 {
