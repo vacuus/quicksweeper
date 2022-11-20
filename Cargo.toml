@@ -29,4 +29,7 @@ strum = "0.24"
 strum_macros = "0.24"
 arrayvec = "0.7"
 
+gridly = "0.9"
+gridly_grids = "0.5"
+
 anyhow = "*" # bound by bevy
