@@ -1,5 +1,5 @@
 use crate::common::{CheckCell, Direction, FlagCell, InitCheckCell, Position};
-use crate::minefield::Minefield;
+use crate::minefield::{MineCellState, Minefield, CELL_SIZE};
 use bevy::{prelude::*, render::camera::Camera};
 use gridly::prelude::*;
 use tap::Tap;
@@ -83,7 +83,8 @@ impl HoldTimer {
     fn init(key: KeyCode, activate_duration: f32, hold_delay: f32) -> Self {
         Self {
             key,
-            activate_timer: Timer::from_seconds(activate_duration, TimerMode::Once).tap_mut(|x| x.pause()),
+            activate_timer: Timer::from_seconds(activate_duration, TimerMode::Once)
+                .tap_mut(|x| x.pause()),
             hold_timer: Timer::from_seconds(hold_delay, TimerMode::Repeating),
         }
     }
@@ -239,9 +240,61 @@ pub fn move_cursor(
     }
 }
 
+/// Locks the cursor to the system pointer
+pub fn pointer_cursor(
+    windows: Res<Windows>,
+    cameras: Query<(&Camera, &GlobalTransform)>,
+    mut cursors: Query<&mut Cursor>,
+    mines: Query<&Transform, &MineCellState>,
+    minefields: Query<&Minefield>,
+) {
+    // code borrowed from bevy cheatbook
+    // get the camera info and transform
+    // assuming there is exactly one main camera entity, so query::single() is OK
+    let (camera, camera_transform) = cameras.single();
+
+    // get the window that the camera is displaying to (or the primary window)
+    let wnd = windows.primary();
+
+    // check if the cursor is inside the window and get its position
+    if let Some(screen_pos) = wnd.cursor_position() {
+        // get the size of the window
+        let window_size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
+
+        // convert screen position [0..resolution] to ndc [-1..1] (gpu coordinates)
+        let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
+
+        // matrix for undoing the projection and camera transform
+        let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
+
+        // use it to convert ndc to world-space coordinates
+        let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
+
+        // reduce it to a 2D value
+        let world_pos = world_pos.truncate();
+
+        let minefield = minefields.single();
+
+        // get the position of one corner of the board
+        let field_transform = mines
+            .get(minefield[&Position { x: 0, y: 0 }])
+            .unwrap()
+            .translation
+            .truncate();
+        let offset = world_pos - field_transform + Vec2::splat(CELL_SIZE) / 2.;
+        let pos = Position {
+            x: (offset.x / CELL_SIZE).floor() as isize,
+            y: (offset.y / CELL_SIZE).floor() as isize
+        };
+
+        if minefield.is_contained(&pos) {
+            cursors.single_mut().position.0 = pos;
+        }
+    }
+}
+
 pub fn translate_cursor(
     mut cursor: Query<(&mut Transform, &Cursor), Without<Camera>>,
-    // mut camera: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
 ) {
     for (

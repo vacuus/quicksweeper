@@ -2,7 +2,10 @@ use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use derive_more::Deref;
 
-use crate::{main_menu::MenuState, minefield::BlankField};
+use crate::{
+    main_menu::MenuState,
+    minefield::{BlankField, CELL_SIZE},
+};
 
 #[derive(AssetCollection, Resource)]
 pub struct Textures {
@@ -27,7 +30,7 @@ impl FromWorld for MineTextures {
     fn from_world(world: &mut World) -> Self {
         let atlas = TextureAtlas::from_grid(
             world.resource::<Textures>().mines.clone(),
-            Vec2::splat(32.0),
+            Vec2::splat(CELL_SIZE),
             4,
             3,
             None,
