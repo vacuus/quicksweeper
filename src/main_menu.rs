@@ -19,8 +19,6 @@ fn create_main_menu(
     mut ctx: ResMut<EguiContext>,
     window_props: Res<WindowDescriptor>,
 ) {
-    println!("{}, {}", window_props.width, window_props.height);
-
     egui::Area::new("main_menu")
         .fixed_pos([window_props.width / 2.0, window_props.height / 2.0])
         .show(ctx.ctx_mut(), |ui| {
