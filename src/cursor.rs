@@ -328,6 +328,7 @@ pub fn init_check_cell(
                     .iter_neighbors(fields.iter())
                     .unwrap()
                     .map(|CursorPosition(pos, _)| pos)
+                    .chain(std::iter::once(cursor_position.0))
                     .collect(),
             })
         }
