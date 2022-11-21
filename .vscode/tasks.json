@@ -40,5 +40,19 @@
 			"group": "build",
 			"label": "cargo release for Windows"
 		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": [
+				"--target",
+				"x86_64-unknown-linux-gnu",
+				"--release"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "cargo release for linux"
+		},
 	]
 }
