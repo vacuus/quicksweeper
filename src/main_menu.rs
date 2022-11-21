@@ -35,8 +35,6 @@ fn create_main_menu(
                 ui.shrink_height_to_current();
             });
         });
-
-    dbg!(ctx.ctx_mut().used_size());
 }
 
 pub struct MainMenuPlugin;
