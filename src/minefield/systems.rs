@@ -17,8 +17,8 @@ pub fn destroy_minefields(
     states.for_each(|ent| commands.entity(ent).despawn());
 }
 
-pub fn wipe_minefields(mut states: Query<&mut MineCellState>) {
-    states.for_each_mut(|mut state| *state = MineCellState::Empty)
+pub fn wipe_minefields(mut states: Query<&mut MineCellState>, mut minefield: Query<&mut Minefield>) {
+    minefield.for_each_mut(|mut field| field.refresh(&mut states))
 }
 
 pub fn generate_minefield(

@@ -97,6 +97,12 @@ impl DerefMut for Minefield {
     }
 }
 
+/// Converts from the total amount of cells there are on the board to the amount of cells without
+/// mines there should be on the board
+fn field_density(val: usize) -> usize {
+    val * 8 / 10
+}
+
 impl Minefield {
     pub fn new_blank_shaped(
         commands: &mut Commands,
@@ -114,9 +120,16 @@ impl Minefield {
         let amnt_cells = field.occupied_entries().count();
 
         Self {
-            remaining_blank: amnt_cells * 8 / 10,
+            remaining_blank: field_density(amnt_cells),
             field,
         }
+    }
+
+    pub fn refresh(&mut self, states: &mut Query<&mut MineCellState>) {
+        states.for_each_mut(|mut state| *state = MineCellState::Empty);
+
+        let amnt_cells = self.occupied_entries().count();
+        self.remaining_blank = field_density(amnt_cells);
     }
 
     pub fn iter_neighbors_enumerated(
