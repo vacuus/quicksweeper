@@ -4,7 +4,7 @@ use derive_more::Deref;
 
 use crate::{main_menu::MenuState, minefield::BlankField};
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct Textures {
     #[asset(path = "textures.png")]
     pub mines: Handle<Image>,
@@ -14,13 +14,13 @@ pub struct Textures {
     pub font: Handle<Font>,
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct Field {
     #[asset(path = "test.field")]
     pub field: Handle<BlankField>,
 }
 
-#[derive(Deref)]
+#[derive(Deref, Resource)]
 pub struct MineTextures(Handle<TextureAtlas>);
 
 impl FromWorld for MineTextures {
@@ -30,6 +30,8 @@ impl FromWorld for MineTextures {
             Vec2::splat(32.0),
             4,
             3,
+            None,
+            None,
         );
         let handle = world.resource_mut::<Assets<TextureAtlas>>().add(atlas);
         MineTextures(handle)

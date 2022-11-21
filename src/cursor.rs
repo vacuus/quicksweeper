@@ -83,8 +83,8 @@ impl HoldTimer {
     fn init(key: KeyCode, activate_duration: f32, hold_delay: f32) -> Self {
         Self {
             key,
-            activate_timer: Timer::from_seconds(activate_duration, false).tap_mut(|x| x.pause()),
-            hold_timer: Timer::from_seconds(hold_delay, true),
+            activate_timer: Timer::from_seconds(activate_duration, TimerMode::Once).tap_mut(|x| x.pause()),
+            hold_timer: Timer::from_seconds(hold_delay, TimerMode::Repeating),
         }
     }
 

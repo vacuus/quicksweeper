@@ -112,7 +112,7 @@ impl Minefield {
         let mut field = SparseGrid::new_default((Rows(10), Columns(10)), None); // TODO: Use less arbitrary numbers in init
         for &pos in template.iter() {
             let entity = commands
-                .spawn_bundle(MineCell::new_empty(pos, textures))
+                .spawn(MineCell::new_empty(pos, textures))
                 .id();
             field.insert(pos, Some(entity));
         }

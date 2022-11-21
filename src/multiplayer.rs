@@ -32,14 +32,14 @@ fn create_entities(
 ) {
     let field_template = field_templates.get(&field_template.field).unwrap();
     let minefield = Minefield::new_blank_shaped(&mut commands, &mine_textures, field_template);
-    let minefield_entity = commands.spawn().insert(minefield).id();
+    let minefield_entity = commands.spawn(()).insert(minefield).id();
 
     #[allow(clippy::or_fun_call)]
     let init_position = field_template.center().unwrap_or(Position::new(0, 0));
 
     // player1
     commands
-        .spawn_bundle(SpriteBundle {
+        .spawn(SpriteBundle {
             texture: textures.cursor.clone(),
             transform: Transform {
                 translation: init_position.absolute(32.0, 32.0).extend(3.0),
@@ -53,7 +53,7 @@ fn create_entities(
         ));
     // player2
     commands
-        .spawn_bundle(SpriteBundle {
+        .spawn(SpriteBundle {
             texture: textures.cursor.clone(),
             transform: Transform {
                 translation: init_position.absolute(32.0, 32.0).extend(3.0),

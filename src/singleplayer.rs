@@ -51,7 +51,7 @@ fn create_entities(
     // create minefield
     let field_template = field_templates.get(&field_template.field).unwrap();
     let minefield = Minefield::new_blank_shaped(&mut commands, &mine_textures, field_template);
-    let minefield_entity = commands.spawn().insert(minefield).id();
+    let minefield_entity = commands.spawn(()).insert(minefield).id();
 
     // get center of minefield
     #[allow(clippy::or_fun_call)]
@@ -59,7 +59,7 @@ fn create_entities(
 
     // create cursor
     commands
-        .spawn_bundle(SpriteBundle {
+        .spawn(SpriteBundle {
             texture: textures.cursor.clone(),
             transform: Transform {
                 translation: init_position.absolute(32.0, 32.0).extend(3.0),

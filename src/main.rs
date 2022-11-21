@@ -18,11 +18,13 @@ pub use singleplayer::SingleplayerState;
 
 fn main() {
     App::new()
-        .insert_resource(WindowDescriptor {
-            title: "Quicksweeper".to_string(),
-            ..Default::default()
-        })
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                title: "Quicksweeper".to_string(),
+                ..default()
+            },
+            ..default()
+        }))
         .add_plugin(EguiPlugin)
         .add_plugin(MainMenuPlugin)
         .add_plugin(singleplayer::SingleplayerMode)

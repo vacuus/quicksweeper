@@ -65,63 +65,63 @@ pub fn create_screen(commands: &mut Commands, font_source: &Res<Textures>, messa
     };
 
     commands
-        .spawn_bundle(NodeBundle {
+        .spawn(NodeBundle {
             style: Style {
                 flex_direction: FlexDirection::ColumnReverse,
                 align_items: AlignItems::Center,
                 margin: UiRect::all(Val::Auto),
                 ..default()
             },
-            color: Color::NONE.into(),
+            background_color: Color::NONE.into(),
             ..default()
         })
         .insert(CompleteScreen)
         .with_children(|parent| {
             // text
             parent
-                .spawn_bundle(NodeBundle {
-                    color: Color::WHITE.into(),
+                .spawn(NodeBundle {
+                    background_color: Color::WHITE.into(),
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
+                    parent.spawn(TextBundle {
                         text: Text::from_section(message, text_style()),
                         ..default()
                     });
                 });
             // button
             parent
-                .spawn_bundle(ButtonBundle {
+                .spawn(ButtonBundle {
                     style: Style {
                         size: Size::new(Val::Px(150.0), Val::Px(65.0)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    color: Color::MIDNIGHT_BLUE.into(),
+                    background_color: Color::MIDNIGHT_BLUE.into(),
                     ..default()
                 })
                 .insert(RetryButton)
                 .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
+                    parent.spawn(TextBundle {
                         text: Text::from_section("Retry", text_style()),
                         ..default()
                     });
                 });
             parent
-                .spawn_bundle(ButtonBundle {
+                .spawn(ButtonBundle {
                     style: Style {
                         size: Size::new(Val::Px(150.0), Val::Px(65.0)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    color: Color::MIDNIGHT_BLUE.into(),
+                    background_color: Color::MIDNIGHT_BLUE.into(),
                     ..default()
                 })
                 .insert(MainMenuButton)
                 .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
+                    parent.spawn(TextBundle {
                         text: Text::from_section("Main Menu", text_style()),
                         ..default()
                     });

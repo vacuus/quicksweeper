@@ -17,10 +17,13 @@ pub enum MenuState {
 fn create_main_menu(
     mut commands: Commands,
     mut ctx: ResMut<EguiContext>,
-    window_props: Res<WindowDescriptor>,
+    windows: Res<Windows>,
 ) {
+
+    let window_props = windows.primary();
+
     egui::Area::new("main_menu")
-        .fixed_pos([window_props.width / 2.0, window_props.height / 2.0])
+        .fixed_pos([window_props.width() / 2.0, window_props.height() / 2.0])
         .show(ctx.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {
                 ui.label("Quicksweeper");

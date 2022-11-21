@@ -124,7 +124,7 @@ pub enum Direction {
 }
 
 fn init_cameras(mut commands: Commands) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 }
 
 pub struct QuicksweeperTypes;
