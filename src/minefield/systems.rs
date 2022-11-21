@@ -5,7 +5,7 @@ use crate::{
 };
 use bevy::prelude::*;
 use itertools::Itertools;
-use rand::prelude::SliceRandom;
+use rand::seq::IteratorRandom;
 use std::collections::VecDeque;
 
 pub fn destroy_minefields(
@@ -17,7 +17,10 @@ pub fn destroy_minefields(
     states.for_each(|ent| commands.entity(ent).despawn());
 }
 
-pub fn wipe_minefields(mut states: Query<&mut MineCellState>, mut minefield: Query<&mut Minefield>) {
+pub fn wipe_minefields(
+    mut states: Query<&mut MineCellState>,
+    mut minefield: Query<&mut Minefield>,
+) {
     minefield.for_each_mut(|mut field| field.refresh(&mut states))
 }
 
@@ -44,18 +47,13 @@ pub fn generate_minefield(
                     .collect_vec();
 
                 minefield_vec
-                    .choose_multiple_weighted(
+                    .iter()
+                    .filter(|&(&pos, _)| !exclude.contains(&pos.into()))
+                    .choose_multiple(
                         &mut rand::thread_rng(),
-                        minefield_vec.len() - field.remaining_blank,
-                        |&(&pos, _)| {
-                            if exclude.contains(&pos.into()) {
-                                0.0
-                            } else {
-                                1.0 / (minefield_vec.len() - exclude.len()) as f32
-                            }
-                        },
+                        minefield_vec.len() - field.remaining_blank(),
                     )
-                    .unwrap()
+                    .into_iter()
                     .for_each(|&(_, cell)| {
                         *states.get_mut(cell).unwrap() = MineCellState::Mine;
                     });
