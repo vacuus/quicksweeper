@@ -15,7 +15,6 @@ use super::BlankField;
 
 #[derive(Clone, Bundle)]
 pub struct MineCell {
-    #[bundle]
     sprite: SpriteSheetBundle,
     state: MineCellState,
     position: Position,
