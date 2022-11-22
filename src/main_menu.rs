@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
-use egui::{RichText, Color32};
+use egui::{Color32, RichText};
 use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
@@ -16,20 +16,30 @@ pub enum MenuState {
 }
 
 fn create_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
-    egui::Area::new("main_menu").show(ctx.ctx_mut(), |ui| {
-        ui.vertical_centered(|ui| {
-            ui.label(RichText::new("Quicksweeper").size(32.0).color(Color32::GOLD));
-            if ui.button("Singleplayer mode").clicked() {
-                commands.insert_resource(NextState(SingleplayerState::PreGame));
-                commands.insert_resource(NextState(MenuState::InGame));
-            }
-            if ui.button("Multiplayer mode").clicked() {
-                commands.insert_resource(NextState(MultiplayerState::PreGame));
-                commands.insert_resource(NextState(MenuState::InGame));
-            }
-            ui.shrink_height_to_current();
+    egui::Window::new("")
+        .resizable(false)
+        .collapsible(false)
+        .title_bar(false)
+        .show(ctx.ctx_mut(), |ui| {
+            ui.vertical_centered(|ui| {
+                let initial_height = ui.available_height();
+                ui.label(
+                    RichText::new("Quicksweeper")
+                        .size(32.0)
+                        .color(Color32::GOLD),
+                );
+                if ui.button("Singleplayer mode").clicked() {
+                    commands.insert_resource(NextState(SingleplayerState::PreGame));
+                    commands.insert_resource(NextState(MenuState::InGame));
+                }
+                if ui.button("Multiplayer mode").clicked() {
+                    commands.insert_resource(NextState(MultiplayerState::PreGame));
+                    commands.insert_resource(NextState(MenuState::InGame));
+                }
+                let height = initial_height - ui.available_height();
+                ui.set_max_height(dbg!(height))
+            });
         });
-    });
 }
 
 pub struct MainMenuPlugin;
