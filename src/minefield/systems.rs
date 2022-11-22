@@ -33,7 +33,6 @@ pub fn generate_minefield(
     if let Some(ev) = check.iter().next().cloned() {
         let exclude = ev.positions;
         for position in exclude.iter() {
-            // TODO: Synchronize with system `check_cell`
             write_back.send(CheckCell(CursorPosition(*position, ev.minefield)));
         }
 
