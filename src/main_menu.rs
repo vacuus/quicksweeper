@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
+use egui::{RichText, Color32};
 use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
@@ -14,25 +15,21 @@ pub enum MenuState {
     InGame,
 }
 
-fn create_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>, windows: Res<Windows>) {
-    let window_props = windows.primary();
-
-    egui::Area::new("main_menu")
-        .fixed_pos([window_props.width() / 2.0, window_props.height() / 2.0])
-        .show(ctx.ctx_mut(), |ui| {
-            ui.vertical_centered(|ui| {
-                ui.label("Quicksweeper");
-                if ui.button("Singleplayer mode").clicked() {
-                    commands.insert_resource(NextState(SingleplayerState::PreGame));
-                    commands.insert_resource(NextState(MenuState::InGame));
-                }
-                if ui.button("Multiplayer mode").clicked() {
-                    commands.insert_resource(NextState(MultiplayerState::PreGame));
-                    commands.insert_resource(NextState(MenuState::InGame));
-                }
-                ui.shrink_height_to_current();
-            });
+fn create_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
+    egui::Area::new("main_menu").show(ctx.ctx_mut(), |ui| {
+        ui.vertical_centered(|ui| {
+            ui.label(RichText::new("Quicksweeper").size(32.0).color(Color32::GOLD));
+            if ui.button("Singleplayer mode").clicked() {
+                commands.insert_resource(NextState(SingleplayerState::PreGame));
+                commands.insert_resource(NextState(MenuState::InGame));
+            }
+            if ui.button("Multiplayer mode").clicked() {
+                commands.insert_resource(NextState(MultiplayerState::PreGame));
+                commands.insert_resource(NextState(MenuState::InGame));
+            }
+            ui.shrink_height_to_current();
         });
+    });
 }
 
 pub struct MainMenuPlugin;
