@@ -55,7 +55,7 @@ pub fn render_mines(
     })
 }
 
-#[derive(Clone, Debug, PartialEq, Component)]
+#[derive(Clone, Debug, PartialEq, Eq, Component)]
 pub enum MineCellState {
     Empty,
     Mine,
@@ -115,9 +115,7 @@ impl Minefield {
     ) -> Self {
         let mut field = SparseGrid::new_default((Rows(10), Columns(10)), None); // TODO: Use less arbitrary numbers in init
         for &pos in template.iter() {
-            let entity = commands
-                .spawn(MineCell::new_empty(pos, textures))
-                .id();
+            let entity = commands.spawn(MineCell::new_empty(pos, textures)).id();
             field.insert(pos, Some(entity));
         }
 
@@ -140,8 +138,8 @@ impl Minefield {
         &self,
         pos: Position,
     ) -> impl Iterator<Item = (Position, Entity)> + '_ {
-        pos.neighbors().into_iter().filter_map(move |neighbor| {
-            self.get(&neighbor)
+        pos.neighbors().into_iter().filter_map(|neighbor| {
+            self.get(neighbor)
                 .ok()
                 .and_then(|&x| x)
                 .map(|entity| (neighbor, entity))
@@ -156,7 +154,7 @@ impl Minefield {
         self.remaining_blank
     }
 
-    pub fn is_contained(&self, pos: &Position) -> bool{
+    pub fn is_contained(&self, pos: &Position) -> bool {
         matches!(self.get(pos), Ok(x) if x.is_some())
     }
 }

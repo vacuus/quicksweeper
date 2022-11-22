@@ -145,7 +145,7 @@ impl KeyTimers {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// The entity field describes the minefield which it is placed on
 pub struct CursorPosition(pub Position, pub Entity);
 
@@ -231,7 +231,7 @@ pub fn move_cursor(
         } = *cursor;
         if let Some(next) = activated.try_into().ok().and_then(|direction| {
             position.neighbor_direction(direction).and_then(|neighbor| {
-                let ent = fields.get(minefield).unwrap().get(&neighbor);
+                let ent = fields.get(minefield).unwrap().get(neighbor);
                 matches!(ent, Ok(x) if x.is_some()).then(|| neighbor)
             })
         }) {
@@ -284,7 +284,7 @@ pub fn pointer_cursor(
         let offset = world_pos - field_transform + Vec2::splat(CELL_SIZE) / 2.;
         let pos = Position {
             x: (offset.x / CELL_SIZE).floor() as isize,
-            y: (offset.y / CELL_SIZE).floor() as isize
+            y: (offset.y / CELL_SIZE).floor() as isize,
         };
 
         if minefield.is_contained(&pos) {

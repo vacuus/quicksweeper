@@ -31,8 +31,7 @@ impl BlankField {
 
         std::iter::once(abs_center)
             .chain(abs_center.neighbors())
-            .filter_map(|pos| self.contains(&pos).then(|| pos))
-            .next()
+            .find_map(|pos| self.contains(&pos).then_some(pos))
     }
 }
 

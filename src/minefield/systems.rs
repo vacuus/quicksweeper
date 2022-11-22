@@ -30,34 +30,31 @@ pub fn generate_minefield(
     minefields: Query<(Entity, &Minefield)>,
     mut states: Query<&mut MineCellState>,
 ) {
-    if let Some(ev) = check.iter().next().map(|x| x.clone()) {
+    if let Some(ev) = check.iter().next().cloned() {
         let exclude = ev.positions;
         for position in exclude.iter() {
             // TODO: Synchronize with system `check_cell`
             write_back.send(CheckCell(CursorPosition(*position, ev.minefield)));
         }
 
-        minefields
-            .iter()
-            .find(|(field, _)| *field == ev.minefield)
-            .map(|(_, field)| {
-                let minefield_vec = field
-                    .occupied_entries()
-                    .filter_map(|(a, b)| b.map(|b| (a, b)))
-                    .collect_vec();
+        if let Some((_, field)) = minefields.iter().find(|(field, _)| *field == ev.minefield) {
+            let minefield_vec = field
+                .occupied_entries()
+                .filter_map(|(a, b)| b.map(|b| (a, b)))
+                .collect_vec();
 
-                minefield_vec
-                    .iter()
-                    .filter(|&(&pos, _)| !exclude.contains(&pos.into()))
-                    .choose_multiple(
-                        &mut rand::thread_rng(),
-                        minefield_vec.len() - field.remaining_blank(),
-                    )
-                    .into_iter()
-                    .for_each(|&(_, cell)| {
-                        *states.get_mut(cell).unwrap() = MineCellState::Mine;
-                    });
-            });
+            minefield_vec
+                .iter()
+                .filter(|&(&pos, _)| !exclude.contains(&pos.into()))
+                .choose_multiple(
+                    &mut rand::thread_rng(),
+                    minefield_vec.len() - field.remaining_blank(),
+                )
+                .into_iter()
+                .for_each(|&(_, cell)| {
+                    *states.get_mut(cell).unwrap() = MineCellState::Mine;
+                });
+        }
     }
 }
 
@@ -87,7 +84,7 @@ pub fn reveal_cell(
                     .count() as u8;
                 if count_mine_neighbors == 0 {
                     check_next.extend(neighbors.into_iter().filter_map(|(pos, state)| {
-                        (!state.is_flagged()).then(|| CursorPosition(pos, ent))
+                        (!state.is_flagged()).then_some(CursorPosition(pos, ent))
                     }));
                 }
 
@@ -105,7 +102,7 @@ pub fn reveal_cell(
                     == x as usize
                 {
                     check_next.extend(neighbors.into_iter().filter_map(|(pos, state)| {
-                        (!state.is_marked()).then(|| CursorPosition(pos, ent))
+                        (!state.is_marked()).then_some(CursorPosition(pos, ent))
                     }));
                 }
             }

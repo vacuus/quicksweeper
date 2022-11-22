@@ -1,5 +1,5 @@
 #![warn(clippy::all)]
-#![allow(clippy::type_complexity)]
+#![allow(clippy::type_complexity)] // this lint marks type signatures of queries as too long, which is unnecessary
 
 mod common;
 mod cursor;

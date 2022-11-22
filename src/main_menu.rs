@@ -14,12 +14,7 @@ pub enum MenuState {
     InGame,
 }
 
-fn create_main_menu(
-    mut commands: Commands,
-    mut ctx: ResMut<EguiContext>,
-    windows: Res<Windows>,
-) {
-
+fn create_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>, windows: Res<Windows>) {
     let window_props = windows.primary();
 
     egui::Area::new("main_menu")

@@ -100,9 +100,6 @@ impl Plugin for SingleplayerMode {
                     .into_conditional()
                     .run_in_states([PreGame, Game]),
             )
-            // .add_system(
-            //     pointer_cursor.run_not_in_state(Inactive)
-            // )
             .add_system(track_cursor.run_not_in_state(Inactive))
             .add_system(translate_cursor.run_not_in_state(Inactive))
             .add_system(init_check_cell.run_in_state(PreGame))
