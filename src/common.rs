@@ -135,7 +135,7 @@ pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {
     fn build(&self, app: &mut App) {
-        app.add_event::<CheckCell>()
+        app.init_resource::<Events<CheckCell>>()
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>()
             .add_startup_system(init_cameras);

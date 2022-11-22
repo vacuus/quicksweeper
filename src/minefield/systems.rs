@@ -58,14 +58,15 @@ pub fn generate_minefield(
     }
 }
 
+/// Reacts to requests to reveal cells, and is the sole consumer of [CheckCell] events.
 pub fn reveal_cell(
     mut fields: Query<&mut Minefield>,
     mut states: Query<&mut MineCellState>,
-    mut ev: EventReader<CheckCell>,
+    mut ev: ResMut<Events<CheckCell>>,
     mut check_next: Local<VecDeque<CursorPosition>>,
     mut finish_state: EventWriter<GameOutcome>,
 ) {
-    check_next.extend(ev.iter().map(|CheckCell(pos)| pos.clone()));
+    check_next.extend(ev.drain().map(|CheckCell(pos)| pos));
 
     while let Some(CursorPosition(position, ent)) = check_next.pop_front() {
         let mut field = fields.get_mut(ent).unwrap();
