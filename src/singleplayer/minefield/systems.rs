@@ -120,19 +120,19 @@ pub fn flag_cell(
     mut fields: Query<&mut Minefield>,
     mut states: Query<&mut MineCellState>,
 ) {
+    use MineCellState::*;
     for FlagCell(CursorPosition(pos, field)) in ev.iter() {
         let mut state = states
             .get_mut(fields.get_mut(*field).unwrap()[pos])
             .unwrap();
-        match *state {
-            MineCellState::Empty => Some(MineCellState::FlaggedEmpty),
-            MineCellState::FlaggedEmpty => Some(MineCellState::Empty),
-            MineCellState::Mine => Some(MineCellState::FlaggedMine),
-            MineCellState::FlaggedMine => Some(MineCellState::Mine),
-            _ => None, // ignore revealed cells
-        }
-        .into_iter()
-        .for_each(|x| *state = x);
+        let new_state = match *state {
+            Empty => FlaggedEmpty,
+            FlaggedEmpty => Empty,
+            Mine => FlaggedMine,
+            FlaggedMine => Mine,
+            Revealed(_) => continue, // ignore revealed cells
+        };
+        *state = new_state;
     }
 }
 
