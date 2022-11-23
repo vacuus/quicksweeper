@@ -8,8 +8,7 @@ use crate::{
     common::{InitCheckCell, Position},
     cursor::*,
     load::{Field, MineTextures, Textures},
-    minefield::{systems::*, Minefield},
-    minefield::{BlankField, GameOutcome},
+    singleplayer::minefield::{systems::*, BlankField, GameOutcome, Minefield},
     state::ConditionalHelpersExt,
 };
 pub struct MultiplayerMode;

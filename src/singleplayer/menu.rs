@@ -6,7 +6,8 @@ use iyes_loopless::{
     state::{NextState},
 };
 
-use crate::{main_menu::MenuState, minefield::Minefield, SingleplayerState};
+use crate::{main_menu::MenuState, SingleplayerState};
+use super::minefield::Minefield;
 
 fn fail_screen(mut commands: Commands, ctx: ResMut<EguiContext>, minefield: Query<&Minefield>) {
     let remaining = minefield.single().remaining_blank();

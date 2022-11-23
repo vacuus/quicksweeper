@@ -1,5 +1,5 @@
 use crate::common::{CheckCell, Direction, FlagCell, InitCheckCell, Position};
-use crate::minefield::{MineCellState, Minefield, CELL_SIZE};
+use crate::singleplayer::minefield::{MineCellState, Minefield, CELL_SIZE};
 use bevy::{prelude::*, render::camera::Camera};
 use gridly::prelude::*;
 use tap::Tap;

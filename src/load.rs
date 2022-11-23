@@ -4,7 +4,7 @@ use derive_more::Deref;
 
 use crate::{
     main_menu::MenuState,
-    minefield::{BlankField, CELL_SIZE},
+    singleplayer::minefield::{BlankField, CELL_SIZE},
 };
 
 #[derive(AssetCollection, Resource)]

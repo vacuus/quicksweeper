@@ -2,7 +2,6 @@ use crate::{
     common::{InitCheckCell, Position},
     cursor::*,
     load::{Field, MineTextures, Textures},
-    minefield::{systems::*, BlankField, GameOutcome, Minefield},
     state::ConditionalHelpersExt,
 };
 use bevy::prelude::*;
@@ -10,8 +9,10 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
+use minefield::{systems::*, BlankField, GameOutcome, Minefield};
 
 mod menu;
+pub mod minefield;
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SingleplayerState {

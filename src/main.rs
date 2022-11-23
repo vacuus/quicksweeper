@@ -5,7 +5,6 @@ mod common;
 mod cursor;
 mod load;
 mod main_menu;
-mod minefield;
 mod multiplayer;
 mod singleplayer;
 mod state;
@@ -31,6 +30,6 @@ fn main() {
         .add_plugin(multiplayer::MultiplayerMode)
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(load::LoadPlugin)
-        .add_plugin(minefield::MinefieldPlugin)
+        .add_plugin(singleplayer::minefield::MinefieldPlugin)
         .run();
 }
