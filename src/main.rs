@@ -32,5 +32,6 @@ fn main() {
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(load::LoadPlugin)
         .add_plugin(singleplayer::minefield::MinefieldPlugin)
+        .add_plugin(server::ServerPlugin)
         .run();
 }
