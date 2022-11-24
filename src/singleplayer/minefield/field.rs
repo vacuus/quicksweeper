@@ -113,9 +113,18 @@ impl Minefield {
         textures: &Res<MineTextures>,
         template: &BlankField,
     ) -> Self {
+        Self::new_shaped(|&pos| {
+            commands.spawn(MineCell::new_empty(pos, textures)).id()
+        }, template)
+    }
+
+    pub fn new_shaped<F>(mut make_entity: F, template: &BlankField) -> Self
+    where
+        F: FnMut(&Position) -> Entity,
+    {
         let mut field = SparseGrid::new_default((Rows(10), Columns(10)), None); // TODO: Use less arbitrary numbers in init
-        for &pos in template.iter() {
-            let entity = commands.spawn(MineCell::new_empty(pos, textures)).id();
+        for pos in template.iter() {
+            let entity = make_entity(pos);
             field.insert(pos, Some(entity));
         }
 
@@ -125,6 +134,7 @@ impl Minefield {
             remaining_blank: field_density(amnt_cells),
             field,
         }
+        
     }
 
     pub fn refresh(&mut self, states: &mut Query<&mut MineCellState>) {
