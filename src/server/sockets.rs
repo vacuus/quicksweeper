@@ -89,10 +89,11 @@ pub fn upgrade_connections(
                     println!("received name {name}");
                     commands.entity(id).insert((ConnectionInfo {name}, ));
                 }
-                // Ok(_) => {
-                //     println!("Connection could not be validated, destroying...");
-                //     commands.entity(id).despawn();
-                // }
+                #[allow(unreachable_patterns)] // this will no longer be true later
+                Ok(_) => {
+                    println!("Improper connection negotiation, destroying...");
+                    commands.entity(id).despawn();
+                }
                 Err(e) => {
                     println!("Connection could not be validated, destroying...");
                     println!("reason: {e}");
