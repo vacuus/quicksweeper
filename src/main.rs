@@ -6,6 +6,7 @@ mod cursor;
 mod load;
 mod main_menu;
 mod multiplayer;
+mod protocol;
 mod server;
 mod singleplayer;
 mod state;

@@ -32,6 +32,8 @@ gridly = "0.9"
 gridly_grids = "0.5"
 
 tungstenite = "0.17"
+rmp-serde = "1.1"
 
 # bound by bevy
 anyhow = "*"
+serde = "*"
