@@ -45,7 +45,7 @@ pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, mess
                     commands.insert_resource(NextState(MenuState::MainMenu));
                 }
                 let height = initial_height - ui.available_height();
-                ui.set_max_height(dbg!(height))
+                ui.set_max_height(height)
             });
         });
 }

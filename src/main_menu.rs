@@ -37,7 +37,7 @@ fn create_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
                     commands.insert_resource(NextState(MenuState::InGame));
                 }
                 let height = initial_height - ui.available_height();
-                ui.set_max_height(dbg!(height))
+                ui.set_max_height(height)
             });
         });
 }
