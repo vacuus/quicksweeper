@@ -1,9 +1,9 @@
 
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize)]
-enum ApiEvent<'a> {
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ApiEvent {
     Greet {
-        name: &'a str,
+        name: String,
     }
 }
