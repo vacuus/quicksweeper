@@ -3,7 +3,7 @@ use bevy::{
     asset::{AssetLoader, LoadedAsset},
     reflect::TypeUuid,
 };
-use derive_more::Deref;
+use bevy::prelude::*;
 use tap::Tap;
 
 use crate::common::Position;

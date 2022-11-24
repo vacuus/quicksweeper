@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
-use derive_more::Deref;
 
 use crate::{
     main_menu::MenuState,
