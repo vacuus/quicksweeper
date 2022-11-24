@@ -1,6 +1,10 @@
 use std::net::{TcpListener, TcpStream};
 
 use bevy::prelude::*;
+// use tokio::net::TcpStream;
+// use tokio_tungstenite::WebSocketStream;
+// use futures_lite::future;
+
 use tungstenite::WebSocket;
 
 #[derive(Resource, DerefMut, Deref)]
@@ -22,9 +26,13 @@ pub struct Connection(WebSocket<TcpStream>);
 
 pub fn receive_client(listener: Res<OpenPort>, mut commands: Commands) {
     if let Ok((client, _)) = listener.accept() {
+        client.set_nonblocking(true).expect(
+            "Connection failed for reason: Could not connect to client in nonblocking mode",
+        );
         match tungstenite::accept(client) {
             Ok(socket) => {
                 commands.spawn((Connection(socket),));
+                println!("Connection accepted!")
             }
             Err(msg) => eprintln!("Connection failed for reason: {msg:?}"),
         };
