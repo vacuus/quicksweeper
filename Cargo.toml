@@ -32,4 +32,7 @@ arrayvec = "0.7"
 gridly = "0.9"
 gridly_grids = "0.5"
 
-anyhow = "*" # bound by bevy
+tungstenite = "0.17"
+
+# bound by bevy
+anyhow = "*"
