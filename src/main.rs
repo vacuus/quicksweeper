@@ -18,17 +18,7 @@ use bevy_egui::EguiPlugin;
 use main_menu::MainMenuPlugin;
 pub use singleplayer::SingleplayerState;
 
-use crate::protocol::ClientMessage;
-
 fn main() {
-    println!(
-        "{:x?}",
-        rmp_serde::to_vec(&ClientMessage::Greet {
-            name: "x".to_string()
-        })
-        .unwrap()
-    );
-
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {

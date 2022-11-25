@@ -52,7 +52,7 @@ pub struct Connection(WebSocket<TcpStream>);
 
 #[derive(Component)]
 pub struct ConnectionInfo {
-    name: String,
+    username: String,
 }
 
 pub fn receive_connections(listener: Res<OpenPort>, mut commands: Commands) {
@@ -77,10 +77,10 @@ pub fn upgrade_connections(
     for (id, mut client) in partial_connections.iter_mut() {
         if let Some(result) = client.read_partial() {
             match result {
-                Ok(ClientMessage::Greet { name }) => {
+                Ok(ClientMessage::Greet { username}) => {
                     println!("Connection upgraded! It is now able to become a player");
-                    println!("received name {name}");
-                    commands.entity(id).insert((ConnectionInfo { name },));
+                    println!("received name {username}");
+                    commands.entity(id).insert((ConnectionInfo { username },));
                 }
                 #[allow(unreachable_patterns)] // this will no longer be true later
                 Ok(_) => {
