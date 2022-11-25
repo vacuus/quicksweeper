@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{singleplayer::minefield::Minefield, server::QuicksweeperGame};
+use crate::{singleplayer::minefield::Minefield, server::{QuicksweeperGame, GameDescriptor}};
 
 #[derive(Component)]
 struct AreaAttack;
@@ -14,18 +14,17 @@ struct AreaAttackBundle {
 impl QuicksweeperGame for AreaAttack {
     type Bun = AreaAttackBundle;
 
-    fn name() -> &'static str {
-        "Area Attack"
-    }
-
-    fn description() -> &'static str {
-        "A race to claim the entire board for yourself"
-    }
-
-    fn initialize() -> Self::Bun {
+    fn initialize(&self) -> Self::Bun {
         AreaAttackBundle {
             marker: AreaAttack,
             minefield: Minefield::new_shaped(|_pos| todo!(), todo!()),
+        }
+    }
+
+    fn descriptor(&self) -> GameDescriptor {
+        GameDescriptor {
+            name: "Area Attack",
+            description: "A race to claim the entire board for yourself",
         }
     }
 }

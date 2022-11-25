@@ -3,7 +3,7 @@ use std::net::{TcpListener, TcpStream};
 use bevy::prelude::*;
 use tungstenite::{Message, WebSocket};
 
-use crate::protocol::ApiEvent;
+use crate::protocol::ClientMessage;
 
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
@@ -30,7 +30,7 @@ enum ConnectionUpgradeError {
 }
 
 impl Connection {
-    fn read_partial(&mut self) -> Option<Result<ApiEvent, ConnectionUpgradeError>> {
+    fn read_partial(&mut self) -> Option<Result<ClientMessage, ConnectionUpgradeError>> {
         let msg = match self.read_message() {
             Ok(msg) => Some(msg),
             Err(tungstenite::Error::Io(_)) => None,
@@ -77,7 +77,7 @@ pub fn upgrade_connections(
     for (id, mut client) in partial_connections.iter_mut() {
         if let Some(result) = client.read_partial() {
             match result {
-                Ok(ApiEvent::Greet { name }) => {
+                Ok(ClientMessage::Greet { name }) => {
                     println!("Connection upgraded! It is now able to become a player");
                     println!("received name {name}");
                     commands.entity(id).insert((ConnectionInfo { name },));

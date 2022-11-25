@@ -1,11 +1,15 @@
 use bevy::prelude::*;
 
+pub struct GameDescriptor {
+    pub name: &'static str,
+    pub description: &'static str
+}
+
 pub trait QuicksweeperGame {
     type Bun: Bundle;
 
-    fn name() -> &'static str;
-    fn description() -> &'static str;
-    fn initialize() -> Self::Bun;
+    fn descriptor(&self) -> GameDescriptor;
+    fn initialize(&self) -> Self::Bun;
 }
 
 #[derive(Component, Deref, DerefMut)]

@@ -5,7 +5,7 @@ use self::sockets::*;
 mod game;
 mod sockets;
 
-pub use game::QuicksweeperGame;
+pub use game::{QuicksweeperGame, GameDescriptor};
 
 pub struct ServerPlugin;
 
