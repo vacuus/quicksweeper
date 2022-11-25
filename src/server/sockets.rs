@@ -3,7 +3,7 @@ use std::net::{TcpListener, TcpStream};
 use bevy::prelude::*;
 use tungstenite::{Message, WebSocket};
 
-use super::protocol::{ClientMessage, ServerMessage};
+use super::protocol::{ClientData, ClientMessage, ServerMessage};
 
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
@@ -30,7 +30,7 @@ enum ConnectionUpgradeError {
 }
 
 impl Connection {
-    fn read_partial(&mut self) -> Option<Result<ClientMessage, ConnectionUpgradeError>> {
+    fn read_partial(&mut self) -> Option<Result<ClientData, ConnectionUpgradeError>> {
         let msg = match self.read_message() {
             Ok(msg) => Some(msg),
             Err(tungstenite::Error::Io(_)) => None,
@@ -77,7 +77,7 @@ pub fn upgrade_connections(
     for (id, mut client) in partial_connections.iter_mut() {
         if let Some(result) = client.read_partial() {
             match result {
-                Ok(ClientMessage::Greet { username }) => {
+                Ok(ClientData::Greet { username }) => {
                     println!("Connection upgraded! It is now able to become a player");
                     println!("received name {username}");
                     commands.entity(id).insert((ConnectionInfo { username },));
@@ -99,11 +99,19 @@ pub fn upgrade_connections(
 
 pub fn listen_clients(
     mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
-    mut server_message: EventWriter<ServerMessage>,
+    mut ev: EventWriter<ClientMessage>,
 ) {
-    for (id, mut client) in clients.iter_mut() {
+    for (sender, mut client) in clients.iter_mut() {
         if let Ok(msg) = client.read_message() {
-            println!("From {id:?} received message {msg}")
+            'normal: {
+                let Message::Binary(content) = msg else { break 'normal };
+                let Ok(data) = rmp_serde::from_slice(&content) else { break 'normal };
+                ev.send(ClientMessage { sender, data });
+                return;
+            }
+            let _ = client.write_message(Message::Binary(
+                rmp_serde::to_vec(&ServerMessage::Malformed).unwrap(),
+            ));
         }
     }
 }
