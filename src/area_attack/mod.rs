@@ -23,8 +23,8 @@ impl QuicksweeperGame for AreaAttack {
 
     fn descriptor(&self) -> GameDescriptor {
         GameDescriptor {
-            name: "Area Attack",
-            description: "A race to claim the entire board for yourself",
+            name: "Area Attack".to_string(),
+            description: "A race to claim the entire board for yourself".to_string(),
         }
     }
 }

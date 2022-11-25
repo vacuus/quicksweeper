@@ -1,8 +1,10 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GameDescriptor {
-    pub name: &'static str,
-    pub description: &'static str
+    pub name: String,
+    pub description: String,
 }
 
 pub trait QuicksweeperGame {
