@@ -20,8 +20,13 @@ pub enum ClientData {
     Greet { username: String },
 }
 
+pub struct ServerMessage {
+    pub receiver: Entity,
+    pub data: ServerData,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
-pub enum ServerMessage {
+pub enum ServerData {
     ActiveGames(Vec<ActiveGame>),
     Malformed,
 }

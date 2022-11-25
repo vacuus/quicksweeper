@@ -3,7 +3,7 @@ use std::net::{TcpListener, TcpStream};
 use bevy::prelude::*;
 use tungstenite::{Message, WebSocket};
 
-use super::protocol::{ClientData, ClientMessage, ServerMessage};
+use super::protocol::{ClientData, ClientMessage, ServerData, ServerMessage};
 
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
@@ -97,20 +97,34 @@ pub fn upgrade_connections(
     }
 }
 
-pub fn listen_clients(
+pub fn communicate_clients(
     mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
-    mut ev: EventWriter<ClientMessage>,
+    mut incoming: EventWriter<ClientMessage>,
+    mut outgoing: ResMut<Events<ServerMessage>>,
+    mut outgoing_collection: Local<Vec<ServerMessage>>,
 ) {
+    outgoing_collection.extend(outgoing.drain());
+
     for (sender, mut client) in clients.iter_mut() {
+        // drain_filter my beloved
+        let mut ix = 0;
+        while ix < outgoing_collection.len() {
+            if outgoing_collection[ix].receiver == sender {
+                let msg = outgoing_collection.swap_remove(ix).data;
+                let _ = client.write_message(Message::Binary(rmp_serde::to_vec(&msg).unwrap()));
+            }
+            ix += 1;
+        }
+
         if let Ok(msg) = client.read_message() {
             'normal: {
                 let Message::Binary(content) = msg else { break 'normal };
                 let Ok(data) = rmp_serde::from_slice(&content) else { break 'normal };
-                ev.send(ClientMessage { sender, data });
+                incoming.send(ClientMessage { sender, data });
                 return;
             }
             let _ = client.write_message(Message::Binary(
-                rmp_serde::to_vec(&ServerMessage::Malformed).unwrap(),
+                rmp_serde::to_vec(&ServerData::Malformed).unwrap(),
             ));
         }
     }
