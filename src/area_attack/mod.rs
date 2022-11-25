@@ -24,6 +24,10 @@ impl AreaAttackBundle {
         Self {
             game: GameBundle {
                 marker: GameMarker(AREA_ATTACK_UUID),
+                descriptor: GameDescriptor {
+                    name: "Area Attack".to_string(),
+                    description: "Race to claim the board for yourself".to_string(),
+                },
                 players: default(),
             },
             field,   

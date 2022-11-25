@@ -12,7 +12,7 @@ use bevy::{prelude::*, utils::Uuid};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Component, Serialize, Deserialize, Debug)]
 pub struct GameDescriptor {
     pub name: String,
     pub description: String,
@@ -27,6 +27,7 @@ pub struct Players(pub Vec<Entity>);
 #[derive(Bundle)]
 pub struct GameBundle {
     pub marker: GameMarker,
+    pub descriptor: GameDescriptor,
     pub players: Players,
 }
 
