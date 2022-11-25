@@ -21,7 +21,12 @@ pub fn wipe_minefields(
     mut states: Query<&mut MineCellState>,
     mut minefield: Query<&mut Minefield>,
 ) {
-    minefield.for_each_mut(|mut field| field.refresh(&mut states))
+    minefield.for_each_mut(|mut field| {
+        states.for_each_mut(|mut state| *state = MineCellState::Empty);
+
+        let amnt_cells = field.occupied_entries().count();
+        field.remaining_blank = amnt_cells * 8 / 10;
+    })
 }
 
 pub fn generate_minefield(
@@ -47,7 +52,7 @@ pub fn generate_minefield(
                 .filter(|&(&pos, _)| !exclude.contains(&pos.into()))
                 .choose_multiple(
                     &mut rand::thread_rng(),
-                    minefield_vec.len() - field.remaining_blank(),
+                    minefield_vec.len() - field.remaining_blank,
                 )
                 .into_iter()
                 .for_each(|&(_, cell)| {

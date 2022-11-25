@@ -9,7 +9,7 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use minefield::{systems::*, BlankField, GameOutcome, Minefield};
+use minefield::{systems::*, BlankField, GameOutcome, Minefield, MineCell};
 
 mod menu;
 pub mod minefield;
@@ -51,12 +51,18 @@ fn create_entities(
 ) {
     // create minefield
     let field_template = field_templates.get(&field_template.field).unwrap();
-    let minefield = Minefield::new_blank_shaped(&mut commands, &mine_textures, field_template);
+    let minefield = Minefield::new_shaped(
+        |&pos| {
+            commands
+                .spawn(MineCell::new_empty(pos, &mine_textures))
+                .id()
+        },
+        field_template,
+    );
     let minefield_entity = commands.spawn(()).insert(minefield).id();
 
     // get center of minefield
-    #[allow(clippy::or_fun_call)]
-    let init_position = field_template.center().unwrap_or(Position::new(0, 0));
+    let init_position = field_template.center().unwrap_or(Position { x: 0, y: 0 });
 
     // create cursor
     commands

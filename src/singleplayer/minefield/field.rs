@@ -83,8 +83,8 @@ impl MineCellState {
 
 #[derive(Component)]
 pub struct Minefield {
-    pub(super) field: SparseGrid<Option<Entity>>,
-    pub(super) remaining_blank: usize,
+    pub field: SparseGrid<Option<Entity>>,
+    pub remaining_blank: usize,
 }
 
 impl Deref for Minefield {
@@ -134,14 +134,6 @@ impl Minefield {
             remaining_blank: field_density(amnt_cells),
             field,
         }
-        
-    }
-
-    pub fn refresh(&mut self, states: &mut Query<&mut MineCellState>) {
-        states.for_each_mut(|mut state| *state = MineCellState::Empty);
-
-        let amnt_cells = self.occupied_entries().count();
-        self.remaining_blank = field_density(amnt_cells);
     }
 
     pub fn iter_neighbors_enumerated(
@@ -158,10 +150,6 @@ impl Minefield {
 
     pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> + '_ {
         self.iter_neighbors_enumerated(pos).map(|(pos, _)| pos)
-    }
-
-    pub fn remaining_blank(&self) -> usize {
-        self.remaining_blank
     }
 
     pub fn is_contained(&self, pos: &Position) -> bool {
