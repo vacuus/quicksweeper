@@ -1,30 +1,32 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::Uuid};
 
-use crate::{singleplayer::minefield::Minefield, server::{QuicksweeperGame, GameDescriptor}};
+use crate::{
+    server::{GameMarker, GameBundle, GameDescriptor},
+    singleplayer::minefield::Minefield,
+};
+
+const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
+    Ok(val) => val,
+    Err(_) => unreachable!(),
+};
 
 #[derive(Component)]
 struct AreaAttack;
 
 #[derive(Bundle)]
 struct AreaAttackBundle {
-    marker: AreaAttack,
-    minefield: Minefield,
+    game: GameBundle,
+    field: Minefield,
 }
 
-impl QuicksweeperGame for AreaAttack {
-    type Bun = AreaAttackBundle;
-
-    fn initialize(&self) -> Self::Bun {
-        AreaAttackBundle {
-            marker: AreaAttack,
-            minefield: Minefield::new_shaped(|_pos| todo!(), todo!()),
-        }
-    }
-
-    fn descriptor(&self) -> GameDescriptor {
-        GameDescriptor {
-            name: "Area Attack".to_string(),
-            description: "A race to claim the entire board for yourself".to_string(),
+impl AreaAttackBundle {
+    fn new(field: Minefield) -> Self {
+        Self {
+            game: GameBundle {
+                marker: GameMarker(AREA_ATTACK_UUID),
+                players: default(),
+            },
+            field,   
         }
     }
 }
