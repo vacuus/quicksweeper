@@ -1,14 +1,10 @@
 //! ## How to create a quicksweeper game
 //!
-//! A quicksweeper gamemode is an entity that contains a [GameBundle] and "responds" to
-//! [ServerEvent]s. It should contain a system which generates a new game when a
-//! [ServerEvent::Create] event is issued to it, and should receive data when a [ServerEvent::Data]
-//! event is issued to it. The event contains a Uuid which signals to your system whether or not
-//! your gamemode is being targeted.
+//! A quicksweeper gamemode is an entity that derives from the [GameBundle] bundle. When connections
+//! are requested to it, the players will become children of the game, and the game will be given
+//! management of their connections. Unfortunately, a gamemode right now is given trust over the
+//! entire world, so caution should be exercised when modifying entities.
 //!
-//!
-
-use std::collections::HashMap;
 
 use bevy::{prelude::*, utils::Uuid};
 
