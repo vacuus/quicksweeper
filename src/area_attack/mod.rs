@@ -1,7 +1,7 @@
 use bevy::{prelude::*, utils::Uuid};
 
 use crate::{
-    server::{GameMarker, GameBundle, GameDescriptor},
+    server::{GameBundle, GameDescriptor, GameMarker},
     singleplayer::minefield::Minefield,
 };
 
@@ -30,7 +30,7 @@ impl AreaAttackBundle {
                 },
                 players: default(),
             },
-            field,   
+            field,
         }
     }
 }

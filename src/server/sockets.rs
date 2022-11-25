@@ -3,7 +3,7 @@ use std::net::{TcpListener, TcpStream};
 use bevy::prelude::*;
 use tungstenite::{Message, WebSocket};
 
-use crate::protocol::ClientMessage;
+use super::protocol::{ClientMessage, ServerMessage};
 
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
@@ -77,7 +77,7 @@ pub fn upgrade_connections(
     for (id, mut client) in partial_connections.iter_mut() {
         if let Some(result) = client.read_partial() {
             match result {
-                Ok(ClientMessage::Greet { username}) => {
+                Ok(ClientMessage::Greet { username }) => {
                     println!("Connection upgraded! It is now able to become a player");
                     println!("received name {username}");
                     commands.entity(id).insert((ConnectionInfo { username },));
@@ -97,8 +97,11 @@ pub fn upgrade_connections(
     }
 }
 
-pub fn listen_clients(mut clients: Query<(Entity, &mut Connection, &ConnectionInfo)>) {
-    for (id, mut client, _) in clients.iter_mut() {
+pub fn listen_clients(
+    mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
+    mut server_message: EventWriter<ServerMessage>,
+) {
+    for (id, mut client) in clients.iter_mut() {
         if let Ok(msg) = client.read_message() {
             println!("From {id:?} received message {msg}")
         }

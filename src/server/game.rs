@@ -8,6 +8,8 @@
 //!
 //!
 
+use std::collections::HashMap;
+
 use bevy::{prelude::*, utils::Uuid};
 
 use serde::{Deserialize, Serialize};
@@ -18,7 +20,7 @@ pub struct GameDescriptor {
     pub description: String,
 }
 
-#[derive(Component, Deref, DerefMut)]
+#[derive(Component, Deref, DerefMut, Serialize, Deserialize, Debug)]
 pub struct GameMarker(pub Uuid);
 
 #[derive(Component, Deref, DerefMut, Default)]
@@ -29,18 +31,4 @@ pub struct GameBundle {
     pub marker: GameMarker,
     pub descriptor: GameDescriptor,
     pub players: Players,
-}
-
-pub enum ServerEvent {
-    Data {
-        player: Entity,
-        game: Entity,
-        marker: GameMarker,
-        data: Vec<u8>,
-    },
-    Create {
-        player: Entity,
-        marker: GameMarker,
-        params: Vec<u8>,
-    }
 }
