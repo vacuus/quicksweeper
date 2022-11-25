@@ -8,7 +8,7 @@ use crate::{
     common::{InitCheckCell, Position},
     cursor::*,
     load::{Field, MineTextures, Textures},
-    singleplayer::minefield::{systems::*, BlankField, GameOutcome, Minefield},
+    singleplayer::minefield::{systems::*, BlankField, GameOutcome, Minefield, specific::MineCell},
     state::ConditionalHelpersExt,
 };
 pub struct MultiplayerMode;
@@ -30,7 +30,14 @@ fn create_entities(
     textures: Res<Textures>,
 ) {
     let field_template = field_templates.get(&field_template.field).unwrap();
-    let minefield = Minefield::new_blank_shaped(&mut commands, &mine_textures, field_template);
+    let minefield = Minefield::new_shaped(
+        |&pos| {
+            commands
+                .spawn(MineCell::new_empty(pos, &mine_textures))
+                .id()
+        },
+        field_template,
+    );
     let minefield_entity = commands.spawn((minefield,)).id();
 
     #[allow(clippy::or_fun_call)]

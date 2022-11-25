@@ -9,7 +9,9 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use minefield::{systems::*, BlankField, GameOutcome, Minefield, MineCell};
+use minefield::{systems::*, BlankField, GameOutcome, Minefield};
+
+use self::minefield::specific::MineCell;
 
 mod menu;
 pub mod minefield;
