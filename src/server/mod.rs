@@ -5,6 +5,8 @@ use self::sockets::*;
 mod game;
 mod sockets;
 
+pub use game::QuicksweeperGame;
+
 pub struct ServerPlugin;
 
 impl Plugin for ServerPlugin {

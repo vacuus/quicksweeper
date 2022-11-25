@@ -1,6 +1,7 @@
 #![warn(clippy::all)]
 #![allow(clippy::type_complexity)] // this lint marks type signatures of queries as too long, which is unnecessary
 
+mod area_attack;
 mod common;
 mod cursor;
 mod load;
@@ -20,8 +21,13 @@ pub use singleplayer::SingleplayerState;
 use crate::protocol::ApiEvent;
 
 fn main() {
-
-    println!("{:x?}", rmp_serde::to_vec(&ApiEvent::Greet { name: "x".to_string()}).unwrap());
+    println!(
+        "{:x?}",
+        rmp_serde::to_vec(&ApiEvent::Greet {
+            name: "x".to_string()
+        })
+        .unwrap()
+    );
 
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {

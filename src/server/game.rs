@@ -1,18 +1,17 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-struct AreaAttack;
+pub trait QuicksweeperGame {
+    type Bun: Bundle;
+
+    fn name() -> &'static str;
+    fn description() -> &'static str;
+    fn initialize() -> Self::Bun;
+}
 
 #[derive(Component, Deref, DerefMut)]
-struct Players(Vec<Entity>);
+pub struct Players(Vec<Entity>);
 
 #[derive(Bundle)]
 struct GameBundle {
     players: Players,
-}
-
-
-#[derive(Bundle)]
-struct AreaAttackBundle {
-    marker: AreaAttack,
 }

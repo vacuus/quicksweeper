@@ -1,10 +1,6 @@
 use std::net::{TcpListener, TcpStream};
 
 use bevy::prelude::*;
-// use tokio::net::TcpStream;
-// use tokio_tungstenite::WebSocketStream;
-// use futures_lite::future;
-
 use tungstenite::{Message, WebSocket};
 
 use crate::protocol::ApiEvent;
@@ -22,9 +18,6 @@ impl OpenPort {
         Self(listener)
     }
 }
-
-// #[derive(Component, Deref, DerefMut)]
-// pub struct PartialConnection(WebSocket<TcpStream>);
 
 #[derive(thiserror::Error, Debug)]
 enum ConnectionUpgradeError {
@@ -87,7 +80,7 @@ pub fn upgrade_connections(
                 Ok(ApiEvent::Greet { name }) => {
                     println!("Connection upgraded! It is now able to become a player");
                     println!("received name {name}");
-                    commands.entity(id).insert((ConnectionInfo {name}, ));
+                    commands.entity(id).insert((ConnectionInfo { name },));
                 }
                 #[allow(unreachable_patterns)] // this will no longer be true later
                 Ok(_) => {
@@ -98,7 +91,6 @@ pub fn upgrade_connections(
                     println!("Connection could not be validated, destroying...");
                     println!("reason: {e}");
                     commands.entity(id).despawn();
-
                 }
             }
         }
