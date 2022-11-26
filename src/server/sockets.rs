@@ -52,7 +52,7 @@ pub struct Connection(WebSocket<TcpStream>);
 
 #[derive(Component)]
 pub struct ConnectionInfo {
-    username: String,
+    pub username: String,
 }
 
 pub fn receive_connections(listener: Res<OpenPort>, mut commands: Commands) {

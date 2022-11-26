@@ -10,15 +10,18 @@ use bevy::{prelude::*, utils::Uuid};
 
 use serde::{Deserialize, Serialize};
 
-use super::protocol::{ClientData, ClientMessage, ServerMessage, ServerData};
+use super::{
+    protocol::{ActiveGame, ClientData, ClientMessage, ServerData, ServerMessage},
+    sockets::ConnectionInfo,
+};
 
-#[derive(Component, Serialize, Deserialize, Debug)]
+#[derive(Component, Serialize, Deserialize, Debug, Clone)]
 pub struct GameDescriptor {
     pub name: String,
     pub description: String,
 }
 
-#[derive(Component, Deref, DerefMut, Serialize, Deserialize, Debug)]
+#[derive(Component, Deref, DerefMut, Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct GameMarker(pub Uuid);
 
 #[derive(Component, Deref, DerefMut, Default)]
@@ -35,10 +38,27 @@ pub fn top_level_connections(
     mut incoming: EventReader<ClientMessage>,
     mut outgoing: EventWriter<ServerMessage>,
     active_games: Query<(&GameMarker, &GameDescriptor, &Players)>,
+    q_players: Query<&ConnectionInfo>,
 ) {
     let translate = |incoming: &ClientMessage| {
         let data = match incoming.data {
             ClientData::Greet { .. } => ServerData::Malformed,
+            ClientData::Games => ServerData::ActiveGames(
+                active_games
+                    .iter()
+                    .map(|(&marker, descriptor, players)| {
+                        let players = players
+                            .iter()
+                            .map(|&ent| q_players.get(ent).unwrap().username.clone())
+                            .collect();
+                        ActiveGame {
+                            marker,
+                            descriptor: descriptor.clone(),
+                            players,
+                        }
+                    })
+                    .collect(),
+            ),
         };
 
         ServerMessage {

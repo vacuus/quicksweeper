@@ -5,9 +5,9 @@ use crate::server::{GameDescriptor, GameMarker};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ActiveGame {
-    marker: GameMarker,
-    descriptor: GameDescriptor,
-    players: Vec<String>,
+    pub marker: GameMarker,
+    pub descriptor: GameDescriptor,
+    pub players: Vec<String>,
 }
 
 pub struct ClientMessage {
@@ -18,6 +18,7 @@ pub struct ClientMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientData {
     Greet { username: String },
+    Games
 }
 
 pub struct ServerMessage {
