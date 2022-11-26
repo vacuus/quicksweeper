@@ -10,6 +10,7 @@ mod protocol;
 mod sockets;
 
 pub use game::*;
+pub use protocol::*;
 
 pub struct ServerPlugin;
 
@@ -20,6 +21,7 @@ impl Plugin for ServerPlugin {
             .add_event::<ClientMessage>()
             .add_system(receive_connections)
             .add_system(upgrade_connections)
-            .add_system(communicate_clients);
+            .add_system(communicate_clients)
+            .add_system(top_level_connections);
     }
 }
