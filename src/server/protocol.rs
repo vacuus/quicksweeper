@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::server::{GameDescriptor, GameMarker};
 
@@ -18,7 +18,7 @@ pub struct ClientMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientData {
     Greet { username: String },
-    Games
+    Games,
 }
 
 pub struct ServerMessage {

@@ -3,7 +3,7 @@ use bevy_asset_loader::prelude::*;
 
 use crate::{
     main_menu::MenuState,
-    singleplayer::minefield::{BlankField, specific::CELL_SIZE},
+    singleplayer::minefield::{specific::CELL_SIZE, BlankField},
 };
 
 #[derive(AssetCollection, Resource)]

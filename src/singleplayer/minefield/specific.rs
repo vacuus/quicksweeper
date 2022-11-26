@@ -39,7 +39,6 @@ pub enum MineCellState {
     FlaggedMine,
 }
 
-
 impl MineCellState {
     pub fn is_flagged(&self) -> bool {
         matches!(

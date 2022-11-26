@@ -1,13 +1,10 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
 use egui::{Color32, RichText};
-use iyes_loopless::{
-    prelude::{IntoConditionalSystem},
-    state::{NextState},
-};
+use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
-use crate::{main_menu::MenuState, SingleplayerState};
 use super::minefield::Minefield;
+use crate::{main_menu::MenuState, SingleplayerState};
 
 fn fail_screen(mut commands: Commands, ctx: ResMut<EguiContext>, minefield: Query<&Minefield>) {
     let remaining = minefield.single().remaining_blank;

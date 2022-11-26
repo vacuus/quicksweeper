@@ -1,4 +1,4 @@
-use super::{field::*, GameOutcome, specific::MineCellState};
+use super::{field::*, specific::MineCellState, GameOutcome};
 use crate::{
     common::{CheckCell, FlagCell, InitCheckCell},
     cursor::CursorPosition,

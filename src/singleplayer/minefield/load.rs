@@ -1,9 +1,9 @@
 use anyhow::anyhow;
+use bevy::prelude::*;
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
     reflect::TypeUuid,
 };
-use bevy::prelude::*;
 use tap::Tap;
 
 use crate::common::Position;
