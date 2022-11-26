@@ -59,6 +59,7 @@ pub fn top_level_connections(
                     })
                     .collect(),
             ),
+            _ => ServerData::Malformed, // reject unimplemented requests for now
         };
 
         ServerMessage {
