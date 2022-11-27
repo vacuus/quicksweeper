@@ -37,13 +37,13 @@ pub struct GameBundle {
 
 pub fn server_messages(
     mut commands: Commands,
-    mut incoming: EventReader<ClientMessage>,
+    mut incoming: ResMut<Events<ClientMessage>>,
     mut outgoing: EventWriter<ServerMessage>,
     mut game_events: EventWriter<IngameEvent>,
     active_games: Query<(&GameMarker, &GameDescriptor, &Players)>,
     q_players: Query<&ConnectionInfo>,
 ) {
-    let mut translate = |incoming: &ClientMessage| {
+    let mut translate = |incoming: ClientMessage| {
         let data = match incoming.data {
             ClientData::Games => ServerData::ActiveGames(
                 active_games
@@ -61,13 +61,13 @@ pub fn server_messages(
                     })
                     .collect(),
             ),
-            ClientData::Create { game, ref data } => {
+            ClientData::Create { game, data } => {
                 let game_id = commands.spawn((game,)).add_child(incoming.sender).id();
                 game_events.send(IngameEvent::Create {
                     client: incoming.sender,
                     game: game_id,
                     kind: game,
-                    data: data.clone(),
+                    data,
                 });
                 ServerData::Confirmed
             }
@@ -80,7 +80,7 @@ pub fn server_messages(
         }
     };
 
-    for incoming in incoming.iter() {
+    for incoming in incoming.drain() {
         outgoing.send(translate(incoming))
     }
 }

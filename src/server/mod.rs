@@ -29,7 +29,7 @@ impl Plugin for ServerPlugin {
 
         app.insert_resource(OpenPort::generate())
             .init_resource::<Events<ServerMessage>>() // communicate_clients is the sole consumer of ServerMessage
-            .add_event::<ClientMessage>()
+            .init_resource::<Events<ClientMessage>>() // server_messages is the sole consumer of ClientMessage
             .add_event::<IngameEvent>()
             .add_system(test_added)
             .add_system(receive_connections)
