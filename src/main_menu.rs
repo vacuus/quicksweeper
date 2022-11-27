@@ -9,7 +9,7 @@ use iyes_loopless::{
 };
 use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, WebSocket};
 
-use crate::{multiplayer::MultiplayerState, SingleplayerState};
+use crate::{multiplayer::MultiplayerState, SingleplayerState, server::ActiveGame};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MenuState {
@@ -63,6 +63,7 @@ fn run_menu(
     mut ctx: ResMut<EguiContext>,
     mut fields: ResMut<MenuFields>,
     mut r_socket: ResMut<ClientSocket>,
+    mut games: Local<Vec<ActiveGame>>,
 ) {
     standard_window(&mut ctx, |ui| match fields.menu_type {
         MenuType::MainMenu => {
@@ -102,8 +103,9 @@ fn run_menu(
                         std::mem::replace(&mut fields.trying_connection, None).unwrap();
                     match maybe_handshake {
                         Ok((socket, _)) => {
-                            println!("Connection succeeded!");
                             **r_socket = Some(socket);
+                            // TODO: Collect username somehow
+                            fields.menu_type = MenuType::GameSelect;
                         }
                         Err(HandshakeError::Interrupted(handshake)) => {
                             fields.trying_connection = Some(handshake.handshake())
@@ -132,7 +134,9 @@ fn run_menu(
                 Result::<_, ()>::Ok(())
             });
         }
-        MenuType::GameSelect => todo!(),
+        MenuType::GameSelect => {
+            ui.label("Running games");
+        },
     });
 }
 
