@@ -7,7 +7,10 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use tungstenite::{handshake::{MidHandshake, client::Response}, ClientHandshake, HandshakeError, WebSocket};
+use tungstenite::{
+    handshake::{client::Response, MidHandshake},
+    ClientHandshake, HandshakeError, WebSocket,
+};
 
 use crate::{multiplayer::MultiplayerState, SingleplayerState};
 
@@ -25,7 +28,8 @@ enum MenuType {
     GameSelect,
 }
 
-type ClientResult = Result<(WebSocket<TcpStream>, Response), HandshakeError<ClientHandshake<TcpStream>>>;
+type ClientResult =
+    Result<(WebSocket<TcpStream>, Response), HandshakeError<ClientHandshake<TcpStream>>>;
 
 #[derive(Resource, Default)]
 struct MenuFields {
@@ -89,7 +93,7 @@ fn run_menu(
             });
         }
         MenuType::ServerSelect => {
-            ui.horizontal(|ui| 'ui: {
+            ui.horizontal(|ui| {
                 ui.label("Server address:");
                 let response = ui.add_enabled(
                     fields.trying_connection.is_none(),
@@ -98,7 +102,8 @@ fn run_menu(
                 ui.colored_label(Color32::RED, fields.remote_select_err);
 
                 if fields.trying_connection.is_some() {
-                    let maybe_handshake = std::mem::replace(&mut fields.trying_connection, None).unwrap();
+                    let maybe_handshake =
+                        std::mem::replace(&mut fields.trying_connection, None).unwrap();
                     match maybe_handshake {
                         Ok((socket, _)) => {
                             println!("Connection succeeded!");
@@ -114,21 +119,21 @@ fn run_menu(
                 }
                 // execute requests to connect to server
                 else if response.lost_focus() && ui.input().key_pressed(Key::Enter) {
-                    let Ok(stream) = TcpStream::connect(&fields.remote_addr) else {
+                    let stream = TcpStream::connect(&fields.remote_addr).map_err(|_| {
                         fields.remote_select_err = "Could not find that address";
-                        break 'ui;
-                    };
+                    })?;
 
-                    if stream.set_nonblocking(true).is_err() {
+                    stream.set_nonblocking(true).map_err(|_| {
                         fields.remote_select_err = "Unable to set nonblocking connection mode";
-                        break 'ui;
-                    }
+                    })?;
 
                     let addr = format!("ws://{}/", fields.remote_addr);
                     fields.trying_connection = Some(tungstenite::client(addr, stream));
                 } else if response.gained_focus() {
                     fields.remote_select_err = "";
                 }
+
+                Result::<_, ()>::Ok(())
             });
         }
         MenuType::GameSelect => todo!(),
