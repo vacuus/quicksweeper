@@ -19,6 +19,7 @@ pub struct ClientMessage {
 pub enum ClientData {
     Greet { username: String },
     Create { game: GameMarker , data: Vec<u8>},
+    Join {game: Entity},
     Ingame { data: Vec<u8> },
     ForceLeave,
     Games,

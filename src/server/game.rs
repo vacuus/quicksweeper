@@ -71,6 +71,14 @@ pub fn server_messages(
                 });
                 ServerData::Confirmed
             }
+            ClientData::Join { game } => {
+                if let Some(mut ent) = commands.get_entity(game) {
+                    ent.add_child(incoming.sender);
+                    ServerData::Confirmed
+                } else {
+                    ServerData::Malformed
+                }
+            }
             _ => ServerData::Malformed, // reject unimplemented requests for now
         };
 
