@@ -18,7 +18,7 @@ pub struct ClientMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientData {
     Greet { username: String },
-    Create { game: GameMarker },
+    Create { game: GameMarker , data: Vec<u8>},
     Ingame { data: Vec<u8> },
     ForceLeave,
     Games,
@@ -32,6 +32,7 @@ pub struct ServerMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ServerData {
     ActiveGames(Vec<ActiveGame>),
+    Confirmed,
     Malformed,
 }
 
@@ -44,6 +45,7 @@ pub enum IngameEvent {
     },
     Create {
         client: Entity,
+        game: Entity,
         kind: GameMarker,
         data: Vec<u8>,
     },

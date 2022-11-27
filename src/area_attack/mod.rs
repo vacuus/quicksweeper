@@ -5,7 +5,7 @@ use crate::{
     singleplayer::minefield::Minefield,
 };
 
-const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
+pub const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
     Ok(val) => val,
     Err(_) => unreachable!(),
 };

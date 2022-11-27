@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use super::{
     protocol::{ActiveGame, ClientData, ClientMessage, ServerData, ServerMessage},
     sockets::ConnectionInfo,
+    IngameEvent,
 };
 
 #[derive(Component, Serialize, Deserialize, Debug, Clone)]
@@ -34,15 +35,16 @@ pub struct GameBundle {
     pub players: Players,
 }
 
-pub fn top_level_connections(
+pub fn server_messages(
+    mut commands: Commands,
     mut incoming: EventReader<ClientMessage>,
     mut outgoing: EventWriter<ServerMessage>,
+    mut game_events: EventWriter<IngameEvent>,
     active_games: Query<(&GameMarker, &GameDescriptor, &Players)>,
     q_players: Query<&ConnectionInfo>,
 ) {
-    let translate = |incoming: &ClientMessage| {
+    let mut translate = |incoming: &ClientMessage| {
         let data = match incoming.data {
-            ClientData::Greet { .. } => ServerData::Malformed,
             ClientData::Games => ServerData::ActiveGames(
                 active_games
                     .iter()
@@ -59,6 +61,16 @@ pub fn top_level_connections(
                     })
                     .collect(),
             ),
+            ClientData::Create { game, ref data } => {
+                let game_id = commands.spawn((game,)).id();
+                game_events.send(IngameEvent::Create {
+                    client: incoming.sender,
+                    game: game_id,
+                    kind: game,
+                    data: data.clone(),
+                });
+                ServerData::Confirmed
+            }
             _ => ServerData::Malformed, // reject unimplemented requests for now
         };
 
