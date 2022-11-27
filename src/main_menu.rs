@@ -9,7 +9,7 @@ use iyes_loopless::{
 };
 use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, WebSocket};
 
-use crate::{multiplayer::MultiplayerState, SingleplayerState, server::ActiveGame};
+use crate::{multiplayer::MultiplayerState, server::ActiveGame, SingleplayerState};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MenuState {
@@ -29,7 +29,6 @@ impl Default for MenuType {
     }
 }
 
-
 type ClientResult =
     Result<(WebSocket<TcpStream>, Response), HandshakeError<ClientHandshake<TcpStream>>>;
 
@@ -37,6 +36,7 @@ type ClientResult =
 struct MenuFields {
     menu_type: MenuType,
     remote_addr: String,
+    username: String,
     remote_select_err: &'static str,
     trying_connection: Option<ClientResult>,
 }
@@ -90,13 +90,27 @@ fn run_menu(
             });
         }
         MenuType::ServerSelect => {
-            ui.horizontal(|ui| {
-                ui.label("Server address:");
-                let response = ui.add_enabled(
-                    fields.trying_connection.is_none(),
-                    TextEdit::singleline(&mut fields.remote_addr),
-                );
+            ui.vertical_centered(|ui| {
                 ui.colored_label(Color32::RED, fields.remote_select_err);
+                let r1 = ui
+                    .horizontal(|ui| {
+                        ui.label("Server address:");
+                        ui.add_enabled(
+                            fields.trying_connection.is_none(),
+                            TextEdit::singleline(&mut fields.remote_addr),
+                        )
+                    })
+                    .inner;
+
+                let r2 = ui
+                    .horizontal(|ui| {
+                        ui.label("Username:");
+                        ui.add_enabled(
+                            fields.trying_connection.is_none(),
+                            TextEdit::singleline(&mut fields.username),
+                        )
+                    })
+                    .inner;
 
                 if fields.trying_connection.is_some() {
                     let maybe_handshake =
@@ -116,7 +130,8 @@ fn run_menu(
                     }
                 }
                 // execute requests to connect to server
-                else if response.lost_focus() && ui.input().key_pressed(Key::Enter) {
+                else if (r1.lost_focus() || r2.lost_focus()) && ui.input().key_pressed(Key::Enter)
+                {
                     let stream = TcpStream::connect(&fields.remote_addr).map_err(|_| {
                         fields.remote_select_err = "Could not find that address";
                     })?;
@@ -127,7 +142,7 @@ fn run_menu(
 
                     let addr = format!("ws://{}/", fields.remote_addr);
                     fields.trying_connection = Some(tungstenite::client(addr, stream));
-                } else if response.gained_focus() {
+                } else if r1.gained_focus() || r2.gained_focus() {
                     fields.remote_select_err = "";
                 }
 
@@ -136,7 +151,7 @@ fn run_menu(
         }
         MenuType::GameSelect => {
             ui.label("Running games");
-        },
+        }
     });
 }
 
