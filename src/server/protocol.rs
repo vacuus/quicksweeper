@@ -18,8 +18,8 @@ pub struct ClientMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientData {
     Greet { username: String },
-    Create { game: GameMarker , data: Vec<u8>},
-    Join {game: Entity},
+    Create { game: GameMarker, data: Vec<u8> },
+    Join { game: Entity },
     Ingame { data: Vec<u8> },
     ForceLeave,
     Games,

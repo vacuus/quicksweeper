@@ -24,8 +24,13 @@ fn test_added(q: Query<&GameMarker, Added<GameMarker>>) {
 
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
-
-        println!("{:X?}", rmp_serde::to_vec(&ClientData::Create { game: GameMarker(AREA_ATTACK_UUID), data: Vec::new() }));
+        println!(
+            "{:X?}",
+            rmp_serde::to_vec(&ClientData::Create {
+                game: GameMarker(AREA_ATTACK_UUID),
+                data: Vec::new()
+            })
+        );
 
         app.insert_resource(OpenPort::generate())
             .init_resource::<Events<ServerMessage>>() // communicate_clients is the sole consumer of ServerMessage

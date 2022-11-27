@@ -4,7 +4,10 @@ use egui::{Color32, RichText};
 use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
 use super::minefield::Minefield;
-use crate::{main_menu::{MenuState, standard_window}, SingleplayerState};
+use crate::{
+    main_menu::{standard_window, MenuState},
+    SingleplayerState,
+};
 
 fn fail_screen(mut commands: Commands, ctx: ResMut<EguiContext>, minefield: Query<&Minefield>) {
     let remaining = minefield.single().remaining_blank;
@@ -27,20 +30,20 @@ fn success_screen(mut commands: Commands, ctx: ResMut<EguiContext>) {
 pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, message: String) {
     use SingleplayerState::*;
     standard_window(&mut ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                let initial_height = ui.available_height();
-                ui.label(RichText::new(message).size(32.0).color(Color32::GOLD));
-                if ui.button("Retry").clicked() {
-                    commands.insert_resource(NextState(PreGame));
-                }
-                if ui.button("Main Menu").clicked() {
-                    commands.insert_resource(NextState(Inactive));
-                    commands.insert_resource(NextState(MenuState::Menu));
-                }
-                let height = initial_height - ui.available_height();
-                ui.set_max_height(height)
-            });
+        ui.vertical_centered(|ui| {
+            let initial_height = ui.available_height();
+            ui.label(RichText::new(message).size(32.0).color(Color32::GOLD));
+            if ui.button("Retry").clicked() {
+                commands.insert_resource(NextState(PreGame));
+            }
+            if ui.button("Main Menu").clicked() {
+                commands.insert_resource(NextState(Inactive));
+                commands.insert_resource(NextState(MenuState::Menu));
+            }
+            let height = initial_height - ui.available_height();
+            ui.set_max_height(height)
         });
+    });
 }
 
 pub struct MenuPlugin;

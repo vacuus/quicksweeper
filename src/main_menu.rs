@@ -1,10 +1,13 @@
+use std::net::TcpStream;
+
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
-use egui::{Color32, InnerResponse, RichText, Ui, Key};
+use egui::{Color32, InnerResponse, Key, RichText, TextEdit, Ui};
 use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
+use tungstenite::{handshake::{MidHandshake, client::Response}, ClientHandshake, HandshakeError, WebSocket};
 
 use crate::{multiplayer::MultiplayerState, SingleplayerState};
 
@@ -22,9 +25,13 @@ enum MenuType {
     GameSelect,
 }
 
+type ClientResult = Result<(WebSocket<TcpStream>, Response), HandshakeError<ClientHandshake<TcpStream>>>;
+
 #[derive(Resource, Default)]
 struct MenuFields {
     remote_addr: String,
+    remote_select_err: &'static str,
+    trying_connection: Option<ClientResult>,
 }
 
 impl Default for MenuType {
@@ -32,6 +39,9 @@ impl Default for MenuType {
         Self::MainMenu
     }
 }
+
+#[derive(Resource, Deref, DerefMut, Default)]
+pub struct ClientSocket(pub Option<WebSocket<TcpStream>>);
 
 pub fn standard_window<F, R>(
     ctx: &mut EguiContext,
@@ -52,6 +62,7 @@ fn run_menu(
     mut ctx: ResMut<EguiContext>,
     mut state: ResMut<MenuType>,
     mut fields: ResMut<MenuFields>,
+    mut r_socket: ResMut<ClientSocket>,
 ) {
     standard_window(&mut ctx, |ui| match *state {
         MenuType::MainMenu => {
@@ -78,11 +89,45 @@ fn run_menu(
             });
         }
         MenuType::ServerSelect => {
-            ui.horizontal(|ui| {
+            ui.horizontal(|ui| 'ui: {
                 ui.label("Server address:");
-                let response = ui.text_edit_singleline(&mut fields.remote_addr);
-                if response.lost_focus() && ui.input().key_pressed(Key::Enter) {
-                    println!("Received address: {}", fields.remote_addr);
+                let response = ui.add_enabled(
+                    fields.trying_connection.is_none(),
+                    TextEdit::singleline(&mut fields.remote_addr),
+                );
+                ui.colored_label(Color32::RED, fields.remote_select_err);
+
+                if fields.trying_connection.is_some() {
+                    let maybe_handshake = std::mem::replace(&mut fields.trying_connection, None).unwrap();
+                    match maybe_handshake {
+                        Ok((socket, _)) => {
+                            println!("Connection succeeded!");
+                            **r_socket = Some(socket);
+                        }
+                        Err(HandshakeError::Interrupted(handshake)) => {
+                            fields.trying_connection = Some(handshake.handshake())
+                        }
+                        Err(_) => {
+                            fields.remote_select_err = "Failed to perform handshake with server"
+                        }
+                    }
+                }
+                // execute requests to connect to server
+                else if response.lost_focus() && ui.input().key_pressed(Key::Enter) {
+                    let Ok(stream) = TcpStream::connect(&fields.remote_addr) else {
+                        fields.remote_select_err = "Could not find that address";
+                        break 'ui;
+                    };
+
+                    if stream.set_nonblocking(true).is_err() {
+                        fields.remote_select_err = "Unable to set nonblocking connection mode";
+                        break 'ui;
+                    }
+
+                    let addr = format!("ws://{}/", fields.remote_addr);
+                    fields.trying_connection = Some(tungstenite::client(addr, stream));
+                } else if response.gained_focus() {
+                    fields.remote_select_err = "";
                 }
             });
         }
@@ -97,6 +142,7 @@ impl Plugin for MainMenuPlugin {
         app.add_loopless_state(MenuState::Loading)
             .init_resource::<MenuType>()
             .init_resource::<MenuFields>()
+            .init_resource::<ClientSocket>()
             .add_system(run_menu.run_in_state(MenuState::Menu))
             .add_enter_system(MenuState::Menu, |mut t: ResMut<MenuType>| {
                 *t = MenuType::MainMenu
