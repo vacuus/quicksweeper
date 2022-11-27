@@ -57,7 +57,7 @@ impl Plugin for LoadPlugin {
         // AssetLoader::new(MenuState::Loading)
         app.add_loading_state(
             LoadingState::new(MenuState::Loading)
-                .continue_to_state(MenuState::MainMenu)
+                .continue_to_state(MenuState::Menu)
                 .with_collection::<Textures>()
                 .with_collection::<Field>()
                 .init_resource::<MineTextures>(),
