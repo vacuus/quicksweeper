@@ -4,7 +4,7 @@ use egui::{Color32, RichText};
 use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
 use super::minefield::Minefield;
-use crate::{main_menu::MenuState, SingleplayerState};
+use crate::{main_menu::{MenuState, standard_window}, SingleplayerState};
 
 fn fail_screen(mut commands: Commands, ctx: ResMut<EguiContext>, minefield: Query<&Minefield>) {
     let remaining = minefield.single().remaining_blank;
@@ -26,11 +26,7 @@ fn success_screen(mut commands: Commands, ctx: ResMut<EguiContext>) {
 
 pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, message: String) {
     use SingleplayerState::*;
-    egui::Window::new("")
-        .resizable(false)
-        .collapsible(false)
-        .title_bar(false)
-        .show(ctx.ctx_mut(), |ui| {
+    standard_window(&mut ctx, |ui| {
             ui.vertical_centered(|ui| {
                 let initial_height = ui.available_height();
                 ui.label(RichText::new(message).size(32.0).color(Color32::GOLD));
