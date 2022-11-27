@@ -7,10 +7,7 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use tungstenite::{
-    handshake::{client::Response, MidHandshake},
-    ClientHandshake, HandshakeError, WebSocket,
-};
+use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, WebSocket};
 
 use crate::{multiplayer::MultiplayerState, SingleplayerState};
 
@@ -21,27 +18,27 @@ pub enum MenuState {
     InGame,
 }
 
-#[derive(Resource)]
 enum MenuType {
     MainMenu,
     ServerSelect,
     GameSelect,
 }
+impl Default for MenuType {
+    fn default() -> Self {
+        Self::MainMenu
+    }
+}
+
 
 type ClientResult =
     Result<(WebSocket<TcpStream>, Response), HandshakeError<ClientHandshake<TcpStream>>>;
 
 #[derive(Resource, Default)]
 struct MenuFields {
+    menu_type: MenuType,
     remote_addr: String,
     remote_select_err: &'static str,
     trying_connection: Option<ClientResult>,
-}
-
-impl Default for MenuType {
-    fn default() -> Self {
-        Self::MainMenu
-    }
 }
 
 #[derive(Resource, Deref, DerefMut, Default)]
@@ -64,11 +61,10 @@ where
 fn run_menu(
     mut commands: Commands,
     mut ctx: ResMut<EguiContext>,
-    mut state: ResMut<MenuType>,
     mut fields: ResMut<MenuFields>,
     mut r_socket: ResMut<ClientSocket>,
 ) {
-    standard_window(&mut ctx, |ui| match *state {
+    standard_window(&mut ctx, |ui| match fields.menu_type {
         MenuType::MainMenu => {
             ui.vertical_centered(|ui| {
                 let initial_height = ui.available_height();
@@ -86,7 +82,7 @@ fn run_menu(
                     commands.insert_resource(NextState(MenuState::InGame));
                 }
                 if ui.button("Connect to server").clicked() {
-                    *state = MenuType::ServerSelect;
+                    fields.menu_type = MenuType::ServerSelect;
                 }
                 let height = initial_height - ui.available_height();
                 ui.set_max_height(height)
@@ -145,12 +141,11 @@ pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(MenuState::Loading)
-            .init_resource::<MenuType>()
             .init_resource::<MenuFields>()
             .init_resource::<ClientSocket>()
             .add_system(run_menu.run_in_state(MenuState::Menu))
-            .add_enter_system(MenuState::Menu, |mut t: ResMut<MenuType>| {
-                *t = MenuType::MainMenu
+            .add_enter_system(MenuState::Menu, |mut t: ResMut<MenuFields>| {
+                t.menu_type = MenuType::MainMenu
             });
     }
 }
