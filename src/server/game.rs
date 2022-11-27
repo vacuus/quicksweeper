@@ -62,7 +62,7 @@ pub fn server_messages(
                     .collect(),
             ),
             ClientData::Create { game, ref data } => {
-                let game_id = commands.spawn((game,)).id();
+                let game_id = commands.spawn((game,)).add_child(incoming.sender).id();
                 game_events.send(IngameEvent::Create {
                     client: incoming.sender,
                     game: game_id,
