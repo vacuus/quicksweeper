@@ -38,7 +38,7 @@ pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, mess
             }
             if ui.button("Main Menu").clicked() {
                 commands.insert_resource(NextState(Inactive));
-                commands.insert_resource(NextState(MenuState::Menu));
+                commands.insert_resource(NextState(MenuState::MainMenu));
             }
             let height = initial_height - ui.available_height();
             ui.set_max_height(height)
