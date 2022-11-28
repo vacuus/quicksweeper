@@ -41,8 +41,8 @@ struct MenuFields {
     trying_connection: Option<ClientResult>,
 }
 
-#[derive(Resource, Deref, DerefMut, Default)]
-pub struct ClientSocket(pub Option<WebSocket<TcpStream>>);
+#[derive(Resource, Deref, DerefMut)]
+pub struct ClientSocket(pub WebSocket<TcpStream>);
 
 pub fn standard_window<F, R>(
     ctx: &mut EguiContext,
@@ -62,7 +62,6 @@ fn run_menu(
     mut commands: Commands,
     mut ctx: ResMut<EguiContext>,
     mut fields: ResMut<MenuFields>,
-    mut r_socket: ResMut<ClientSocket>,
     mut games: Local<Vec<ActiveGame>>,
 ) {
     standard_window(&mut ctx, |ui| match fields.menu_type {
@@ -117,8 +116,8 @@ fn run_menu(
                         std::mem::replace(&mut fields.trying_connection, None).unwrap();
                     match maybe_handshake {
                         Ok((socket, _)) => {
-                            **r_socket = Some(socket);
                             // TODO: Collect username somehow
+                            commands.insert_resource(ClientSocket(socket));
                             fields.menu_type = MenuType::GameSelect;
                         }
                         Err(HandshakeError::Interrupted(handshake)) => {
@@ -161,7 +160,6 @@ impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(MenuState::Loading)
             .init_resource::<MenuFields>()
-            .init_resource::<ClientSocket>()
             .add_system(run_menu.run_in_state(MenuState::Menu))
             .add_enter_system(MenuState::Menu, |mut t: ResMut<MenuFields>| {
                 t.menu_type = MenuType::MainMenu
