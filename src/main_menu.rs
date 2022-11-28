@@ -104,7 +104,10 @@ fn server_select_menu(
                     })
                     .inner;
 
-                (r1.lost_focus() || r2.lost_focus(), r1.gained_focus() || r2.gained_focus())
+                (
+                    r1.lost_focus() || r2.lost_focus(),
+                    r1.gained_focus() || r2.gained_focus(),
+                )
             })
             .inner;
 
@@ -175,8 +178,7 @@ fn game_select_menu(
             ui.end_row();
 
             for game in games.iter() {
-                ui.vertical(|ui| {
-                });
+                ui.vertical(|ui| {});
             }
 
             ui.button("+create");

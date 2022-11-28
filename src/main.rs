@@ -10,15 +10,18 @@ mod multiplayer;
 mod server;
 mod singleplayer;
 mod state;
+mod registry;
 
 use bevy::prelude::*;
 
 use bevy_egui::EguiPlugin;
 use main_menu::MainMenuPlugin;
+use registry::GameRegistry;
 pub use singleplayer::SingleplayerState;
 
 fn main() {
     App::new()
+        .init_resource::<GameRegistry>()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Quicksweeper".to_string(),
