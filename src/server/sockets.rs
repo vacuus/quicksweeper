@@ -6,18 +6,22 @@ use tungstenite::{Message, WebSocket};
 use super::protocol::{ClientData, ClientMessage, ServerData, ServerMessage};
 
 #[derive(thiserror::Error, Debug)]
-pub enum QuicksweeperMessageError {
+pub enum MessageError {
     #[error("From socket library (tungstenite): {0}")]
     Tungstenite(#[from] tungstenite::Error),
     #[error("From serialization (rmp_serde): {0}")]
     Serialization(#[from] rmp_serde::encode::Error),
+    #[error("From deserialization: {0}")]
+    Deserialization(rmp_serde::decode::Error),
+    #[error("Data received from websocket is not encoded in binary format")]
+    Encoding,
 }
 
 #[derive(Resource, Deref, DerefMut)]
 pub struct ClientSocket(pub WebSocket<TcpStream>);
 
 impl ClientSocket {
-    pub fn write_data(&mut self, msg: ClientData) -> Result<(), QuicksweeperMessageError> {
+    pub fn write_data(&mut self, msg: ClientData) -> Result<(), MessageError> {
         Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
     }
 }
@@ -36,18 +40,8 @@ impl OpenPort {
     }
 }
 
-#[derive(thiserror::Error, Debug)]
-enum ConnectionUpgradeError {
-    #[error("Websocket (tungstenite) error: {0}")]
-    Tungstenite(#[from] tungstenite::Error),
-    #[error("Deserialization error: {0}")]
-    DataFormat(rmp_serde::decode::Error),
-    #[error("Data received from websocket is not encoded in binary format")]
-    Encoding,
-}
-
 impl Connection {
-    fn read_partial(&mut self) -> Option<Result<ClientData, ConnectionUpgradeError>> {
+    fn read_partial(&mut self) -> Option<Result<ClientData, MessageError>> {
         let msg = match self.read_message() {
             Ok(msg) => Some(msg),
             Err(tungstenite::Error::Io(_)) => None,
@@ -57,9 +51,9 @@ impl Connection {
         match msg {
             Message::Ping(_) | Message::Pong(_) => None,
             Message::Binary(v) => {
-                Some(rmp_serde::from_slice(&v).map_err(ConnectionUpgradeError::DataFormat))
+                Some(rmp_serde::from_slice(&v).map_err(MessageError::Deserialization))
             }
-            _ => Some(Err(ConnectionUpgradeError::Encoding)),
+            _ => Some(Err(MessageError::Encoding)),
         }
     }
 }
