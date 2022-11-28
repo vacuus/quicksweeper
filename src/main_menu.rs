@@ -59,56 +59,59 @@ where
         .show(ctx.ctx_mut(), add_contents)
 }
 
-fn run_menu(
-    mut commands: Commands,
-    mut ctx: ResMut<EguiContext>,
-    mut fields: ResMut<MenuFields>,
-    mut games: Local<Vec<ActiveGame>>,
-) {
-    standard_window(&mut ctx, |ui| match fields.menu_type {
+fn run_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>, mut fields: Local<MenuFields>) {
+    match fields.menu_type {
         MenuType::MainMenu => {
-            ui.vertical_centered(|ui| {
-                let initial_height = ui.available_height();
-                ui.label(
-                    RichText::new("Quicksweeper")
-                        .size(32.0)
-                        .color(Color32::GOLD),
-                );
-                if ui.button("Singleplayer mode").clicked() {
-                    commands.insert_resource(NextState(SingleplayerState::PreGame));
-                    commands.insert_resource(NextState(MenuState::InGame));
-                }
-                if ui.button("Multiplayer mode").clicked() {
-                    commands.insert_resource(NextState(MultiplayerState::PreGame));
-                    commands.insert_resource(NextState(MenuState::InGame));
-                }
-                if ui.button("Connect to server").clicked() {
-                    fields.menu_type = MenuType::ServerSelect;
-                }
-                let height = initial_height - ui.available_height();
-                ui.set_max_height(height)
+            standard_window(&mut ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    let initial_height = ui.available_height();
+                    ui.label(
+                        RichText::new("Quicksweeper")
+                            .size(32.0)
+                            .color(Color32::GOLD),
+                    );
+                    if ui.button("Singleplayer mode").clicked() {
+                        commands.insert_resource(NextState(SingleplayerState::PreGame));
+                        commands.insert_resource(NextState(MenuState::InGame));
+                    }
+                    if ui.button("Multiplayer mode").clicked() {
+                        commands.insert_resource(NextState(MultiplayerState::PreGame));
+                        commands.insert_resource(NextState(MenuState::InGame));
+                    }
+                    if ui.button("Connect to server").clicked() {
+                        fields.menu_type = MenuType::ServerSelect;
+                    }
+                    let height = initial_height - ui.available_height();
+                    ui.set_max_height(height)
+                });
             });
         }
         MenuType::ServerSelect => {
-            ui.vertical_centered(|ui| {
-                ui.colored_label(Color32::RED, fields.remote_select_err);
-                let r1 = ui
-                    .horizontal(|ui| {
-                        ui.label("Server address:");
-                        ui.add_enabled(
-                            fields.trying_connection.is_none(),
-                            TextEdit::singleline(&mut fields.remote_addr),
-                        )
-                    })
-                    .inner;
+            standard_window(&mut ctx, |ui| {
+                let response = ui
+                    .vertical_centered(|ui| {
+                        ui.colored_label(Color32::RED, fields.remote_select_err);
+                        let r1 = ui
+                            .horizontal(|ui| {
+                                ui.label("Server address:");
+                                ui.add_enabled(
+                                    fields.trying_connection.is_none(),
+                                    TextEdit::singleline(&mut fields.remote_addr),
+                                )
+                            })
+                            .inner;
 
-                let r2 = ui
-                    .horizontal(|ui| {
-                        ui.label("Username:");
-                        ui.add_enabled(
-                            fields.trying_connection.is_none(),
-                            TextEdit::singleline(&mut fields.username),
-                        )
+                        let r2 = ui
+                            .horizontal(|ui| {
+                                ui.label("Username:");
+                                ui.add_enabled(
+                                    fields.trying_connection.is_none(),
+                                    TextEdit::singleline(&mut fields.username),
+                                )
+                            })
+                            .inner;
+
+                        r1.union(r2)
                     })
                     .inner;
 
@@ -117,8 +120,6 @@ fn run_menu(
                         std::mem::replace(&mut fields.trying_connection, None).unwrap();
                     match maybe_handshake {
                         Ok((socket, _)) => {
-                            // TODO: Collect username somehow
-
                             let mut socket = ClientSocket(socket);
                             socket
                                 .write_data(ClientData::Greet {
@@ -140,8 +141,7 @@ fn run_menu(
                     }
                 }
                 // execute requests to connect to server
-                else if (r1.lost_focus() || r2.lost_focus()) && ui.input().key_pressed(Key::Enter)
-                {
+                else if response.lost_focus() && ui.input().key_pressed(Key::Enter) {
                     let stream = TcpStream::connect(&fields.remote_addr).map_err(|_| {
                         fields.remote_select_err = "Could not find that address";
                     })?;
@@ -152,17 +152,26 @@ fn run_menu(
 
                     let addr = format!("ws://{}/", fields.remote_addr);
                     fields.trying_connection = Some(tungstenite::client(addr, stream));
-                } else if r1.gained_focus() || r2.gained_focus() {
+                } else if response.gained_focus() {
                     fields.remote_select_err = "";
                 }
 
                 Result::<_, ()>::Ok(())
             });
         }
-        MenuType::GameSelect => {
-            ui.label("Running games");
-        }
-    });
+        _ => (),
+    }
+}
+
+/// Same thing as `run_menu`, but safe to run with socket access
+fn game_select_menu(
+    mut commands: Commands,
+    mut ctx: ResMut<EguiContext>,
+    mut games: Local<Vec<ActiveGame>>,
+    mut socket: ResMut<ClientSocket>,
+    mut fields: Local<MenuFields>,
+) {
+
 }
 
 pub struct MainMenuPlugin;
@@ -172,6 +181,7 @@ impl Plugin for MainMenuPlugin {
         app.add_loopless_state(MenuState::Loading)
             .init_resource::<MenuFields>()
             .add_system(run_menu.run_in_state(MenuState::Menu))
+            .add_system(game_select_menu)
             .add_enter_system(MenuState::Menu, |mut t: ResMut<MenuFields>| {
                 t.menu_type = MenuType::MainMenu
             });
