@@ -15,5 +15,4 @@ pub trait ConditionalHelpersExt<Params>: IntoConditionalSystem<Params> {
     }
 }
 
-// impl ConditionalHelpersExt for ConditionalSystemDescriptor {}
 impl<T, P> ConditionalHelpersExt<P> for T where T: IntoConditionalSystem<P> {}

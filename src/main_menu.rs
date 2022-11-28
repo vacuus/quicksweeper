@@ -157,6 +157,9 @@ fn game_select_menu(
     mut games: Local<Vec<ActiveGame>>,
     mut socket: Query<&mut ClientSocket>,
 ) {
+    let socket = socket.single_mut();
+
+
     standard_window(&mut ctx, |ui| {
         egui::Grid::new("window").show(ui, |ui| {
             ui.button("⏴back");
@@ -174,7 +177,6 @@ impl Plugin for MainMenuPlugin {
             .init_resource::<MenuFields>()
             .add_system(run_main_menu.run_in_state(MenuState::MainMenu))
             .add_system(server_select_menu.run_in_state(MenuState::ServerSelect))
-            .add_system(game_select_menu.run_in_state(MenuState::GameSelect))
-            .add_system(game_select_menu);
+            .add_system(game_select_menu.run_in_state(MenuState::GameSelect));
     }
 }
