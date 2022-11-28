@@ -41,7 +41,7 @@ pub fn server_messages(
     mut incoming: ResMut<Events<ClientMessage>>,
     mut outgoing: EventWriter<ServerMessage>,
     mut game_events: EventWriter<IngameEvent>,
-    active_games: Query<(&GameMarker, &Players)>,
+    active_games: Query<(Entity, &GameMarker, &Players)>,
     q_players: Query<&ConnectionInfo>,
     registry: Res<GameRegistry>,
 ) {
@@ -50,13 +50,14 @@ pub fn server_messages(
             ClientData::Games => ServerData::ActiveGames(
                 active_games
                     .iter()
-                    .map(|(&marker, players)| {
+                    .map(|(id, &marker, players)| {
                         let players = players
                             .iter()
                             .map(|&ent| q_players.get(ent).unwrap().username.clone())
                             .collect();
                         ActiveGame {
                             marker,
+                            id, 
                             players,
                         }
                     })

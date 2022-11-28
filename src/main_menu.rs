@@ -12,7 +12,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 use crate::{
     multiplayer::MultiplayerState,
     server::{ActiveGame, ClientData, ClientSocket, GameMarker, MessageSocket, ServerData},
-    SingleplayerState,
+    SingleplayerState, registry::GameRegistry,
 };
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -159,6 +159,7 @@ fn game_select_menu(
     mut ctx: ResMut<EguiContext>,
     mut games: Local<Vec<ActiveGame>>,
     mut socket: Query<&mut ClientSocket>,
+    registry: Res<GameRegistry>,
 ) {
     let mut socket = socket.single_mut();
 
@@ -169,9 +170,9 @@ fn game_select_menu(
         join_game: Option<Entity>,
     }
 
-    // if let Some(Ok(ServerData::ActiveGames(v))) = socket.read_data() {
-    //     games.clear();
-    // }
+    if let Some(Ok(ServerData::ActiveGames(v))) = socket.read_data() {
+        *games = v;
+    }
 
     standard_window(&mut ctx, |ui| {
         egui::Grid::new("window").show(ui, |ui| {
@@ -181,8 +182,25 @@ fn game_select_menu(
             let reload = ui.button("reload🔁");
             ui.end_row();
 
+            let mut join_game = None;
             for game in games.iter() {
-                ui.vertical(|ui| {});
+                if let Some(descriptor) = registry.get(&game.marker) {
+                    ui.vertical(|ui| {
+                        ui.label(&descriptor.name);
+                        ui.label(&descriptor.description);
+                    });
+                    
+                    ui.label(""); // empty
+
+                    if ui.button("Join").clicked() {
+                        join_game = Some(game.id)
+                    }
+
+                    ui.end_row();
+                }
+                else {
+                    ui.label("Unsuppored game type");
+                }
             }
 
             ui.button("+create");
