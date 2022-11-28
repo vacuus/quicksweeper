@@ -7,13 +7,11 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use tungstenite::{
-    handshake::client::Response, ClientHandshake, HandshakeError, Message, WebSocket,
-};
+use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, WebSocket};
 
 use crate::{
     multiplayer::MultiplayerState,
-    server::{ActiveGame, ClientData},
+    server::{ActiveGame, ClientData, ClientSocket},
     SingleplayerState,
 };
 
@@ -45,23 +43,6 @@ struct MenuFields {
     username: String,
     remote_select_err: &'static str,
     trying_connection: Option<ClientResult>,
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum QuicksweeperMessageError {
-    #[error("From socket library (tungstenite): {0}")]
-    Tungstenite(#[from] tungstenite::Error),
-    #[error("From serialization (rmp_serde): {0}")]
-    Serialization(#[from] rmp_serde::encode::Error),
-}
-
-#[derive(Resource, Deref, DerefMut)]
-pub struct ClientSocket(pub WebSocket<TcpStream>);
-
-impl ClientSocket {
-    pub fn write_data(&mut self, msg: ClientData) -> Result<(), QuicksweeperMessageError> {
-        Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
-    }
 }
 
 pub fn standard_window<F, R>(
@@ -139,11 +120,13 @@ fn run_menu(
                             // TODO: Collect username somehow
 
                             let mut socket = ClientSocket(socket);
-                            socket.write_data(ClientData::Greet {
-                                username: fields.username.clone(),
-                            }).map_err(|_| {
-                                fields.remote_select_err = "Failure in initializing connection";
-                            })?;
+                            socket
+                                .write_data(ClientData::Greet {
+                                    username: fields.username.clone(),
+                                })
+                                .map_err(|_| {
+                                    fields.remote_select_err = "Failure in initializing connection";
+                                })?;
 
                             commands.insert_resource(socket);
                             fields.menu_type = MenuType::GameSelect;

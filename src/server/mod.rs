@@ -13,6 +13,7 @@ mod sockets;
 
 pub use game::*;
 pub use protocol::*;
+pub use sockets::ClientSocket;
 
 pub struct ServerPlugin;
 

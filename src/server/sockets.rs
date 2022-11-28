@@ -5,6 +5,23 @@ use tungstenite::{Message, WebSocket};
 
 use super::protocol::{ClientData, ClientMessage, ServerData, ServerMessage};
 
+#[derive(thiserror::Error, Debug)]
+pub enum QuicksweeperMessageError {
+    #[error("From socket library (tungstenite): {0}")]
+    Tungstenite(#[from] tungstenite::Error),
+    #[error("From serialization (rmp_serde): {0}")]
+    Serialization(#[from] rmp_serde::encode::Error),
+}
+
+#[derive(Resource, Deref, DerefMut)]
+pub struct ClientSocket(pub WebSocket<TcpStream>);
+
+impl ClientSocket {
+    pub fn write_data(&mut self, msg: ClientData) -> Result<(), QuicksweeperMessageError> {
+        Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
+    }
+}
+
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
 
