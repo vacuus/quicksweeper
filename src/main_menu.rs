@@ -11,7 +11,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     multiplayer::MultiplayerState,
-    server::{ActiveGame, ClientData, ClientSocket, GameMarker, MessageSocket},
+    server::{ActiveGame, ClientData, ClientSocket, GameMarker, MessageSocket, ServerData},
     SingleplayerState,
 };
 
@@ -160,14 +160,18 @@ fn game_select_menu(
     mut games: Local<Vec<ActiveGame>>,
     mut socket: Query<&mut ClientSocket>,
 ) {
-    let socket = socket.single_mut();
+    let mut socket = socket.single_mut();
 
     struct GameSelectResponse {
         go_back: egui::Response,
         reload: egui::Response,
         create: Option<GameMarker>,
-        join_game: Option<ActiveGame>,
+        join_game: Option<Entity>,
     }
+
+    // if let Some(Ok(ServerData::ActiveGames(v))) = socket.read_data() {
+    //     games.clear();
+    // }
 
     standard_window(&mut ctx, |ui| {
         egui::Grid::new("window").show(ui, |ui| {

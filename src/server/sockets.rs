@@ -4,6 +4,7 @@ use std::{
 };
 
 use bevy::prelude::*;
+use serde::{de::DeserializeOwned, Serialize};
 use tungstenite::{Message, WebSocket};
 
 use super::protocol::{ClientData, ClientMessage, ServerData, ServerMessage};
@@ -41,7 +42,7 @@ impl OpenPort {
 pub struct Connection(WebSocket<TcpStream>);
 
 pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
-    fn read_data(&mut self) -> Option<Result<ClientData, MessageError>> {
+    fn read_data<D>(&mut self) -> Option<Result<D, MessageError>> where D: DeserializeOwned {
         let msg = match self.read_message() {
             Ok(msg) => Some(msg),
             Err(tungstenite::Error::Io(_)) => None,
@@ -56,7 +57,7 @@ pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
             _ => Some(Err(MessageError::Encoding)),
         }
     }
-    fn write_data(&mut self, msg: ClientData) -> Result<(), MessageError> {
+    fn write_data(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
         Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
     }
 }
