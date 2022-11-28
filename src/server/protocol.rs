@@ -1,12 +1,11 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::server::{GameDescriptor, GameMarker};
+use crate::server::GameMarker;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ActiveGame {
     pub marker: GameMarker,
-    pub descriptor: GameDescriptor,
     pub players: Vec<String>,
 }
 
