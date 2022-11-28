@@ -118,11 +118,7 @@ impl Plugin for MultiplayerMode {
             // in-game logic
             .add_system(flag_cell.run_in_state(Game))
             .add_system(reveal_cell.run_in_state(Game))
-            .add_system(
-                move_cursor
-                    .into_conditional()
-                    .run_in_states([PreGame, Game]),
-            )
+            .add_system(move_cursor.run_in_states([PreGame, Game]))
             .add_system(translate_cursor.run_not_in_state(Inactive))
             .add_system(init_check_cell.run_in_state(PreGame))
             .add_system(check_cell.run_in_state(Game));

@@ -105,9 +105,7 @@ impl Plugin for SingleplayerMode {
             .add_system(reveal_cell.run_in_state(Game))
             .add_system(
                 // move_cursor
-                pointer_cursor
-                    .into_conditional()
-                    .run_in_states([PreGame, Game]),
+                pointer_cursor.run_in_states([PreGame, Game]),
             )
             .add_system(track_cursor.run_not_in_state(Inactive))
             .add_system(translate_cursor.run_not_in_state(Inactive))
