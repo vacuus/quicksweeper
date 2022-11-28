@@ -1,4 +1,7 @@
-use std::net::{TcpListener, TcpStream};
+use std::{
+    net::{TcpListener, TcpStream},
+    ops::DerefMut,
+};
 
 use bevy::prelude::*;
 use tungstenite::{Message, WebSocket};
@@ -20,12 +23,6 @@ pub enum MessageError {
 #[derive(Resource, Deref, DerefMut)]
 pub struct ClientSocket(pub WebSocket<TcpStream>);
 
-impl ClientSocket {
-    pub fn write_data(&mut self, msg: ClientData) -> Result<(), MessageError> {
-        Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
-    }
-}
-
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
 
@@ -40,8 +37,11 @@ impl OpenPort {
     }
 }
 
-impl Connection {
-    fn read_partial(&mut self) -> Option<Result<ClientData, MessageError>> {
+#[derive(Component, Deref, DerefMut)]
+pub struct Connection(WebSocket<TcpStream>);
+
+pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
+    fn read_data(&mut self) -> Option<Result<ClientData, MessageError>> {
         let msg = match self.read_message() {
             Ok(msg) => Some(msg),
             Err(tungstenite::Error::Io(_)) => None,
@@ -56,10 +56,12 @@ impl Connection {
             _ => Some(Err(MessageError::Encoding)),
         }
     }
+    fn write_data(&mut self, msg: ClientData) -> Result<(), MessageError> {
+        Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
+    }
 }
 
-#[derive(Component, Deref, DerefMut)]
-pub struct Connection(WebSocket<TcpStream>);
+impl<T> MessageSocket for T where T: DerefMut<Target = WebSocket<TcpStream>> {}
 
 #[derive(Component)]
 pub struct ConnectionInfo {
@@ -86,7 +88,7 @@ pub fn upgrade_connections(
     mut commands: Commands,
 ) {
     for (id, mut client) in partial_connections.iter_mut() {
-        if let Some(result) = client.read_partial() {
+        if let Some(result) = client.read_data() {
             match result {
                 Ok(ClientData::Greet { username }) => {
                     println!("Connection upgraded! It is now able to become a player");

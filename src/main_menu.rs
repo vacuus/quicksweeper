@@ -11,7 +11,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     multiplayer::MultiplayerState,
-    server::{ActiveGame, ClientData, ClientSocket},
+    server::{ActiveGame, ClientData, ClientSocket, MessageSocket},
     SingleplayerState,
 };
 
