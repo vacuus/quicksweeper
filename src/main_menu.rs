@@ -138,7 +138,14 @@ fn run_menu(
                         Ok((socket, _)) => {
                             // TODO: Collect username somehow
 
-                            commands.insert_resource(ClientSocket(socket));
+                            let mut socket = ClientSocket(socket);
+                            socket.write_data(ClientData::Greet {
+                                username: fields.username.clone(),
+                            }).map_err(|_| {
+                                fields.remote_select_err = "Failure in initializing connection";
+                            })?;
+
+                            commands.insert_resource(socket);
                             fields.menu_type = MenuType::GameSelect;
                         }
                         Err(HandshakeError::Interrupted(handshake)) => {
