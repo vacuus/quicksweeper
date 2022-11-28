@@ -10,6 +10,8 @@ use bevy::{prelude::*, utils::Uuid};
 
 use serde::{Deserialize, Serialize};
 
+use crate::registry::GameRegistry;
+
 use super::{
     protocol::{ActiveGame, ClientData, ClientMessage, ServerData, ServerMessage},
     sockets::ConnectionInfo,
@@ -22,7 +24,7 @@ pub struct GameDescriptor {
     pub description: String,
 }
 
-#[derive(Component, Deref, DerefMut, Serialize, Deserialize, Debug, Copy, Clone)]
+#[derive(Component, Deref, DerefMut, Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct GameMarker(pub Uuid);
 
 #[derive(Component, Deref, DerefMut, Default)]
@@ -31,7 +33,6 @@ pub struct Players(pub Vec<Entity>);
 #[derive(Bundle)]
 pub struct GameBundle {
     pub marker: GameMarker,
-    pub descriptor: GameDescriptor,
     pub players: Players,
 }
 
@@ -42,6 +43,7 @@ pub fn server_messages(
     mut game_events: EventWriter<IngameEvent>,
     active_games: Query<(&GameMarker, &GameDescriptor, &Players)>,
     q_players: Query<&ConnectionInfo>,
+    registry: Res<GameRegistry>,
 ) {
     let mut translate = |incoming: ClientMessage| {
         let data = match incoming.data {

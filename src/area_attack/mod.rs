@@ -1,6 +1,7 @@
 use bevy::{prelude::*, utils::Uuid};
 
 use crate::{
+    registry::GameRegistry,
     server::{GameBundle, GameDescriptor, GameMarker},
     singleplayer::minefield::Minefield,
 };
@@ -11,7 +12,21 @@ pub const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b69
 };
 
 #[derive(Component)]
-struct AreaAttack;
+pub struct AreaAttack;
+
+impl Plugin for AreaAttack {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(|mut registry: ResMut<GameRegistry>| {
+            registry.insert(
+                GameMarker(AREA_ATTACK_UUID),
+                GameDescriptor {
+                    name: "Area Attack".to_string(),
+                    description: "Race to claim the board for yourself".to_string(),
+                },
+            );
+        });
+    }
+}
 
 #[derive(Bundle)]
 struct AreaAttackBundle {
@@ -24,10 +39,6 @@ impl AreaAttackBundle {
         Self {
             game: GameBundle {
                 marker: GameMarker(AREA_ATTACK_UUID),
-                descriptor: GameDescriptor {
-                    name: "Area Attack".to_string(),
-                    description: "Race to claim the board for yourself".to_string(),
-                },
                 players: default(),
             },
             field,

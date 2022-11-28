@@ -37,5 +37,7 @@ fn main() {
         .add_plugin(load::LoadPlugin)
         .add_plugin(singleplayer::minefield::MinefieldPlugin)
         .add_plugin(server::ServerPlugin)
+        // gamemodes
+        .add_plugin(area_attack::AreaAttack)
         .run();
 }
