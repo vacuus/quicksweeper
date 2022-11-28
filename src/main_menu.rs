@@ -11,7 +11,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     multiplayer::MultiplayerState,
-    server::{ActiveGame, ClientData, ClientSocket, MessageSocket},
+    server::{ActiveGame, ClientData, ClientSocket, GameMarker, MessageSocket},
     SingleplayerState,
 };
 
@@ -159,12 +159,35 @@ fn game_select_menu(
 ) {
     let socket = socket.single_mut();
 
+    struct GameSelectResponse {
+        go_back: egui::Response,
+        reload: egui::Response,
+        create: Option<GameMarker>,
+        join_game: Option<ActiveGame>,
+    }
 
     standard_window(&mut ctx, |ui| {
         egui::Grid::new("window").show(ui, |ui| {
-            ui.button("⏴back");
+            // header
+            let go_back = ui.button("⏴back");
             ui.label("Game select");
-            ui.button("reload🔁");
+            let reload = ui.button("reload🔁");
+            ui.end_row();
+
+            for game in games.iter() {
+                ui.vertical(|ui| {
+                });
+            }
+
+            ui.button("+create");
+            ui.end_row();
+
+            // GameSelectResponse {
+            //     go_back,
+            //     reload,
+            //     create: todo!(),
+            //     join_game: todo!(),
+            // }
         })
     });
 }
