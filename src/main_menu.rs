@@ -81,7 +81,7 @@ fn server_select_menu(
     mut fields: Local<MenuFields>,
 ) {
     standard_window(&mut ctx, |ui| {
-        let response = ui
+        let (focus_lost, focus_gained) = ui
             .vertical_centered(|ui| {
                 ui.colored_label(Color32::RED, fields.remote_select_err);
                 let r1 = ui
@@ -104,7 +104,7 @@ fn server_select_menu(
                     })
                     .inner;
 
-                r1.union(r2)
+                (r1.lost_focus() || r2.lost_focus(), r1.gained_focus() || r2.gained_focus())
             })
             .inner;
 
@@ -131,7 +131,7 @@ fn server_select_menu(
             }
         }
         // execute requests to connect to server
-        else if response.lost_focus() && ui.input().key_pressed(Key::Enter) {
+        else if focus_lost && ui.input().key_pressed(Key::Enter) {
             let stream = TcpStream::connect(&fields.remote_addr).map_err(|_| {
                 fields.remote_select_err = "Could not find that address";
             })?;
@@ -142,7 +142,7 @@ fn server_select_menu(
 
             let addr = format!("ws://{}/", fields.remote_addr);
             fields.trying_connection = Some(tungstenite::client(addr, stream));
-        } else if response.gained_focus() {
+        } else if focus_gained {
             fields.remote_select_err = "";
         }
 
