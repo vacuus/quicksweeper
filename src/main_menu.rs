@@ -7,9 +7,15 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, WebSocket};
+use tungstenite::{
+    handshake::client::Response, ClientHandshake, HandshakeError, Message, WebSocket,
+};
 
-use crate::{multiplayer::MultiplayerState, server::ActiveGame, SingleplayerState};
+use crate::{
+    multiplayer::MultiplayerState,
+    server::{ActiveGame, ClientData},
+    SingleplayerState,
+};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MenuState {
@@ -41,8 +47,22 @@ struct MenuFields {
     trying_connection: Option<ClientResult>,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum QuicksweeperMessageError {
+    #[error("From socket library (tungstenite): {0}")]
+    Tungstenite(#[from] tungstenite::Error),
+    #[error("From serialization (rmp_serde): {0}")]
+    Serialization(#[from] rmp_serde::encode::Error),
+}
+
 #[derive(Resource, Deref, DerefMut)]
 pub struct ClientSocket(pub WebSocket<TcpStream>);
+
+impl ClientSocket {
+    pub fn write_data(&mut self, msg: ClientData) -> Result<(), QuicksweeperMessageError> {
+        Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
+    }
+}
 
 pub fn standard_window<F, R>(
     ctx: &mut EguiContext,
@@ -117,6 +137,7 @@ fn run_menu(
                     match maybe_handshake {
                         Ok((socket, _)) => {
                             // TODO: Collect username somehow
+
                             commands.insert_resource(ClientSocket(socket));
                             fields.menu_type = MenuType::GameSelect;
                         }
