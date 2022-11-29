@@ -11,8 +11,9 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     multiplayer::MultiplayerState,
+    registry::GameRegistry,
     server::{ActiveGame, ClientData, ClientSocket, GameMarker, MessageSocket, ServerData},
-    SingleplayerState, registry::GameRegistry,
+    SingleplayerState,
 };
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -124,6 +125,10 @@ fn server_select_menu(
                             fields.remote_select_err = "Failure in initializing connection";
                         })?;
 
+                    socket.write_data(ClientData::Games).map_err(|_| {
+                        fields.remote_select_err = "Could not retrieve games on the server"
+                    })?;
+
                     commands.spawn((socket,));
                     commands.insert_resource(NextState(MenuState::GameSelect));
                 }
@@ -158,6 +163,7 @@ fn game_select_menu(
     mut commands: Commands,
     mut ctx: ResMut<EguiContext>,
     mut games: Local<Vec<ActiveGame>>,
+    mut selected_gamemode: Local<(Option<String>, Option<GameMarker>)>,
     mut socket: Query<&mut ClientSocket>,
     registry: Res<GameRegistry>,
 ) {
@@ -189,7 +195,7 @@ fn game_select_menu(
                         ui.label(&descriptor.name);
                         ui.label(&descriptor.description);
                     });
-                    
+
                     ui.label(""); // empty
 
                     if ui.button("Join").clicked() {
@@ -197,21 +203,36 @@ fn game_select_menu(
                     }
 
                     ui.end_row();
-                }
-                else {
+                } else {
                     ui.label("Unsuppored game type");
                 }
             }
 
-            ui.button("+create");
+            egui::ComboBox::from_label("gamemode")
+                .selected_text(
+                    selected_gamemode
+                        .0
+                        .as_deref()
+                        .unwrap_or("<Choose gamemode>"),
+                )
+                .show_ui(ui, |ui| {
+                    for (&marker, descriptor) in registry.iter() {
+                        ui.selectable_value(
+                            &mut *selected_gamemode,
+                            (Some(descriptor.name.clone()), Some(marker)),
+                            &descriptor.name,
+                        );
+                    }
+                });
+            let create = ui.button("+create").clicked();
             ui.end_row();
 
-            // GameSelectResponse {
-            //     go_back,
-            //     reload,
-            //     create: todo!(),
-            //     join_game: todo!(),
-            // }
+            GameSelectResponse {
+                go_back,
+                reload,
+                create: create.then_some(selected_gamemode.1).flatten(),
+                join_game,
+            }
         })
     });
 }
