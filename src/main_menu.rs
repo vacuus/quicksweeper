@@ -238,6 +238,12 @@ fn game_select_menu(
 
     if response.go_back.clicked() {
         commands.insert_resource(NextState(MenuState::MainMenu));
+    } else if response.reload.clicked() {
+        let _ = socket.write_data(ClientData::Games); // TODO: Report error to user
+    } else if let Some(mode) = response.create {
+        let _ = socket.write_data(ClientData::Create { game: mode, data: Vec::new() });
+    } else if let Some(game) = response.join_game {
+        let _ = socket.write_data(ClientData::Join { game });
     }
 
 }
