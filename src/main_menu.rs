@@ -135,7 +135,10 @@ fn server_select_menu(
                 Err(HandshakeError::Interrupted(handshake)) => {
                     fields.trying_connection = Some(handshake.handshake())
                 }
-                Err(_) => fields.remote_select_err = "Failed to perform handshake with server",
+                Err(e) => {
+                    eprintln!("{e}");
+                    fields.remote_select_err = "Failed to perform handshake with server";
+                }
             }
         }
         // execute requests to connect to server
