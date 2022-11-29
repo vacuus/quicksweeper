@@ -180,7 +180,7 @@ fn game_select_menu(
         *games = v;
     }
 
-    standard_window(&mut ctx, |ui| {
+    let response = standard_window(&mut ctx, |ui| {
         egui::Grid::new("window").show(ui, |ui| {
             // header
             let go_back = ui.button("⏴back");
@@ -234,7 +234,16 @@ fn game_select_menu(
                 join_game,
             }
         })
-    });
+    }).unwrap().inner.unwrap().inner;
+
+    if response.go_back.clicked() {
+        commands.insert_resource(NextState(MenuState::MainMenu));
+    }
+
+}
+
+fn destroy_socket(mut commands: Commands, q: Query<Entity, With<ClientSocket>>) {
+    q.for_each(|ent| commands.entity(ent).despawn())
 }
 
 pub struct MainMenuPlugin;
@@ -245,6 +254,7 @@ impl Plugin for MainMenuPlugin {
             .init_resource::<MenuFields>()
             .add_system(run_main_menu.run_in_state(MenuState::MainMenu))
             .add_system(server_select_menu.run_in_state(MenuState::ServerSelect))
-            .add_system(game_select_menu.run_in_state(MenuState::GameSelect));
+            .add_system(game_select_menu.run_in_state(MenuState::GameSelect))
+            .add_enter_system(MenuState::MainMenu, destroy_socket);
     }
 }
