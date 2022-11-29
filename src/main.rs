@@ -7,10 +7,10 @@ mod cursor;
 mod load;
 mod main_menu;
 mod multiplayer;
+mod registry;
 mod server;
 mod singleplayer;
 mod state;
-mod registry;
 
 use bevy::prelude::*;
 

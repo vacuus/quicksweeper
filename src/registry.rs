@@ -7,5 +7,4 @@ use crate::server::{GameDescriptor, GameMarker};
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct GameRegistry(HashMap<GameMarker, GameDescriptor>);
 
-impl GameRegistry {
-}
+impl GameRegistry {}

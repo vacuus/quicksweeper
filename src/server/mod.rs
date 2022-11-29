@@ -2,9 +2,7 @@ use bevy::prelude::*;
 
 use crate::area_attack::AREA_ATTACK_UUID;
 
-use self::{
-    sockets::*,
-};
+use self::sockets::*;
 
 mod game;
 mod protocol;

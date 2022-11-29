@@ -237,18 +237,24 @@ fn game_select_menu(
                 join_game,
             }
         })
-    }).unwrap().inner.unwrap().inner;
+    })
+    .unwrap()
+    .inner
+    .unwrap()
+    .inner;
 
     if response.go_back.clicked() {
         commands.insert_resource(NextState(MenuState::MainMenu));
     } else if response.reload.clicked() {
         let _ = socket.write_data(ClientMessage::Games); // TODO: Report error to user
     } else if let Some(mode) = response.create {
-        let _ = socket.write_data(ClientMessage::Create { game: mode, data: Vec::new() });
+        let _ = socket.write_data(ClientMessage::Create {
+            game: mode,
+            data: Vec::new(),
+        });
     } else if let Some(game) = response.join_game {
         let _ = socket.write_data(ClientMessage::Join { game });
     }
-
 }
 
 fn destroy_socket(mut commands: Commands, q: Query<Entity, With<ClientSocket>>) {
