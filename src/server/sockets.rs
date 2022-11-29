@@ -42,7 +42,10 @@ impl OpenPort {
 pub struct Connection(WebSocket<TcpStream>);
 
 pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
-    fn read_data<D>(&mut self) -> Option<Result<D, MessageError>> where D: DeserializeOwned {
+    fn read_data<D>(&mut self) -> Option<Result<D, MessageError>>
+    where
+        D: DeserializeOwned,
+    {
         let msg = match self.read_message() {
             Ok(msg) => Some(msg),
             Err(tungstenite::Error::Io(_)) => None,
@@ -129,16 +132,12 @@ pub fn communicate_clients(
             ix += 1;
         }
 
-        if let Ok(msg) = client.read_message() {
-            'normal: {
-                let Message::Binary(content) = msg else { break 'normal };
-                let Ok(data) = rmp_serde::from_slice(&content) else { break 'normal };
-                incoming.send(ClientMessage { sender, data });
-                return;
+        match client.read_data::<ClientData>() {
+            Some(Ok(data)) => incoming.send(ClientMessage { sender, data }),
+            Some(Err(_)) => {
+                let _ = client.write_data(ServerData::Malformed); // TODO report this later
             }
-            let _ = client.write_message(Message::Binary(
-                rmp_serde::to_vec(&ServerData::Malformed).unwrap(),
-            ));
+            _ => (),
         }
     }
 }
