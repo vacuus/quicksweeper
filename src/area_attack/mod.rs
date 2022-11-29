@@ -39,7 +39,6 @@ impl AreaAttackBundle {
         Self {
             game: GameBundle {
                 marker: GameMarker(AREA_ATTACK_UUID),
-                players: default(),
             },
             field,
         }

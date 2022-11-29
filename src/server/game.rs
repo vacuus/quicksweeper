@@ -27,13 +27,9 @@ pub struct GameDescriptor {
 #[derive(Component, Deref, DerefMut, Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct GameMarker(pub Uuid);
 
-#[derive(Component, Deref, DerefMut, Default)]
-pub struct Players(pub Vec<Entity>);
-
 #[derive(Bundle)]
 pub struct GameBundle {
     pub marker: GameMarker,
-    pub players: Players,
 }
 
 pub fn server_messages(
@@ -41,7 +37,7 @@ pub fn server_messages(
     mut incoming: ResMut<Events<ClientMessage>>,
     mut outgoing: EventWriter<ServerMessage>,
     mut game_events: EventWriter<IngameEvent>,
-    active_games: Query<(Entity, &GameMarker, &Players)>,
+    active_games: Query<(Entity, &GameMarker, &Children)>,
     q_players: Query<&ConnectionInfo>,
     registry: Res<GameRegistry>,
 ) {
@@ -50,8 +46,8 @@ pub fn server_messages(
             ClientData::Games => ServerData::ActiveGames(
                 active_games
                     .iter()
-                    .map(|(id, &marker, players)| {
-                        let players = players
+                    .map(|(id, &marker, player_ids)| {
+                        let players = player_ids
                             .iter()
                             .map(|&ent| q_players.get(ent).unwrap().username.clone())
                             .collect();
