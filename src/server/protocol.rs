@@ -10,13 +10,8 @@ pub struct ActiveGame {
     pub players: Vec<String>,
 }
 
-pub struct ClientMessage {
-    pub sender: Entity,
-    pub data: ClientData,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
-pub enum ClientData {
+pub enum ClientMessage {
     Greet { username: String },
     Create { game: GameMarker, data: Vec<u8> },
     Join { game: Entity },
@@ -25,13 +20,8 @@ pub enum ClientData {
     Games,
 }
 
-pub struct ServerMessage {
-    pub receiver: Entity,
-    pub data: ServerData,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
-pub enum ServerData {
+pub enum ServerMessage {
     ActiveGames(Vec<ActiveGame>),
     Confirmed,
     Malformed,
@@ -40,12 +30,12 @@ pub enum ServerData {
 #[derive(Debug)]
 pub enum IngameEvent {
     Data {
-        client: Entity,
+        player: Entity,
         game: Entity,
         data: Vec<u8>,
     },
     Create {
-        client: Entity,
+        player: Entity,
         game: Entity,
         kind: GameMarker,
         data: Vec<u8>,

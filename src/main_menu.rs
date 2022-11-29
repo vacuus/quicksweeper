@@ -12,7 +12,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 use crate::{
     multiplayer::MultiplayerState,
     registry::GameRegistry,
-    server::{ActiveGame, ClientData, ClientSocket, GameMarker, MessageSocket, ServerData},
+    server::{ActiveGame, ClientMessage, ClientSocket, GameMarker, MessageSocket, ServerMessage},
     SingleplayerState,
 };
 
@@ -118,14 +118,14 @@ fn server_select_menu(
                 Ok((socket, _)) => {
                     let mut socket = ClientSocket(socket);
                     socket
-                        .write_data(ClientData::Greet {
+                        .write_data(ClientMessage::Greet {
                             username: fields.username.clone(),
                         })
                         .map_err(|_| {
                             fields.remote_select_err = "Failure in initializing connection";
                         })?;
 
-                    socket.write_data(ClientData::Games).map_err(|_| {
+                    socket.write_data(ClientMessage::Games).map_err(|_| {
                         fields.remote_select_err = "Could not retrieve games on the server"
                     })?;
 
@@ -179,7 +179,7 @@ fn game_select_menu(
         join_game: Option<Entity>,
     }
 
-    if let Some(Ok(ServerData::ActiveGames(v))) = socket.read_data() {
+    if let Some(Ok(ServerMessage::ActiveGames(v))) = socket.read_data() {
         *games = v;
     }
 
@@ -242,11 +242,11 @@ fn game_select_menu(
     if response.go_back.clicked() {
         commands.insert_resource(NextState(MenuState::MainMenu));
     } else if response.reload.clicked() {
-        let _ = socket.write_data(ClientData::Games); // TODO: Report error to user
+        let _ = socket.write_data(ClientMessage::Games); // TODO: Report error to user
     } else if let Some(mode) = response.create {
-        let _ = socket.write_data(ClientData::Create { game: mode, data: Vec::new() });
+        let _ = socket.write_data(ClientMessage::Create { game: mode, data: Vec::new() });
     } else if let Some(game) = response.join_game {
-        let _ = socket.write_data(ClientData::Join { game });
+        let _ = socket.write_data(ClientMessage::Join { game });
     }
 
 }

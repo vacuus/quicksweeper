@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use serde::{de::DeserializeOwned, Serialize};
 use tungstenite::{Message, WebSocket};
 
-use super::protocol::{ClientData, ClientMessage, ServerData, ServerMessage};
+use super::protocol::ClientMessage;
 
 #[derive(thiserror::Error, Debug)]
 pub enum MessageError {
@@ -94,7 +94,7 @@ pub fn upgrade_connections(
     for (id, mut client) in partial_connections.iter_mut() {
         if let Some(result) = client.read_data() {
             match result {
-                Ok(ClientData::Greet { username }) => {
+                Ok(ClientMessage::Greet { username }) => {
                     println!("Connection upgraded! It is now able to become a player");
                     println!("received name {username}");
                     commands.entity(id).insert((ConnectionInfo { username },));
@@ -109,35 +109,6 @@ pub fn upgrade_connections(
                     commands.entity(id).despawn();
                 }
             }
-        }
-    }
-}
-
-pub fn communicate_clients(
-    mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
-    mut incoming: EventWriter<ClientMessage>,
-    mut outgoing: ResMut<Events<ServerMessage>>,
-    mut outgoing_collection: Local<Vec<ServerMessage>>,
-) {
-    outgoing_collection.extend(outgoing.drain());
-
-    for (sender, mut client) in clients.iter_mut() {
-        // drain_filter my beloved
-        let mut ix = 0;
-        while ix < outgoing_collection.len() {
-            if outgoing_collection[ix].receiver == sender {
-                let msg = outgoing_collection.swap_remove(ix).data;
-                let _ = client.write_message(Message::Binary(rmp_serde::to_vec(&msg).unwrap()));
-            }
-            ix += 1;
-        }
-
-        match client.read_data::<ClientData>() {
-            Some(Ok(data)) => incoming.send(ClientMessage { sender, data }),
-            Some(Err(_)) => {
-                let _ = client.write_data(ServerData::Malformed); // TODO report this later
-            }
-            _ => (),
         }
     }
 }

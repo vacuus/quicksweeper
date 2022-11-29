@@ -3,7 +3,6 @@ use bevy::prelude::*;
 use crate::area_attack::AREA_ATTACK_UUID;
 
 use self::{
-    protocol::{ClientMessage, ServerMessage},
     sockets::*,
 };
 
@@ -27,20 +26,17 @@ impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         println!(
             "{:X?}",
-            rmp_serde::to_vec(&ClientData::Create {
+            rmp_serde::to_vec(&ClientMessage::Create {
                 game: GameMarker(AREA_ATTACK_UUID),
                 data: Vec::new()
             })
         );
 
         app.insert_resource(OpenPort::generate())
-            .init_resource::<Events<ServerMessage>>() // communicate_clients is the sole consumer of ServerMessage
-            .init_resource::<Events<ClientMessage>>() // server_messages is the sole consumer of ClientMessage
             .add_event::<IngameEvent>()
             .add_system(test_added)
             .add_system(receive_connections)
             .add_system(upgrade_connections)
-            .add_system(communicate_clients)
             .add_system(server_messages);
     }
 }

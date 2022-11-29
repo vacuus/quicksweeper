@@ -7,15 +7,12 @@
 //!
 
 use bevy::{prelude::*, utils::Uuid};
-
 use serde::{Deserialize, Serialize};
 
-use crate::registry::GameRegistry;
-
 use super::{
-    protocol::{ActiveGame, ClientData, ClientMessage, ServerData, ServerMessage},
-    sockets::ConnectionInfo,
-    IngameEvent,
+    protocol::{ActiveGame, ClientMessage, ServerMessage},
+    sockets::{Connection, ConnectionInfo},
+    IngameEvent, MessageSocket,
 };
 
 #[derive(Component, Serialize, Deserialize, Debug, Clone)]
@@ -24,7 +21,9 @@ pub struct GameDescriptor {
     pub description: String,
 }
 
-#[derive(Component, Deref, DerefMut, Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(
+    Component, Deref, DerefMut, Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash,
+)]
 pub struct GameMarker(pub Uuid);
 
 #[derive(Bundle)]
@@ -34,59 +33,53 @@ pub struct GameBundle {
 
 pub fn server_messages(
     mut commands: Commands,
-    mut incoming: ResMut<Events<ClientMessage>>,
-    mut outgoing: EventWriter<ServerMessage>,
-    mut game_events: EventWriter<IngameEvent>,
-    active_games: Query<(Entity, &GameMarker, &Children)>,
+    mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
     q_players: Query<&ConnectionInfo>,
-    registry: Res<GameRegistry>,
+    active_games: Query<(Entity, &GameMarker, &Children)>,
+    mut game_events: EventWriter<IngameEvent>,
 ) {
-    let mut translate = |incoming: ClientMessage| {
-        let data = match incoming.data {
-            ClientData::Games => ServerData::ActiveGames(
-                active_games
-                    .iter()
-                    .map(|(id, &marker, player_ids)| {
-                        let players = player_ids
-                            .iter()
-                            .map(|&ent| q_players.get(ent).unwrap().username.clone())
-                            .collect();
-                        ActiveGame {
-                            marker,
-                            id, 
-                            players,
-                        }
-                    })
-                    .collect(),
-            ),
-            ClientData::Create { game, data } => {
-                let game_id = commands.spawn((game,)).add_child(incoming.sender).id();
+    for (player, mut socket) in clients.iter_mut() {
+        match socket.read_data::<ClientMessage>() {
+            Some(Ok(ClientMessage::Games)) => {
+                let msg = ServerMessage::ActiveGames(
+                    active_games
+                        .iter()
+                        .map(|(id, &marker, player_ids)| {
+                            let players = player_ids
+                                .iter()
+                                .map(|&ent| q_players.get(ent).unwrap().username.clone())
+                                .collect();
+                            ActiveGame {
+                                marker,
+                                id,
+                                players,
+                            }
+                        })
+                        .collect(),
+                );
+
+                let _ = socket.write_data(msg);
+            }
+            Some(Ok(ClientMessage::Create { game, data })) => {
+                let game_id = commands.spawn((game,)).add_child(player).id();
                 game_events.send(IngameEvent::Create {
-                    client: incoming.sender,
+                    player,
                     game: game_id,
                     kind: game,
                     data,
                 });
-                ServerData::Confirmed
             }
-            ClientData::Join { game } => {
+            Some(Ok(ClientMessage::Join { game })) => {
                 if let Some(mut ent) = commands.get_entity(game) {
-                    ent.add_child(incoming.sender);
-                    ServerData::Confirmed
+                    ent.add_child(player);
                 } else {
-                    ServerData::Malformed
+                    let _ = socket.write_data(ServerMessage::Malformed);
                 }
             }
-            _ => ServerData::Malformed, // reject unimplemented requests for now
+            Some(_) => {
+                let _ = socket.write_data(ServerMessage::Malformed); // TODO report this later
+            }
+            _ => (),
         };
-
-        ServerMessage {
-            receiver: incoming.sender,
-            data,
-        }
-    };
-
-    for incoming in incoming.drain() {
-        outgoing.send(translate(incoming))
     }
 }
