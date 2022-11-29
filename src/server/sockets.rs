@@ -96,7 +96,6 @@ pub fn upgrade_connections(
                     println!("received name {username}");
                     commands.entity(id).insert((ConnectionInfo { username },));
                 }
-                #[allow(unreachable_patterns)] // this will no longer be true later
                 Ok(_) => {
                     println!("Improper connection negotiation, destroying...");
                     commands.entity(id).despawn();
