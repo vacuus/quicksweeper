@@ -1,5 +1,6 @@
 use bevy::{prelude::*, utils::Uuid};
 
+mod cell;
 mod server_systems;
 
 use server_systems::*;
