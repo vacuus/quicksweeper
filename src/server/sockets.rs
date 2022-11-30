@@ -1,4 +1,5 @@
 use std::{
+    io::{Read, Write},
     net::{TcpListener, TcpStream},
     ops::DerefMut,
 };
@@ -29,7 +30,6 @@ pub struct OpenPort(TcpListener);
 
 impl OpenPort {
     pub fn generate() -> Self {
-
         let ip = local_ip_address::local_ip().unwrap();
         let listener = TcpListener::bind((ip, 0)).unwrap();
         listener
@@ -43,7 +43,10 @@ impl OpenPort {
 #[derive(Component, Deref, DerefMut)]
 pub struct Connection(WebSocket<TcpStream>);
 
-pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
+pub trait MessageSocket<S>: DerefMut<Target = WebSocket<S>>
+where
+    S: Read + Write,
+{
     fn recv_message<D>(&mut self) -> Option<Result<D, MessageError>>
     where
         D: DeserializeOwned,
@@ -67,7 +70,12 @@ pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
     }
 }
 
-impl<T> MessageSocket for T where T: DerefMut<Target = WebSocket<TcpStream>> {}
+impl<T, S> MessageSocket<S> for T
+where
+    T: DerefMut<Target = WebSocket<S>>,
+    S: Read + Write,
+{
+}
 
 #[derive(Component)]
 pub struct ConnectionInfo {
