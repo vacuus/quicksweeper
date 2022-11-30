@@ -18,12 +18,13 @@ pub enum ClientMessage {
     Ingame { data: Vec<u8> },
     ForceLeave,
     Games,
+    GameTypes,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ServerMessage {
     ActiveGames(Vec<ActiveGame>),
-    Confirmed,
+    AvailableGames(Vec<GameMarker>),
     Malformed,
 }
 

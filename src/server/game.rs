@@ -9,6 +9,8 @@
 use bevy::{prelude::*, utils::Uuid};
 use serde::{Deserialize, Serialize};
 
+use crate::registry::GameRegistry;
+
 use super::{
     protocol::{ActiveGame, ClientMessage, ServerMessage},
     sockets::{Connection, ConnectionInfo},
@@ -37,6 +39,7 @@ pub fn server_messages(
     q_players: Query<&ConnectionInfo>,
     active_games: Query<(Entity, &GameMarker, &Children)>,
     mut game_events: EventWriter<IngameEvent>,
+    registry: Res<GameRegistry>,
 ) {
     for (player, mut socket) in clients.iter_mut() {
         match socket.read_data::<ClientMessage>() {
@@ -59,6 +62,11 @@ pub fn server_messages(
                 );
 
                 let _ = socket.write_data(msg);
+            }
+            Some(Ok(ClientMessage::GameTypes)) => {
+                let _ = socket.write_data(ServerMessage::AvailableGames(
+                    registry.keys().copied().collect(),
+                ));
             }
             Some(Ok(ClientMessage::Create { game, data })) => {
                 let game_id = commands.spawn((game,)).add_child(player).id();
