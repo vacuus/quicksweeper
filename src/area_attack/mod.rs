@@ -1,5 +1,9 @@
 use bevy::{prelude::*, utils::Uuid};
 
+mod server_systems;
+
+use server_systems::*;
+
 use crate::{
     registry::GameRegistry,
     server::{GameBundle, GameDescriptor, GameMarker},
@@ -12,9 +16,9 @@ pub const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b69
 };
 
 #[derive(Component)]
-pub struct AreaAttack;
+pub struct AreaAttackServer;
 
-impl Plugin for AreaAttack {
+impl Plugin for AreaAttackServer {
     fn build(&self, app: &mut App) {
         app.add_startup_system(|mut registry: ResMut<GameRegistry>| {
             registry.insert(
@@ -24,7 +28,8 @@ impl Plugin for AreaAttack {
                     description: "Race to claim the board for yourself".to_string(),
                 },
             );
-        });
+        })
+        .add_system(create_game);
     }
 }
 
