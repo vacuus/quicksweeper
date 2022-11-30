@@ -10,6 +10,7 @@ use iyes_loopless::{
     state::NextState,
 };
 use minefield::{systems::*, BlankField, GameOutcome, Minefield};
+use rand::seq::SliceRandom;
 
 use self::minefield::specific::MineCell;
 
@@ -47,12 +48,14 @@ fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>
 fn create_entities(
     mut commands: Commands,
     field_templates: Res<Assets<BlankField>>,
-    field_template: Res<Field>,
+    template_handles: Res<Field>,
     mine_textures: Res<MineTextures>,
     textures: Res<Textures>,
 ) {
     // create minefield
-    let field_template = field_templates.get(&field_template.field).unwrap();
+    let field_template = field_templates
+        .get(template_handles.take_one(&mut rand::thread_rng()))
+        .unwrap();
     let minefield = Minefield::new_shaped(
         |&pos| {
             commands

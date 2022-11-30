@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
+use rand::{Rng, seq::SliceRandom};
 
 use crate::{
     main_menu::MenuState,
@@ -18,8 +19,14 @@ pub struct Textures {
 
 #[derive(AssetCollection, Resource)]
 pub struct Field {
-    #[asset(path = "test.field")]
-    pub field: Handle<BlankField>,
+    #[asset(path = "fields", collection(typed))]
+    pub handles: Vec<Handle<BlankField>>,
+}
+
+impl Field {
+    pub fn take_one(&self, rng: &mut impl Rng) -> &Handle<BlankField> {
+        self.handles.choose(rng).unwrap()
+    }
 }
 
 #[derive(Deref, Resource)]

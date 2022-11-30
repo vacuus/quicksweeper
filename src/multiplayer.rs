@@ -25,11 +25,13 @@ pub enum MultiplayerState {
 fn create_entities(
     mut commands: Commands,
     field_templates: Res<Assets<BlankField>>,
-    field_template: Res<Field>,
+    template_handles: Res<Field>,
     mine_textures: Res<MineTextures>,
     textures: Res<Textures>,
 ) {
-    let field_template = field_templates.get(&field_template.field).unwrap();
+    let field_template = field_templates
+        .get(template_handles.take_one(&mut rand::thread_rng()))
+        .unwrap();
     let minefield = Minefield::new_shaped(
         |&pos| {
             commands
