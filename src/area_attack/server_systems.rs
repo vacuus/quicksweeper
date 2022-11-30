@@ -1,24 +1,43 @@
 use bevy::prelude::*;
 
-use crate::{server::IngameEvent, singleplayer::minefield::Minefield};
+use crate::{
+    load::Field,
+    server::IngameEvent,
+    singleplayer::minefield::{FieldShape, Minefield},
+};
 
-use super::AreaAttackBundle;
+use super::{AreaAttackBundle, AREA_ATTACK_UUID};
 
-pub fn create_game(mut commands: Commands, mut ev: EventReader<IngameEvent>) {
+#[derive(Component)]
+struct Host;
+
+pub fn create_game(
+    mut commands: Commands,
+    mut ev: EventReader<IngameEvent>,
+    field_templates: Res<Assets<FieldShape>>,
+    template_handles: Res<Field>,
+) {
     for ev in ev.iter() {
         if let IngameEvent::Create {
-            player,
-            game,
-            kind,
-            data,
+            player, game, kind, ..
         } = ev
         {
-            // commands
-            //     .entity(*game)
-            //     .insert(AreaAttackBundle::new(Minefield::new_shaped(
-            //         |pos| {todo!()},
-            //         todo!(),
-            //     )));
+            if **kind != AREA_ATTACK_UUID {
+                continue;
+            }
+
+            let minefield = Minefield::new_shaped(
+                |pos| commands.spawn(()).id(), // TODO Create cell entity types
+                field_templates
+                    .get(template_handles.take_one(&mut rand::thread_rng()))
+                    .unwrap(),
+            );
+
+            commands
+                .entity(*game)
+                .insert(AreaAttackBundle::new(minefield));
+
+            commands.entity(*player).insert(Host);
         }
     }
 }

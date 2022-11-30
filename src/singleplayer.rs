@@ -10,7 +10,6 @@ use iyes_loopless::{
     state::NextState,
 };
 use minefield::{systems::*, FieldShape, GameOutcome, Minefield};
-use rand::seq::SliceRandom;
 
 use self::minefield::specific::MineCell;
 
