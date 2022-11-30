@@ -33,6 +33,22 @@ pub struct GameBundle {
     pub marker: GameMarker,
 }
 
+pub fn game_messages(
+    mut clients: Query<(Entity, &mut Connection, &Parent)>,
+    mut game_events: EventWriter<IngameEvent>,
+) {
+    for (player, mut socket, game) in clients.iter_mut() {
+        match socket.read_data() {
+            Some(Ok(ClientMessage::Ingame { data })) => {}
+            Some(Ok(ClientMessage::ForceLeave)) => {},
+            Some(_) => {
+                let _ = socket.write_data(ServerMessage::Malformed); // TODO report this later
+            }
+            None => (),
+        }
+    }
+}
+
 pub fn server_messages(
     mut commands: Commands,
     mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
@@ -42,7 +58,7 @@ pub fn server_messages(
     registry: Res<GameRegistry>,
 ) {
     for (player, mut socket) in clients.iter_mut() {
-        match socket.read_data::<ClientMessage>() {
+        match socket.read_data() {
             Some(Ok(ClientMessage::Games)) => {
                 let msg = ServerMessage::ActiveGames(
                     active_games

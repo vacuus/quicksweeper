@@ -35,6 +35,7 @@ impl Plugin for ServerPlugin {
             .add_system(test_added)
             .add_system(receive_connections)
             .add_system(upgrade_connections)
+            .add_system(game_messages)
             .add_system(server_messages);
     }
 }
