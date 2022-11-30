@@ -34,13 +34,20 @@ pub struct GameBundle {
 }
 
 pub fn game_messages(
+    mut commands: Commands,
     mut clients: Query<(Entity, &mut Connection, &Parent)>,
     mut game_events: EventWriter<IngameEvent>,
 ) {
     for (player, mut socket, game) in clients.iter_mut() {
         match socket.read_data() {
-            Some(Ok(ClientMessage::Ingame { data })) => {}
-            Some(Ok(ClientMessage::ForceLeave)) => {},
+            Some(Ok(ClientMessage::Ingame { data })) => game_events.send(IngameEvent::Data {
+                player,
+                game: **game,
+                data,
+            }),
+            Some(Ok(ClientMessage::ForceLeave)) => {
+                commands.entity(**game).remove_children(&[player]);
+            }
             Some(_) => {
                 let _ = socket.write_data(ServerMessage::Malformed); // TODO report this later
             }
