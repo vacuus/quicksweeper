@@ -44,7 +44,7 @@ impl OpenPort {
 pub struct Connection(WebSocket<TcpStream>);
 
 pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
-    fn read_data<D>(&mut self) -> Option<Result<D, MessageError>>
+    fn recv_message<D>(&mut self) -> Option<Result<D, MessageError>>
     where
         D: DeserializeOwned,
     {
@@ -62,7 +62,7 @@ pub trait MessageSocket: DerefMut<Target = WebSocket<TcpStream>> {
             _ => Some(Err(MessageError::Encoding)),
         }
     }
-    fn write_data(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
+    fn send_message(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
         Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
     }
 }
@@ -94,7 +94,7 @@ pub fn upgrade_connections(
     mut commands: Commands,
 ) {
     for (id, mut client) in partial_connections.iter_mut() {
-        if let Some(result) = client.read_data() {
+        if let Some(result) = client.recv_message() {
             match result {
                 Ok(ClientMessage::Greet { username }) => {
                     println!("Connection upgraded! It is now able to become a player");

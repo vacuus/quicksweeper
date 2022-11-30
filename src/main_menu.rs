@@ -118,14 +118,14 @@ fn server_select_menu(
                 Ok((socket, _)) => {
                     let mut socket = ClientSocket(socket);
                     socket
-                        .write_data(ClientMessage::Greet {
+                        .send_message(ClientMessage::Greet {
                             username: fields.username.clone(),
                         })
                         .map_err(|_| {
                             fields.remote_select_err = "Failure in initializing connection";
                         })?;
 
-                    socket.write_data(ClientMessage::Games).map_err(|_| {
+                    socket.send_message(ClientMessage::Games).map_err(|_| {
                         fields.remote_select_err = "Could not retrieve games on the server"
                     })?;
 
@@ -179,7 +179,7 @@ fn game_select_menu(
         join_game: Option<Entity>,
     }
 
-    if let Some(Ok(ServerMessage::ActiveGames(v))) = socket.read_data() {
+    if let Some(Ok(ServerMessage::ActiveGames(v))) = socket.recv_message() {
         *games = v;
     }
 
@@ -246,14 +246,14 @@ fn game_select_menu(
     if response.go_back.clicked() {
         commands.insert_resource(NextState(MenuState::MainMenu));
     } else if response.reload.clicked() {
-        let _ = socket.write_data(ClientMessage::Games); // TODO: Report error to user
+        let _ = socket.send_message(ClientMessage::Games); // TODO: Report error to user
     } else if let Some(mode) = response.create {
-        let _ = socket.write_data(ClientMessage::Create {
+        let _ = socket.send_message(ClientMessage::Create {
             game: mode,
             data: Vec::new(),
         });
     } else if let Some(game) = response.join_game {
-        let _ = socket.write_data(ClientMessage::Join { game });
+        let _ = socket.send_message(ClientMessage::Join { game });
     }
 }
 

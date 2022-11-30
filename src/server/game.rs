@@ -39,7 +39,7 @@ pub fn game_messages(
     mut game_events: EventWriter<IngameEvent>,
 ) {
     for (player, mut socket, game) in clients.iter_mut() {
-        match socket.read_data() {
+        match socket.recv_message() {
             Some(Ok(ClientMessage::Ingame { data })) => game_events.send(IngameEvent::Data {
                 player,
                 game: **game,
@@ -49,7 +49,7 @@ pub fn game_messages(
                 commands.entity(**game).remove_children(&[player]);
             }
             Some(_) => {
-                let _ = socket.write_data(ServerMessage::Malformed); // TODO report this later
+                let _ = socket.send_message(ServerMessage::Malformed); // TODO report this later
             }
             None => (),
         }
@@ -65,7 +65,7 @@ pub fn server_messages(
     registry: Res<GameRegistry>,
 ) {
     for (player, mut socket) in clients.iter_mut() {
-        match socket.read_data() {
+        match socket.recv_message() {
             Some(Ok(ClientMessage::Games)) => {
                 let msg = ServerMessage::ActiveGames(
                     active_games
@@ -84,10 +84,10 @@ pub fn server_messages(
                         .collect(),
                 );
 
-                let _ = socket.write_data(msg);
+                let _ = socket.send_message(msg);
             }
             Some(Ok(ClientMessage::GameTypes)) => {
-                let _ = socket.write_data(ServerMessage::AvailableGames(
+                let _ = socket.send_message(ServerMessage::AvailableGames(
                     registry.keys().copied().collect(),
                 ));
             }
@@ -104,11 +104,11 @@ pub fn server_messages(
                 if let Some(mut ent) = commands.get_entity(game) {
                     ent.add_child(player);
                 } else {
-                    let _ = socket.write_data(ServerMessage::Malformed);
+                    let _ = socket.send_message(ServerMessage::Malformed);
                 }
             }
             Some(_) => {
-                let _ = socket.write_data(ServerMessage::Malformed); // TODO report this later
+                let _ = socket.send_message(ServerMessage::Malformed); // TODO report this later
             }
             _ => (),
         };
