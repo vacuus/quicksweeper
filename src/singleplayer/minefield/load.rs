@@ -10,9 +10,9 @@ use crate::common::Position;
 
 #[derive(TypeUuid, Debug, Deref)]
 #[uuid = "2d02b7fb-4718-4073-82c2-80075e688e08"]
-pub struct BlankField(Vec<Position>);
+pub struct FieldShape(Vec<Position>);
 
-impl BlankField {
+impl FieldShape {
     pub fn center(&self) -> Option<Position> {
         let max = self.iter().fold(Position::new(0, 0), |acc, item| {
             acc.tap_mut(|acc| {
@@ -62,7 +62,7 @@ impl AssetLoader for FieldLoader {
                         })
                 })?;
 
-            ctx.set_default_asset(LoadedAsset::new(BlankField(positions)));
+            ctx.set_default_asset(LoadedAsset::new(FieldShape(positions)));
 
             Ok(())
         })

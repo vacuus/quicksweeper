@@ -8,7 +8,7 @@ use crate::{
     common::{InitCheckCell, Position},
     cursor::*,
     load::{Field, MineTextures, Textures},
-    singleplayer::minefield::{specific::MineCell, systems::*, BlankField, GameOutcome, Minefield},
+    singleplayer::minefield::{specific::MineCell, systems::*, FieldShape, GameOutcome, Minefield},
     state::ConditionalHelpersExt,
 };
 pub struct MultiplayerMode;
@@ -24,7 +24,7 @@ pub enum MultiplayerState {
 
 fn create_entities(
     mut commands: Commands,
-    field_templates: Res<Assets<BlankField>>,
+    field_templates: Res<Assets<FieldShape>>,
     template_handles: Res<Field>,
     mine_textures: Res<MineTextures>,
     textures: Res<Textures>,

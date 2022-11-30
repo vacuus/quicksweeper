@@ -9,7 +9,7 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use minefield::{systems::*, BlankField, GameOutcome, Minefield};
+use minefield::{systems::*, FieldShape, GameOutcome, Minefield};
 use rand::seq::SliceRandom;
 
 use self::minefield::specific::MineCell;
@@ -47,7 +47,7 @@ fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>
 
 fn create_entities(
     mut commands: Commands,
-    field_templates: Res<Assets<BlankField>>,
+    field_templates: Res<Assets<FieldShape>>,
     template_handles: Res<Field>,
     mine_textures: Res<MineTextures>,
     textures: Res<Textures>,

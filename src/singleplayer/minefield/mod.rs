@@ -6,7 +6,7 @@ pub mod specific;
 pub mod systems;
 
 pub use field::*;
-pub use load::BlankField;
+pub use load::FieldShape;
 
 pub enum GameOutcome {
     Failed,
@@ -17,7 +17,7 @@ pub struct MinefieldPlugin;
 
 impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_asset::<load::BlankField>()
+        app.add_asset::<load::FieldShape>()
             .add_asset_loader(load::FieldLoader)
             .add_event::<GameOutcome>()
             .add_system(specific::render_mines);

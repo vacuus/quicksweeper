@@ -10,7 +10,7 @@ use gridly_grids::SparseGrid;
 use crate::common::Position;
 use std::ops::{Deref, DerefMut};
 
-use super::BlankField;
+use super::FieldShape;
 
 #[derive(Component)]
 pub struct Minefield {
@@ -39,7 +39,7 @@ fn field_density(val: usize) -> usize {
 }
 
 impl Minefield {
-    pub fn new_shaped<F>(mut make_entity: F, template: &BlankField) -> Self
+    pub fn new_shaped<F>(mut make_entity: F, template: &FieldShape) -> Self
     where
         F: FnMut(&Position) -> Entity,
     {

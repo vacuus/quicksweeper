@@ -4,7 +4,7 @@ use rand::{Rng, seq::SliceRandom};
 
 use crate::{
     main_menu::MenuState,
-    singleplayer::minefield::{specific::CELL_SIZE, BlankField},
+    singleplayer::minefield::{specific::CELL_SIZE, FieldShape},
 };
 
 #[derive(AssetCollection, Resource)]
@@ -20,11 +20,11 @@ pub struct Textures {
 #[derive(AssetCollection, Resource)]
 pub struct Field {
     #[asset(path = "fields", collection(typed))]
-    pub handles: Vec<Handle<BlankField>>,
+    pub handles: Vec<Handle<FieldShape>>,
 }
 
 impl Field {
-    pub fn take_one(&self, rng: &mut impl Rng) -> &Handle<BlankField> {
+    pub fn take_one(&self, rng: &mut impl Rng) -> &Handle<FieldShape> {
         self.handles.choose(rng).unwrap()
     }
 }
