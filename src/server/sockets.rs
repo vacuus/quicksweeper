@@ -29,7 +29,9 @@ pub struct OpenPort(TcpListener);
 
 impl OpenPort {
     pub fn generate() -> Self {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+
+        let ip = local_ip_address::local_ip().unwrap();
+        let listener = TcpListener::bind((ip, 0)).unwrap();
         listener
             .set_nonblocking(true)
             .expect("could not start server in nonblocking mode");

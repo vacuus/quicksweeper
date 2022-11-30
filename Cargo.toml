@@ -32,6 +32,7 @@ gridly = "0.9"
 gridly_grids = "0.5"
 
 tungstenite = "0.18"
+local-ip-address = "0.4.9"
 rmp-serde = "1.1"
 
 # bound by bevy
