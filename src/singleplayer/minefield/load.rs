@@ -25,13 +25,13 @@ impl TileKind {
 }
 
 impl TryFrom<u8> for TileKind {
-    type Error = anyhow::Error;
+    type Error = u8;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             b'o' | b' ' => Ok(Self::Void),
             b'x' => Ok(Self::Exists),
-            _ => Err(anyhow!("Imposter cell detected :bangbang:")),
+            _ => Err(value),
         }
     }
 }
@@ -110,44 +110,24 @@ impl AssetLoader for FieldLoader {
         Box::pin(async {
             let mut data = Vec::new();
 
-            bytes.rsplit(|&b| b == b'\n').try_for_each(|line| {
-                let mut prev_kind = line
-                    .first()
-                    .map(|&c| TileKind::try_from(c))
-                    .unwrap_or(Ok(TileKind::Void))?;
-                let mut finished = false;
+            bytes
+                .rsplit(|&b| b == b'\n')
+                .try_for_each(|line| {
+                    let row_header = line
+                        .first()
+                        .map(|&c| TileKind::try_from(c))
+                        .unwrap_or(Ok(TileKind::Void))?;
 
-                data.push(FieldCode::Row { starts: prev_kind });
+                    data.push(FieldCode::Row { starts: row_header });
 
-                line.iter()
-                    .batching(|it| {
-
-                        if finished {
-                            return None
-                        }
-                        let mut count = 1;
-
-                        loop {
-                            match it.next().map(|&e| TileKind::try_from(e)) {
-                                Some(Ok(t)) if t == prev_kind => count += 1,
-                                Some(Ok(u)) => {
-                                    prev_kind = u;
-                                    break;
-                                }
-                                Some(Err(e)) => return Some(Err(e)),
-                                None => {
-                                    finished = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        Some(Ok(FieldCode::Run(count)))
-                    })
-                    .try_for_each(|e| e.map(|run| data.push(run)))
-            })?;
-
-            println!("generated board {data:?}");
+                    line.iter()
+                        .group_by(|&&c| TileKind::try_from(c))
+                        .into_iter()
+                        .try_for_each(|(group, i)| {
+                            group.map(|_| data.push(FieldCode::Run(i.count() as u32)))
+                        })
+                })
+                .map_err(|char| anyhow!("Did not expect character '{char}' as a tile"))?;
 
             ctx.set_default_asset(LoadedAsset::new(FieldShape(data)));
 
