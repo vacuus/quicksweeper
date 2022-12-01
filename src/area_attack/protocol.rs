@@ -1,9 +1,11 @@
 use serde::{Serialize, Deserialize};
 
+use crate::singleplayer::minefield::FieldShape;
+
 
 #[derive(Serialize, Deserialize)]
-struct ServerUpdate {
-    
+enum ServerUpdate {
+    FieldShape(FieldShape),
 }
 
 #[derive(Serialize, Deserialize)]

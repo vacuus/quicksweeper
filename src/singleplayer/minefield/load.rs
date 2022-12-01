@@ -4,10 +4,11 @@ use bevy::{
     reflect::TypeUuid,
 };
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 use crate::common::Position;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 enum TileKind {
     Void,
     Exists,
@@ -34,13 +35,13 @@ impl TryFrom<u8> for TileKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 enum FieldCode {
     Row { starts: TileKind },
     Run(u32),
 }
 
-#[derive(TypeUuid, Debug)]
+#[derive(TypeUuid, Debug, Serialize, Deserialize)]
 #[uuid = "2d02b7fb-4718-4073-82c2-80075e688e08"]
 pub struct FieldShape(Vec<FieldCode>);
 
