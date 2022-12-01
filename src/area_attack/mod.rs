@@ -2,6 +2,7 @@ use bevy::{prelude::*, utils::Uuid};
 
 mod server_systems;
 mod states;
+mod protocol;
 mod tile;
 
 use iyes_loopless::prelude::AppLooplessStateExt;
