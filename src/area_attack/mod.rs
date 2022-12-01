@@ -4,6 +4,7 @@ mod server_systems;
 mod states;
 mod tile;
 
+use iyes_loopless::prelude::AppLooplessStateExt;
 use server_systems::*;
 
 use crate::{
@@ -37,6 +38,14 @@ impl Plugin for AreaAttackServer {
     }
 }
 
+pub struct AreaAttackClient;
+
+impl Plugin for AreaAttackClient {
+    fn build(&self, app: &mut App) {
+        app.add_loopless_state(AreaAttackState::Inactive);
+    }
+}
+
 #[derive(Bundle)]
 struct AreaAttackBundle {
     game: GameBundle,
@@ -51,7 +60,7 @@ impl AreaAttackBundle {
                 marker: GameMarker(AREA_ATTACK_UUID),
             },
             field,
-            state: default(),
+            state: AreaAttackState::Selecting,
         }
     }
 }

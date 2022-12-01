@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
-#[derive(PartialEq, Eq, Component)]
+#[derive(PartialEq, Eq, Clone, Hash, Debug, Component)]
 pub enum AreaAttackState {
+    /// Only for client -- to indicate that there is no Area Attack game in progress
+    Inactive,
     /// Players are selecting the cells that they will begin on
     Selecting,
     /// The first stage of Area Attack, without restrictions
@@ -13,10 +15,4 @@ pub enum AreaAttackState {
     /// After the game is done, rank is awarded (if it is valid for this game to do so) and players
     /// are prompted to rematch or exit
     Finishing,
-}
-
-impl Default for AreaAttackState {
-    fn default() -> Self {
-        Self::Selecting
-    }
 }
