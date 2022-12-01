@@ -1,11 +1,9 @@
 use anyhow::anyhow;
-use bevy::prelude::*;
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
     reflect::TypeUuid,
 };
 use itertools::Itertools;
-use tap::Tap;
 
 use crate::common::Position;
 
@@ -76,26 +74,28 @@ impl FieldShape {
     }
 
     pub fn center(&self) -> Option<Position> {
-        // let max = self.iter().fold(Position::new(0, 0), |acc, item| {
-        //     acc.tap_mut(|acc| {
-        //         acc.x = std::cmp::max(acc.x, item.x);
-        //         acc.y = std::cmp::max(acc.y, item.y);
-        //     })
-        // });
-        // let min = self.iter().fold(Position::new(0, 0), |acc, item| {
-        //     acc.tap_mut(|acc| {
-        //         acc.x = std::cmp::min(acc.x, item.x);
-        //         acc.y = std::cmp::min(acc.y, item.y);
-        //     })
-        // });
-
-        // let abs_center = min + (max - min) / 2;
-
-        // std::iter::once(abs_center)
-        //     .chain(abs_center.neighbors())
-        //     .find_map(|pos| self.contains(&pos).then_some(pos))
-        // todo!()
-        None
+        let farthest_y = self
+            .0
+            .iter()
+            .filter(|c| matches!(c, FieldCode::Row { .. }))
+            .count()
+            - 1;
+        let farthest_x = self
+            .0
+            .split(|c| matches!(c, FieldCode::Row { .. }))
+            .map(|row| {
+                row.iter().fold(0, |distance, r| match r {
+                    FieldCode::Run(len) => distance + len,
+                    _ => unreachable!(),
+                })
+            })
+            .max();
+        farthest_x.map(|farthest_x| {
+            Position {
+                x: farthest_x as isize,
+                y: farthest_y as isize,
+            } / 2
+        })
     }
 }
 
