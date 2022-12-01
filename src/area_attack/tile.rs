@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::common::Position;
+
 #[derive(Component)]
 pub enum ServerTile {
     /// No one has claimed the tile, and the tile does not contain a mine
@@ -10,6 +12,12 @@ pub enum ServerTile {
     Mine,
     /// There is a mine on this tile, and it has been revealed
     HardMine,
+}
+
+#[derive(Bundle)]
+pub struct ServerTileBundle {
+    pub tile: ServerTile,
+    pub position: Position,
 }
 
 #[derive(Component)]
