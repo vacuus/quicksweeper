@@ -41,4 +41,9 @@ pub enum IngameEvent {
         kind: GameMarker,
         data: Vec<u8>,
     },
+    /// Only one of Join or Create will be sent per player -- never both.
+    Join {
+        player: Entity,
+        game: Entity,
+    }
 }

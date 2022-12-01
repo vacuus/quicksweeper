@@ -102,6 +102,7 @@ pub fn server_messages(
             }
             Some(Ok(ClientMessage::Join { game })) => {
                 if let Some(mut ent) = commands.get_entity(game) {
+                    game_events.send(IngameEvent::Join { player, game });
                     ent.add_child(player);
                 } else {
                     let _ = socket.send_message(ServerMessage::Malformed);
