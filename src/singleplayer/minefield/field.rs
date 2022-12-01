@@ -44,8 +44,8 @@ impl Minefield {
         F: FnMut(&Position) -> Entity,
     {
         let mut field = SparseGrid::new_default((Rows(10), Columns(10)), None); // TODO: Use less arbitrary numbers in init
-        for pos in template.iter() {
-            let entity = make_entity(pos);
+        for pos in template.decode() {
+            let entity = make_entity(&pos);
             field.insert(pos, Some(entity));
         }
 

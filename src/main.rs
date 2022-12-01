@@ -38,6 +38,6 @@ fn main() {
         .add_plugin(singleplayer::minefield::MinefieldPlugin)
         .add_plugin(server::ServerPlugin)
         // gamemodes
-        .add_plugin(area_attack::AreaAttackServer)
+        // .add_plugin(area_attack::AreaAttackServer)
         .run();
 }
