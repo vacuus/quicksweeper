@@ -1,5 +1,6 @@
-use bevy::prelude::Entity;
+use bevy::prelude::*;
 
+#[derive(Component)]
 pub enum ServerTile {
     /// No one has claimed the tile, and the tile does not contain a mine
     Empty,
@@ -11,6 +12,7 @@ pub enum ServerTile {
     HardMine,
 }
 
+#[derive(Component)]
 pub enum ClientTile {
     /// No one has claimed this tile, and it isn't known whether it is blank or contains a mine
     Unknown,

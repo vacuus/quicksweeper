@@ -1,7 +1,8 @@
 use bevy::{prelude::*, utils::Uuid};
 
-mod tile;
 mod server_systems;
+mod states;
+mod tile;
 
 use server_systems::*;
 
@@ -10,6 +11,8 @@ use crate::{
     server::{GameBundle, GameDescriptor, GameMarker},
     singleplayer::minefield::Minefield,
 };
+
+use self::states::AreaAttackState;
 
 pub const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
     Ok(val) => val,
@@ -38,6 +41,7 @@ impl Plugin for AreaAttackServer {
 struct AreaAttackBundle {
     game: GameBundle,
     field: Minefield,
+    state: AreaAttackState,
 }
 
 impl AreaAttackBundle {
@@ -47,6 +51,7 @@ impl AreaAttackBundle {
                 marker: GameMarker(AREA_ATTACK_UUID),
             },
             field,
+            state: default(),
         }
     }
 }

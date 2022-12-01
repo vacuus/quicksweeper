@@ -6,7 +6,7 @@ use crate::{
     singleplayer::minefield::{FieldShape, Minefield},
 };
 
-use super::{AreaAttackBundle, AREA_ATTACK_UUID};
+use super::{AreaAttackBundle, AREA_ATTACK_UUID, tile::ServerTile};
 
 #[derive(Component)]
 struct Host;
@@ -27,7 +27,7 @@ pub fn create_game(
             }
 
             let minefield = Minefield::new_shaped(
-                |pos| commands.spawn(()).id(), // TODO Create cell entity types
+                |pos| commands.spawn((ServerTile::Empty,)).id(),
                 field_templates
                     .get(template_handles.take_one(&mut rand::thread_rng()))
                     .unwrap(),
