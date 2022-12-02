@@ -99,6 +99,10 @@ pub fn server_messages(
                     kind: game,
                     data,
                 });
+                game_events.send(IngameEvent::Join {
+                    player,
+                    game: game_id,
+                });
             }
             Some(Ok(ClientMessage::Join { game })) => {
                 if let Some(mut ent) = commands.get_entity(game) {
