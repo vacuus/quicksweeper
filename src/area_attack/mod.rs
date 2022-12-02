@@ -1,8 +1,8 @@
 use bevy::{prelude::*, utils::Uuid};
 
+mod protocol;
 mod server_systems;
 mod states;
-mod protocol;
 mod tile;
 
 use iyes_loopless::prelude::AppLooplessStateExt;
@@ -11,10 +11,13 @@ use server_systems::*;
 use crate::{
     registry::GameRegistry,
     server::{GameBundle, GameDescriptor, GameMarker},
-    singleplayer::minefield::Minefield,
+    singleplayer::minefield::{FieldShape, Minefield},
 };
 
-use self::states::AreaAttackState;
+use self::{
+    states::AreaAttackState,
+    tile::{ServerTile, ServerTileBundle},
+};
 
 pub const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
     Ok(val) => val,
@@ -51,17 +54,35 @@ impl Plugin for AreaAttackClient {
 struct AreaAttackBundle {
     game: GameBundle,
     field: Minefield,
+    template: Handle<FieldShape>,
     state: AreaAttackState,
+    typed_marker: AreaAttackServer,
 }
 
 impl AreaAttackBundle {
-    fn new(field: Minefield) -> Self {
+    fn new(
+        commands: &mut Commands,
+        template: Handle<FieldShape>,
+        template_set: &Res<Assets<FieldShape>>,
+    ) -> Self {
         Self {
             game: GameBundle {
                 marker: GameMarker(AREA_ATTACK_UUID),
             },
-            field,
+            field: Minefield::new_shaped(
+                |&position| {
+                    commands
+                        .spawn(ServerTileBundle {
+                            tile: ServerTile::Empty,
+                            position,
+                        })
+                        .id()
+                },
+                template_set.get(&template).unwrap(),
+            ),
+            template,
             state: AreaAttackState::Selecting,
+            typed_marker: AreaAttackServer,
         }
     }
 }

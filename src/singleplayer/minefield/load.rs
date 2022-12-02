@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
+    prelude::*,
     reflect::TypeUuid,
 };
 use itertools::Itertools;
@@ -35,13 +36,13 @@ impl TryFrom<u8> for TileKind {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 enum FieldCode {
     Row { starts: TileKind },
     Run(u32),
 }
 
-#[derive(TypeUuid, Debug, Serialize, Deserialize)]
+#[derive(TypeUuid, Debug, Serialize, Deserialize, Component, Clone)]
 #[uuid = "2d02b7fb-4718-4073-82c2-80075e688e08"]
 pub struct FieldShape(Vec<FieldCode>);
 
