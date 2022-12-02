@@ -1,4 +1,7 @@
 use bevy::prelude::*;
+use itertools::Itertools;
+use rand::seq::IteratorRandom;
+use strum::IntoEnumIterator;
 
 use crate::{
     load::Field,
@@ -7,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    components::{AreaAttackBundle, PlayerColor},
+    components::{AreaAttackBundle, PlayerBundle, PlayerColor},
     protocol::AreaAttackUpdate,
     AreaAttackServer, AREA_ATTACK_MARKER,
 };
@@ -44,7 +47,7 @@ pub fn prepare_player(
     mut commands: Commands,
     mut ev: EventReader<IngameEvent>,
     games: Query<(&Children, &FieldShape), With<AreaAttackServer>>,
-    players: Query<(&ConnectionInfo, &PlayerColor)>,
+    players: Query<(&ConnectionInfo, &mut PlayerColor)>,
     mut connections: Query<&mut Connection>,
 ) {
     for ev in ev.iter() {
@@ -52,12 +55,22 @@ pub fn prepare_player(
         let Ok((peers, shape)) = games.get(*game) else { continue; };
         let Ok(mut this_connection) = connections.get_mut(*player) else { continue; };
 
+        // guard if there are too many players
+        if peers.len() >= 4 {
+            let _ = this_connection.send_message(AreaAttackUpdate::Full);
+            commands.entity(*game).remove_children(&[*player]);
+            continue;
+        }
+
+        let mut taken_colors = Vec::new();
+
         // send the selected board
         let _ = this_connection.send_message(AreaAttackUpdate::FieldShape(shape.clone()));
 
         // send list of players and player properties
         for &peer_id in peers {
             let (ConnectionInfo { username }, &color) = players.get(peer_id).unwrap();
+            taken_colors.push(color);
             let _ = this_connection.send_message(AreaAttackUpdate::PlayerModified {
                 id: peer_id,
                 username: username.clone(),
@@ -65,7 +78,17 @@ pub fn prepare_player(
             });
         }
 
+        let assigned_color = PlayerColor::iter()
+            .filter(|co| !taken_colors.contains(co))
+            .choose(&mut rand::thread_rng())
+            .unwrap();
+
         // initialize some player properties
-        unimplemented!("initialize the player entity itself") // TODO implement
+        commands.entity(*player).insert(PlayerBundle {
+            color: assigned_color,
+        });
+        let _ = this_connection.send_message(AreaAttackUpdate::SelfModified {
+            color: assigned_color,
+        });
     }
 }

@@ -47,6 +47,11 @@ impl AreaAttackBundle {
     }
 }
 
+#[derive(Bundle)]
+pub struct PlayerBundle {
+    pub color: PlayerColor,
+}
+
 #[derive(Component)]
 pub enum ServerTile {
     /// No one has claimed the tile, and the tile does not contain a mine
@@ -79,7 +84,7 @@ pub enum ClientTile {
     HardMine,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter)]
+#[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter, PartialEq, Eq)]
 pub enum PlayerColor {
     Yellow,
     Green,

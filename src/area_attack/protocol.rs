@@ -16,10 +16,16 @@ pub enum AreaAttackUpdate {
         username: String,
         color: PlayerColor,
     },
+    /// Will be sent to the player if the game autosets its properties (e.g. on initial join)
+    SelfModified {
+        color: PlayerColor,
+    },
     TileChanged {
         position: Position,
         to: ClientTile,
     },
+    /// Issued to a client when it attempts to join a full game
+    Full,
 }
 
 #[derive(Serialize, Deserialize)]
