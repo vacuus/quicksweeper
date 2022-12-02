@@ -1,5 +1,6 @@
 use bevy::{prelude::*, utils::Uuid};
 
+mod client_systems;
 mod components;
 mod protocol;
 mod server_systems;
@@ -50,6 +51,12 @@ pub struct AreaAttackClient;
 
 impl Plugin for AreaAttackClient {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(AreaAttackState::Inactive);
+        app.add_loopless_state(AreaAttackState::Inactive)
+            .add_system(||{}) // transition from menu into game
+            .add_system_set(
+                ConditionSet::new()
+                    .run_not_in_state(AreaAttackState::Inactive)
+                    .into(),
+            );
     }
 }

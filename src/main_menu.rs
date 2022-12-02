@@ -161,6 +161,10 @@ fn server_select_menu(
     });
 }
 
+/// Event issued when a multiplayer game has been selected. The corresponding game's client
+/// implementation should then pick up this event and
+struct ToGame(GameMarker);
+
 /// Same thing as [run_menu], but only safe to run with socket access
 fn game_select_menu(
     mut commands: Commands,
@@ -168,6 +172,7 @@ fn game_select_menu(
     mut games: Local<Vec<ActiveGame>>,
     mut selected_gamemode: Local<(Option<String>, Option<GameMarker>)>,
     mut socket: Query<&mut ClientSocket>,
+    mut start_game: EventWriter<ToGame>,
     registry: Res<GameRegistry>,
 ) {
     let mut socket = socket.single_mut();
@@ -176,7 +181,7 @@ fn game_select_menu(
         go_back: egui::Response,
         reload: egui::Response,
         create: Option<GameMarker>,
-        join_game: Option<Entity>,
+        join_game: Option<(Entity, GameMarker)>,
     }
 
     if let Some(Ok(ServerMessage::ActiveGames(v))) = socket.recv_message() {
@@ -202,7 +207,7 @@ fn game_select_menu(
                     ui.label(""); // empty
 
                     if ui.button("Join").clicked() {
-                        join_game = Some(game.id)
+                        join_game = Some((game.id, game.marker))
                     }
 
                     ui.end_row();
@@ -252,8 +257,11 @@ fn game_select_menu(
             game: mode,
             data: Vec::new(),
         });
-    } else if let Some(game) = response.join_game {
+    } else if let Some((game, marker)) = response.join_game {
         let _ = socket.send_message(ClientMessage::Join { game });
+        // TODO: Enter ingame
+        start_game.send(ToGame(marker));
+        commands.insert_resource(NextState(MenuState::InGame));
     }
 }
 
@@ -266,6 +274,7 @@ pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(MenuState::Loading)
+            .add_event::<ToGame>()
             .init_resource::<MenuFields>()
             .add_system(run_main_menu.run_in_state(MenuState::MainMenu))
             .add_system(server_select_menu.run_in_state(MenuState::ServerSelect))
