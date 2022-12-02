@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use itertools::Itertools;
-use rand::seq::IteratorRandom;
 use strum::IntoEnumIterator;
 
 use crate::{
@@ -79,8 +77,7 @@ pub fn prepare_player(
         }
 
         let assigned_color = PlayerColor::iter()
-            .filter(|co| !taken_colors.contains(co))
-            .choose(&mut rand::thread_rng())
+            .find(|co| !taken_colors.contains(co))
             .unwrap();
 
         // initialize some player properties
