@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use crate::area_attack::AREA_ATTACK_MARKER;
-
 use self::sockets::*;
 
 mod game;

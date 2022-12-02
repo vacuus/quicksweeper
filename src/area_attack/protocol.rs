@@ -1,19 +1,10 @@
 use bevy::prelude::*;
 
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumIter;
 
 use crate::{common::Position, singleplayer::minefield::FieldShape};
 
-use super::tile::ClientTile;
-
-#[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter)]
-pub enum PlayerColor {
-    Yellow,
-    Green,
-    Blue,
-    Purple,
-}
+use super::components::{ClientTile, PlayerColor};
 
 #[derive(Serialize, Deserialize)]
 pub enum AreaAttackUpdate {

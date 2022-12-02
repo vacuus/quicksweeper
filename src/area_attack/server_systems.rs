@@ -7,8 +7,9 @@ use crate::{
 };
 
 use super::{
-    protocol::{AreaAttackUpdate, PlayerColor},
-    AreaAttackBundle, AreaAttackServer, AREA_ATTACK_MARKER,
+    components::{AreaAttackBundle, PlayerColor},
+    protocol::AreaAttackUpdate,
+    AreaAttackServer, AREA_ATTACK_MARKER,
 };
 
 #[derive(Component)]
