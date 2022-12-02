@@ -5,10 +5,11 @@ mod server_systems;
 mod states;
 mod tile;
 
-use iyes_loopless::prelude::AppLooplessStateExt;
+use iyes_loopless::prelude::*;
 use server_systems::*;
 
 use crate::{
+    main_menu::MenuState,
     registry::GameRegistry,
     server::{GameBundle, GameDescriptor, GameMarker},
     singleplayer::minefield::{FieldShape, Minefield},
@@ -38,7 +39,12 @@ impl Plugin for AreaAttackServer {
                 },
             );
         })
-        .add_system(create_game);
+        .add_system_set(
+            ConditionSet::new()
+                .run_not_in_state(MenuState::Loading)
+                .with_system(create_game)
+                .into(),
+        );
     }
 }
 
