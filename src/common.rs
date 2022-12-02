@@ -1,6 +1,7 @@
 use arrayvec::ArrayVec;
 use bevy::prelude::*;
 use gridly::prelude::*;
+use serde::{Serialize, Deserialize};
 
 use std::{
     hash::Hash,
@@ -11,7 +12,7 @@ use strum_macros::EnumIter;
 
 use crate::cursor::CursorPosition;
 
-#[derive(PartialEq, Clone, Copy, Debug, Component, Eq, Hash)]
+#[derive(PartialEq, Clone, Copy, Debug, Component, Eq, Hash, Serialize, Deserialize)]
 pub struct Position {
     pub x: isize,
     pub y: isize,

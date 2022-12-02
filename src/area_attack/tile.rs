@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use serde::{Serialize, Deserialize};
 
 use crate::common::Position;
 
@@ -20,7 +21,7 @@ pub struct ServerTileBundle {
     pub position: Position,
 }
 
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize)]
 pub enum ClientTile {
     /// No one has claimed this tile, and it isn't known whether it is blank or contains a mine
     Unknown,
