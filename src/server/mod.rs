@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::area_attack::AREA_ATTACK_UUID;
+use crate::area_attack::AREA_ATTACK_MARKER;
 
 use self::sockets::*;
 
@@ -10,7 +10,7 @@ mod sockets;
 
 pub use game::*;
 pub use protocol::*;
-pub use sockets::{ClientSocket, MessageSocket, Connection, ConnectionInfo};
+pub use sockets::{ClientSocket, Connection, ConnectionInfo, MessageSocket};
 
 pub struct ServerPlugin;
 
@@ -22,14 +22,6 @@ fn test_added(q: Query<&GameMarker, Added<GameMarker>>) {
 
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
-        println!(
-            "{:X?}",
-            rmp_serde::to_vec(&ClientMessage::Create {
-                game: GameMarker(AREA_ATTACK_UUID),
-                data: Vec::new()
-            })
-        );
-
         app.insert_resource(OpenPort::generate())
             .add_event::<IngameEvent>()
             .add_system(test_added)

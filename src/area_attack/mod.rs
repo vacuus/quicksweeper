@@ -20,10 +20,12 @@ use self::{
     tile::{ServerTile, ServerTileBundle},
 };
 
-pub const AREA_ATTACK_UUID: Uuid = match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
-    Ok(val) => val,
-    Err(_) => unreachable!(),
-};
+pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
+    match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
+        Ok(val) => val,
+        Err(_) => unreachable!(),
+    },
+);
 
 #[derive(Component)]
 pub struct AreaAttackServer;
@@ -32,7 +34,7 @@ impl Plugin for AreaAttackServer {
     fn build(&self, app: &mut App) {
         app.add_startup_system(|mut registry: ResMut<GameRegistry>| {
             registry.insert(
-                GameMarker(AREA_ATTACK_UUID),
+                AREA_ATTACK_MARKER,
                 GameDescriptor {
                     name: "Area Attack".to_string(),
                     description: "Race to claim the board for yourself".to_string(),
@@ -73,7 +75,7 @@ impl AreaAttackBundle {
     ) -> Self {
         Self {
             game: GameBundle {
-                marker: GameMarker(AREA_ATTACK_UUID),
+                marker: AREA_ATTACK_MARKER,
             },
             field: Minefield::new_shaped(
                 |&position| {

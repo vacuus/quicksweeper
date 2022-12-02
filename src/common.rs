@@ -1,7 +1,7 @@
 use arrayvec::ArrayVec;
 use bevy::prelude::*;
 use gridly::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::{
     hash::Hash,

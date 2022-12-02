@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
-use crate::{singleplayer::minefield::FieldShape, common::Position};
+use crate::{common::Position, singleplayer::minefield::FieldShape};
 
 use super::tile::ClientTile;
 
@@ -27,12 +27,12 @@ pub enum AreaAttackUpdate {
     },
     TileChanged {
         position: Position,
-        to: ClientTile, 
-    }
+        to: ClientTile,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
 pub enum AreaAttackRequest {
-    Reveal(Position), 
+    Reveal(Position),
     Color(PlayerColor),
 }

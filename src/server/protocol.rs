@@ -41,9 +41,6 @@ pub enum IngameEvent {
         kind: GameMarker,
         data: Vec<u8>,
     },
-    /// A join event will also be issued when a player is auto-joined into a game upon creating it 
-    Join {
-        player: Entity,
-        game: Entity,
-    }
+    /// A join event will also be issued when a player is auto-joined into a game upon creating it
+    Join { player: Entity, game: Entity },
 }

@@ -8,7 +8,7 @@ use crate::{
 
 use super::{
     protocol::{AreaAttackUpdate, PlayerColor},
-    AreaAttackBundle, AreaAttackServer, AREA_ATTACK_UUID,
+    AreaAttackBundle, AreaAttackServer, AREA_ATTACK_MARKER,
 };
 
 #[derive(Component)]
@@ -25,7 +25,7 @@ pub fn create_game(
             player, game, kind, ..
         } = ev
         {
-            if **kind != AREA_ATTACK_UUID {
+            if *kind != AREA_ATTACK_MARKER {
                 continue;
             }
 
