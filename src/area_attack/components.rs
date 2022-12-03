@@ -84,6 +84,12 @@ pub enum ClientTile {
     HardMine,
 }
 
+#[derive(Bundle)]
+pub struct ClientTileBundle {
+    pub tile: ClientTile,
+    pub position: Position,
+}
+
 #[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter, PartialEq, Eq)]
 pub enum PlayerColor {
     Yellow,
