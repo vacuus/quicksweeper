@@ -88,6 +88,7 @@ pub enum ClientTile {
 pub struct ClientTileBundle {
     pub tile: ClientTile,
     pub position: Position,
+    pub sprite: TextureAtlasSprite,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter, PartialEq, Eq)]
@@ -97,3 +98,6 @@ pub enum PlayerColor {
     Blue,
     Purple,
 }
+
+
+pub struct InitFinished;

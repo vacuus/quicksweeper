@@ -163,7 +163,8 @@ fn server_select_menu(
 
 /// Event issued when a multiplayer game has been selected. The corresponding game's client
 /// implementation should then pick up this event and
-struct ToGame(GameMarker);
+#[derive(Deref)]
+pub struct ToGame(pub GameMarker);
 
 /// Same thing as [run_menu], but only safe to run with socket access
 fn game_select_menu(
@@ -255,6 +256,8 @@ fn game_select_menu(
             game: mode,
             data: Vec::new(),
         });
+        start_game.send(ToGame(mode));
+        commands.insert_resource(NextState(MenuState::InGame));
     } else if let Some((game, marker)) = response.join_game {
         let _ = socket.send_message(ClientMessage::Join { game });
         start_game.send(ToGame(marker));

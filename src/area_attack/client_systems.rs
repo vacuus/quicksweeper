@@ -7,11 +7,7 @@ use super::{
     protocol::AreaAttackUpdate,
 };
 
-fn start_game(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
-}
-
-fn listen_events(
+pub fn listen_events(
     mut commands: Commands,
     mut sock: ResMut<ClientSocket>,
     tiles: Query<Entity, With<ClientTile>>,
@@ -28,6 +24,7 @@ fn listen_events(
                 commands.spawn(ClientTileBundle {
                     tile: ClientTile::Unknown,
                     position,
+                    sprite: TextureAtlasSprite::new(9)
                 });
             }
         }
@@ -41,7 +38,3 @@ fn listen_events(
         _ => (),
     }
 }
-
-// fn draw_minefield(
-//     cells: Query<
-// )

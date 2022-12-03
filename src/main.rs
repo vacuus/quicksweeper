@@ -39,5 +39,6 @@ fn main() {
         .add_plugin(server::ServerPlugin)
         // gamemodes
         .add_plugin(area_attack::AreaAttackServer)
+        .add_plugin(area_attack::AreaAttackClient)
         .run();
 }

@@ -6,11 +6,12 @@ mod protocol;
 mod server_systems;
 mod states;
 
+use itertools::Itertools;
 use iyes_loopless::prelude::*;
 use server_systems::*;
 
 use crate::{
-    main_menu::MenuState,
+    main_menu::{MenuState, ToGame},
     registry::GameRegistry,
     server::{GameDescriptor, GameMarker},
 };
@@ -42,6 +43,7 @@ impl Plugin for AreaAttackServer {
             ConditionSet::new()
                 .run_not_in_state(MenuState::Loading)
                 .with_system(create_game)
+                .with_system(prepare_player)
                 .into(),
         );
     }
@@ -52,10 +54,16 @@ pub struct AreaAttackClient;
 impl Plugin for AreaAttackClient {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(AreaAttackState::Inactive)
-            .add_system(||{}) // transition from menu into game
+            .add_system(|mut commands: Commands, mut ev: EventReader<ToGame>| {
+                if ev.iter().any(|e| **e == AREA_ATTACK_MARKER) {
+                    // transition from menu into game
+                    commands.insert_resource(NextState(AreaAttackState::Selecting))
+                }
+            })
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(AreaAttackState::Inactive)
+                    .with_system(client_systems::listen_events)
                     .into(),
             );
     }

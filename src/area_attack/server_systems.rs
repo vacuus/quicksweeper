@@ -47,11 +47,13 @@ pub fn prepare_player(
     games: Query<(&Children, &FieldShape), With<AreaAttackServer>>,
     players: Query<(&ConnectionInfo, &mut PlayerColor)>,
     mut connections: Query<&mut Connection>,
+    mut init_store: Local<Vec<IngameEvent>>,
 ) {
     for ev in ev.iter() {
-        let IngameEvent::Join { player, game } = ev else { continue; };
-        let Ok((peers, shape)) = games.get(*game) else { continue; };
-        let Ok(mut this_connection) = connections.get_mut(*player) else { continue; };
+        println!("`prepare_player` received event {ev:?}");
+        let IngameEvent::Join { player, game } = ev else { println!("Broken from guard 1"); continue; };
+        let Ok((peers, shape)) = games.get(*game) else { println!("Broken from guard 2"); continue; };
+        let Ok(mut this_connection) = connections.get_mut(*player) else {println!("Broken from guard 3"); continue; };
 
         // guard if there are too many players
         if peers.len() >= 4 {
