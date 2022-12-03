@@ -129,7 +129,7 @@ fn server_select_menu(
                         fields.remote_select_err = "Could not retrieve games on the server"
                     })?;
 
-                    commands.spawn((socket,));
+                    commands.insert_resource(socket);
                     commands.insert_resource(NextState(MenuState::GameSelect));
                 }
                 Err(HandshakeError::Interrupted(handshake)) => {
@@ -171,12 +171,10 @@ fn game_select_menu(
     mut ctx: ResMut<EguiContext>,
     mut games: Local<Vec<ActiveGame>>,
     mut selected_gamemode: Local<(Option<String>, Option<GameMarker>)>,
-    mut socket: Query<&mut ClientSocket>,
+    mut socket: ResMut<ClientSocket>,
     mut start_game: EventWriter<ToGame>,
     registry: Res<GameRegistry>,
 ) {
-    let mut socket = socket.single_mut();
-
     struct GameSelectResponse {
         go_back: egui::Response,
         reload: egui::Response,
@@ -259,14 +257,9 @@ fn game_select_menu(
         });
     } else if let Some((game, marker)) = response.join_game {
         let _ = socket.send_message(ClientMessage::Join { game });
-        // TODO: Enter ingame
         start_game.send(ToGame(marker));
         commands.insert_resource(NextState(MenuState::InGame));
     }
-}
-
-fn destroy_socket(mut commands: Commands, q: Query<Entity, With<ClientSocket>>) {
-    q.for_each(|ent| commands.entity(ent).despawn())
 }
 
 pub struct MainMenuPlugin;
@@ -279,6 +272,8 @@ impl Plugin for MainMenuPlugin {
             .add_system(run_main_menu.run_in_state(MenuState::MainMenu))
             .add_system(server_select_menu.run_in_state(MenuState::ServerSelect))
             .add_system(game_select_menu.run_in_state(MenuState::GameSelect))
-            .add_enter_system(MenuState::MainMenu, destroy_socket);
+            .add_enter_system(MenuState::MainMenu, |mut commands: Commands| {
+                commands.remove_resource::<ClientSocket>()
+            });
     }
 }

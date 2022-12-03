@@ -22,7 +22,7 @@ pub enum MessageError {
     Encoding,
 }
 
-#[derive(Component, Deref, DerefMut)]
+#[derive(Resource, Deref, DerefMut)]
 pub struct ClientSocket(pub WebSocket<TcpStream>);
 
 #[derive(Resource, DerefMut, Deref)]
