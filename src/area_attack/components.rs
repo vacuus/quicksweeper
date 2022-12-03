@@ -4,15 +4,13 @@ use strum_macros::EnumIter;
 
 use crate::{
     common::Position,
-    server::GameBundle,
     singleplayer::minefield::{FieldShape, Minefield},
 };
 
-use super::{states::AreaAttackState, AreaAttackServer, AREA_ATTACK_MARKER};
+use super::{states::AreaAttackState, AreaAttackServer};
 
 #[derive(Bundle)]
 pub struct AreaAttackBundle {
-    game: GameBundle,
     field: Minefield,
     template: Handle<FieldShape>,
     state: AreaAttackState,
@@ -26,9 +24,6 @@ impl AreaAttackBundle {
         template_set: &Res<Assets<FieldShape>>,
     ) -> Self {
         Self {
-            game: GameBundle {
-                marker: AREA_ATTACK_MARKER,
-            },
             field: Minefield::new_shaped(
                 |&position| {
                     commands
@@ -98,6 +93,3 @@ pub enum PlayerColor {
     Blue,
     Purple,
 }
-
-
-pub struct InitFinished;

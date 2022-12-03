@@ -28,9 +28,18 @@ pub struct GameDescriptor {
 )]
 pub struct GameMarker(pub Uuid);
 
+#[derive(Component)]
+pub enum Access {
+    Initializing,
+    Open,
+    Full,
+    Ingame,
+}
+
 #[derive(Bundle)]
 pub struct GameBundle {
     pub marker: GameMarker,
+    pub access: Access,
 }
 
 pub fn game_messages(
@@ -92,7 +101,10 @@ pub fn server_messages(
                 ));
             }
             Some(Ok(ClientMessage::Create { game, data })) => {
-                let game_id = commands.spawn((game,)).add_child(player).id();
+                let game_id = commands.spawn(GameBundle {
+                    marker: game,
+                    access: Access::Initializing,
+                }).add_child(player).id();
                 game_events.send(IngameEvent::Create {
                     player,
                     game: game_id,

@@ -6,7 +6,6 @@ mod protocol;
 mod server_systems;
 mod states;
 
-use itertools::Itertools;
 use iyes_loopless::prelude::*;
 use server_systems::*;
 

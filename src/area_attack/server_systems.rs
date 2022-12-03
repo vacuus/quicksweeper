@@ -3,7 +3,7 @@ use strum::IntoEnumIterator;
 
 use crate::{
     load::Field,
-    server::{Connection, ConnectionInfo, IngameEvent, MessageSocket},
+    server::{Connection, ConnectionInfo, IngameEvent, MessageSocket, Access},
     singleplayer::minefield::FieldShape,
 };
 
@@ -21,7 +21,14 @@ pub fn create_game(
     mut ev: EventReader<IngameEvent>,
     field_templates: Res<Assets<FieldShape>>,
     template_handles: Res<Field>,
+    mut update_readiness: Local<Vec<Entity>>,
+    mut access: Query<&mut Access>,
 ) {
+
+    for game in update_readiness.iter() {
+        *access.get_mut(*game).unwrap() = Access::Open;
+    }
+
     for ev in ev.iter() {
         if let IngameEvent::Create {
             player, game, kind, ..
@@ -37,6 +44,7 @@ pub fn create_game(
             commands.entity(*game).insert(bundle);
 
             commands.entity(*player).insert(Host);
+            update_readiness.push(*game);
         }
     }
 }
@@ -47,7 +55,6 @@ pub fn prepare_player(
     games: Query<(&Children, &FieldShape), With<AreaAttackServer>>,
     players: Query<(&ConnectionInfo, &mut PlayerColor)>,
     mut connections: Query<&mut Connection>,
-    mut init_store: Local<Vec<IngameEvent>>,
 ) {
     for ev in ev.iter() {
         println!("`prepare_player` received event {ev:?}");
