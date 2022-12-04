@@ -13,7 +13,7 @@ pub struct ActiveGame {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage {
     Greet { username: String },
-    Create { game: GameMarker, data: Vec<u8> },
+    Create { game: GameMarker },
     Join { game: Entity },
     Ingame { data: Vec<u8> },
     ForceLeave,
@@ -29,18 +29,8 @@ pub enum ServerMessage {
 }
 
 #[derive(Debug)]
-pub enum IngameEvent {
-    Data {
-        player: Entity,
-        game: Entity,
-        data: Vec<u8>,
-    },
-    Create {
-        player: Entity,
-        game: Entity,
-        kind: GameMarker,
-        data: Vec<u8>,
-    },
-    /// A join event will also be issued when a player is auto-joined into a game upon creating it
-    Join { player: Entity, game: Entity },
+pub struct IngameEvent {
+        pub player: Entity,
+        pub game: Entity,
+        pub data: Vec<u8>,
 }

@@ -42,6 +42,7 @@ impl Plugin for AreaAttackServer {
             ConditionSet::new()
                 .run_not_in_state(MenuState::Loading)
                 .with_system(create_game)
+                .with_system(unmark_init_access)
                 .with_system(prepare_player)
                 .into(),
         );

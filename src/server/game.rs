@@ -49,7 +49,7 @@ pub fn game_messages(
 ) {
     for (player, mut socket, game) in clients.iter_mut() {
         match socket.recv_message() {
-            Some(Ok(ClientMessage::Ingame { data })) => game_events.send(IngameEvent::Data {
+            Some(Ok(ClientMessage::Ingame { data })) => game_events.send(IngameEvent {
                 player,
                 game: **game,
                 data,
@@ -70,7 +70,6 @@ pub fn server_messages(
     mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
     q_players: Query<&ConnectionInfo>,
     active_games: Query<(Entity, &GameMarker, &Children)>,
-    mut game_events: EventWriter<IngameEvent>,
     registry: Res<GameRegistry>,
 ) {
     for (player, mut socket) in clients.iter_mut() {
@@ -100,25 +99,16 @@ pub fn server_messages(
                     registry.keys().copied().collect(),
                 ));
             }
-            Some(Ok(ClientMessage::Create { game, data })) => {
-                let game_id = commands.spawn(GameBundle {
-                    marker: game,
-                    access: Access::Initializing,
-                }).add_child(player).id();
-                game_events.send(IngameEvent::Create {
-                    player,
-                    game: game_id,
-                    kind: game,
-                    data,
-                });
-                game_events.send(IngameEvent::Join {
-                    player,
-                    game: game_id,
-                });
+            Some(Ok(ClientMessage::Create { game })) => {
+                commands
+                    .spawn(GameBundle {
+                        marker: game,
+                        access: Access::Initializing,
+                    })
+                    .add_child(player);
             }
             Some(Ok(ClientMessage::Join { game })) => {
                 if let Some(mut ent) = commands.get_entity(game) {
-                    game_events.send(IngameEvent::Join { player, game });
                     ent.add_child(player);
                 } else {
                     let _ = socket.send_message(ServerMessage::Malformed);
