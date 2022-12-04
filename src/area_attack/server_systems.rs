@@ -23,7 +23,6 @@ pub fn create_game(
     field_templates: Res<Assets<FieldShape>>,
     template_handles: Res<Field>,
 ) {
-
     for (game, kind, children) in new_games.iter() {
         if *kind != AREA_ATTACK_MARKER {
             continue;
@@ -41,9 +40,7 @@ pub fn create_game(
 }
 
 pub fn unmark_init_access(mut access: Query<&mut Access, Added<AreaAttackServer>>) {
-    access.for_each_mut(|mut access| {
-        *access = Access::Open
-    })
+    access.for_each_mut(|mut access| *access = Access::Open)
 }
 
 pub fn prepare_player(

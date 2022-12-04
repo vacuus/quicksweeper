@@ -24,7 +24,7 @@ pub fn listen_events(
                 commands.spawn(ClientTileBundle {
                     tile: ClientTile::Unknown,
                     position,
-                    sprite: TextureAtlasSprite::new(9)
+                    sprite: TextureAtlasSprite::new(9),
                 });
             }
         }

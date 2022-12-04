@@ -30,7 +30,7 @@ pub enum ServerMessage {
 
 #[derive(Debug)]
 pub struct IngameEvent {
-        pub player: Entity,
-        pub game: Entity,
-        pub data: Vec<u8>,
+    pub player: Entity,
+    pub game: Entity,
+    pub data: Vec<u8>,
 }
