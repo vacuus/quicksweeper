@@ -12,7 +12,7 @@ use super::{states::AreaAttackState, AreaAttackServer};
 #[derive(Bundle)]
 pub struct AreaAttackBundle {
     field: Minefield,
-    template: Handle<FieldShape>,
+    template: FieldShape,
     state: AreaAttackState,
     typed_marker: AreaAttackServer,
 }
@@ -23,6 +23,8 @@ impl AreaAttackBundle {
         template: Handle<FieldShape>,
         template_set: &Res<Assets<FieldShape>>,
     ) -> Self {
+
+        let template = template_set.get(&template).unwrap();
         Self {
             field: Minefield::new_shaped(
                 |&position| {
@@ -33,9 +35,9 @@ impl AreaAttackBundle {
                         })
                         .id()
                 },
-                template_set.get(&template).unwrap(),
+                template,
             ),
-            template,
+            template: template.clone(),
             state: AreaAttackState::Selecting,
             typed_marker: AreaAttackServer,
         }
@@ -83,7 +85,7 @@ pub enum ClientTile {
 pub struct ClientTileBundle {
     pub tile: ClientTile,
     pub position: Position,
-    pub sprite: TextureAtlasSprite,
+    pub sprite: SpriteSheetBundle,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter, PartialEq, Eq)]

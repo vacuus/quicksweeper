@@ -135,7 +135,8 @@ fn access<'query>(
     parents.get(*parent).ok()
 }
 
-pub struct ConnectionSwitch(HierarchyEvent);
+#[derive(Debug)]
+pub struct ConnectionSwitch(pub HierarchyEvent);
 
 pub fn delay_hierarchy_events(
     mut hierarchy_events: EventReader<HierarchyEvent>,

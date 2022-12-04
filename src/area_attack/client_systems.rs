@@ -1,6 +1,12 @@
 use bevy::prelude::*;
+use tap::Tap;
 
-use crate::server::{ClientSocket, MessageSocket};
+use crate::{
+    common::Position,
+    load::MineTextures,
+    server::{ClientSocket, MessageSocket},
+    singleplayer::minefield::specific::CELL_SIZE,
+};
 
 use super::{
     components::{ClientTile, ClientTileBundle},
@@ -11,6 +17,7 @@ pub fn listen_events(
     mut commands: Commands,
     mut sock: ResMut<ClientSocket>,
     tiles: Query<Entity, With<ClientTile>>,
+    textures: Res<MineTextures>,
 ) {
     match sock.recv_message() {
         Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
@@ -19,12 +26,21 @@ pub fn listen_events(
                 commands.entity(tile).despawn();
             }
 
-            // spawn all tiles sent
-            for position in template.decode() {
+            // spawn all received tiles
+            for position @ Position { x, y } in template.decode() {
                 commands.spawn(ClientTileBundle {
                     tile: ClientTile::Unknown,
                     position,
-                    sprite: TextureAtlasSprite::new(9),
+                    sprite: textures.empty().tap_mut(|b| {
+                        b.transform = Transform {
+                            translation: Vec3::new(
+                                (x as f32) * CELL_SIZE,
+                                (y as f32) * CELL_SIZE,
+                                3.0,
+                            ),
+                            ..Default::default()
+                        };
+                    }),
                 });
             }
         }
