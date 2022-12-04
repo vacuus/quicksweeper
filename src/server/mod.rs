@@ -22,6 +22,8 @@ impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(OpenPort::generate())
             .add_event::<IngameEvent>()
+            .add_event::<ConnectionSwitch>()
+            .add_system_to_stage(CoreStage::PostUpdate, delay_hierarchy_events)
             .add_system(test_added)
             .add_system(receive_connections)
             .add_system(upgrade_connections)

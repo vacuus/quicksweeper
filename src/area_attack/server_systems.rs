@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
 use strum::IntoEnumIterator;
 
@@ -40,7 +40,10 @@ pub fn create_game(
 }
 
 pub fn unmark_init_access(mut access: Query<&mut Access, Added<AreaAttackServer>>) {
-    access.for_each_mut(|mut access| *access = Access::Open)
+    access.for_each_mut(|mut access| {
+        println!("Opening access to area attack");
+        *access = Access::Open;
+    })
 }
 
 pub fn prepare_player(

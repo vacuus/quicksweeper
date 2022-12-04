@@ -6,7 +6,7 @@
 //! entire world, so caution should be exercised when modifying entities.
 //!
 
-use bevy::{prelude::*, utils::Uuid};
+use bevy::{hierarchy::HierarchyEvent, prelude::*, utils::Uuid};
 use serde::{Deserialize, Serialize};
 
 use crate::registry::GameRegistry;
@@ -119,5 +119,50 @@ pub fn server_messages(
             }
             _ => (),
         };
+    }
+}
+
+fn access<'query>(
+    event: &HierarchyEvent,
+    parents: &'query Query<&Access>,
+) -> Option<&'query Access> {
+    use HierarchyEvent::*;
+    let (ChildAdded { parent, .. }
+    | ChildMoved {
+        new_parent: parent, ..
+    }
+    | ChildRemoved { parent, .. }) = event;
+    parents.get(*parent).ok()
+}
+
+pub struct ConnectionSwitch(HierarchyEvent);
+
+pub fn delay_hierarchy_events(
+    mut hierarchy_events: EventReader<HierarchyEvent>,
+    mut connection_events: EventWriter<ConnectionSwitch>,
+    targets: Query<&Access>,
+    mut store: Local<Vec<HierarchyEvent>>,
+) {
+    // TODO drain filter again...
+    {
+        let mut ix = 0;
+        while ix < store.len() {
+            if !matches!(access(&store[ix], &targets), Some(Access::Initializing)) {
+                println!("Resending event {:?}", store[ix]);
+                connection_events.send(ConnectionSwitch(store.swap_remove(ix)))
+            } else {
+                ix += 1;
+            }
+        }
+    }
+
+    for event in hierarchy_events.iter() {
+        if matches!(access(event, &targets), Some(Access::Initializing)) {
+            println!("Delaying event {event:?}");
+            store.push(event.clone());
+        } else if access(event, &targets).is_some() {
+            // That is, the entity is a game at all
+            connection_events.send(ConnectionSwitch(event.clone()))
+        }
     }
 }
