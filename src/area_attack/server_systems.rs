@@ -53,7 +53,7 @@ pub fn prepare_player(
     mut commands: Commands,
     mut ev: EventReader<ConnectionSwitch>,
     mut games: Query<(&Children, &FieldShape, &mut Access), With<AreaAttackServer>>,
-    players: Query<(&ConnectionInfo, &mut PlayerColor)>,
+    players: Query<(&ConnectionInfo, &mut PlayerColor, &Position)>,
     mut connections: Query<&mut Connection>,
 ) {
     for ev in ev.iter() {
@@ -80,13 +80,13 @@ pub fn prepare_player(
             if peer_id == *player {
                 continue;
             }
-            let (ConnectionInfo { username }, &color) = players.get(peer_id).unwrap();
+            let (ConnectionInfo { username }, &color, &position) = players.get(peer_id).unwrap();
             taken_colors.push(color);
             let _ = this_connection.send_message(AreaAttackUpdate::PlayerChange {
                 id: peer_id,
                 username: Some(username.clone()),
                 color: Some(color),
-                position: None
+                position: Some(position)
             });
         }
 
