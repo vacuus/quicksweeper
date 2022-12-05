@@ -10,7 +10,6 @@ use iyes_loopless::{
 use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, WebSocket};
 
 use crate::{
-    multiplayer::MultiplayerState,
     registry::GameRegistry,
     server::{ActiveGame, ClientMessage, ClientSocket, GameMarker, MessageSocket, ServerMessage},
     SingleplayerState,
@@ -61,10 +60,6 @@ fn run_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
             );
             if ui.button("Singleplayer mode").clicked() {
                 commands.insert_resource(NextState(SingleplayerState::PreGame));
-                commands.insert_resource(NextState(MenuState::InGame));
-            }
-            if ui.button("Multiplayer mode").clicked() {
-                commands.insert_resource(NextState(MultiplayerState::PreGame));
                 commands.insert_resource(NextState(MenuState::InGame));
             }
             if ui.button("Connect to server").clicked() {

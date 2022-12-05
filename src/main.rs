@@ -6,7 +6,6 @@ mod common;
 mod cursor;
 mod load;
 mod main_menu;
-mod multiplayer;
 mod registry;
 mod server;
 mod singleplayer;
@@ -32,7 +31,6 @@ fn main() {
         .add_plugin(EguiPlugin)
         .add_plugin(MainMenuPlugin)
         .add_plugin(singleplayer::SingleplayerMode)
-        .add_plugin(multiplayer::MultiplayerMode)
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(load::LoadPlugin)
         .add_plugin(singleplayer::minefield::MinefieldPlugin)
