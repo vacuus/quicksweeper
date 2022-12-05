@@ -52,7 +52,7 @@ pub fn unmark_init_access(mut access: Query<&mut Access, Added<AreaAttackServer>
 pub fn prepare_player(
     mut commands: Commands,
     mut ev: EventReader<ConnectionSwitch>,
-    games: Query<(&Children, &FieldShape), With<AreaAttackServer>>,
+    mut games: Query<(&Children, &FieldShape, &mut Access), With<AreaAttackServer>>,
     players: Query<(&ConnectionInfo, &mut PlayerColor)>,
     mut connections: Query<&mut Connection>,
 ) {
@@ -62,14 +62,12 @@ pub fn prepare_player(
             // TODO add ChildMoved variant as well
             continue;
         };
-        let Ok((peers, shape)) = games.get(*game) else { continue; };
+        let Ok((peers, shape, mut access)) = games.get_mut(*game) else { continue; };
         let Ok(mut this_connection) = connections.get_mut(*player) else {continue; };
 
         // guard if there are too many players
-        if peers.len() > 4 {
-            let _ = this_connection.send_message(AreaAttackUpdate::Full);
-            commands.entity(*game).remove_children(&[*player]);
-            continue;
+        if peers.len() >= 4 {
+            *access = Access::Full // TODO: Reset when connection drops
         }
 
         let mut taken_colors = Vec::new();
