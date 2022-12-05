@@ -8,7 +8,7 @@ use crate::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent,
         MessageSocket,
     },
-    singleplayer::minefield::FieldShape,
+    singleplayer::minefield::FieldShape, common::Position,
 };
 
 use super::{
@@ -84,10 +84,11 @@ pub fn prepare_player(
             }
             let (ConnectionInfo { username }, &color) = players.get(peer_id).unwrap();
             taken_colors.push(color);
-            let _ = this_connection.send_message(AreaAttackUpdate::PlayerModified {
+            let _ = this_connection.send_message(AreaAttackUpdate::PlayerChange {
                 id: peer_id,
-                username: username.clone(),
-                color,
+                username: Some(username.clone()),
+                color: Some(color),
+                position: None
             });
         }
 
@@ -96,10 +97,12 @@ pub fn prepare_player(
             .unwrap();
 
         // initialize some player properties
+        let position = shape.center().unwrap_or(Position { x : 0, y : 0});
         commands.entity(*player).insert(PlayerBundle {
             color: assigned_color,
+            position
         });
-        let _ = this_connection.send_message(AreaAttackUpdate::SelfModified {
+        let _ = this_connection.send_message(AreaAttackUpdate::SelfChange {
             color: assigned_color,
         });
     }

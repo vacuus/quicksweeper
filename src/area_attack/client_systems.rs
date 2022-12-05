@@ -44,12 +44,13 @@ pub fn listen_events(
                 });
             }
         }
-        Some(Ok(AreaAttackUpdate::PlayerModified {
+        Some(Ok(AreaAttackUpdate::PlayerChange {
             id,
             username,
             color,
+            position,
         })) => {}
-        Some(Ok(AreaAttackUpdate::SelfModified { color })) => {}
+        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {}
         Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {}
         _ => (),
     }

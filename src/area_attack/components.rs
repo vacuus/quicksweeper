@@ -47,6 +47,7 @@ impl AreaAttackBundle {
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub color: PlayerColor,
+    pub position: Position,
 }
 
 #[derive(Component)]
