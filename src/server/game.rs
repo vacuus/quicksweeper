@@ -28,8 +28,12 @@ pub struct GameDescriptor {
 )]
 pub struct GameMarker(pub Uuid);
 
+/// A component on a game describing whether or not a game is allowed to be connected to by the
+/// player
 #[derive(Component)]
 pub enum Access {
+    /// Each game is spawned with this access. It is up to the game to update this to reflect that
+    /// it is ready to receive players (by changing to Open access)
     Initializing,
     Open,
     Full,
