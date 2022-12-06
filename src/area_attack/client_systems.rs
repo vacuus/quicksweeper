@@ -3,9 +3,10 @@ use tap::Tap;
 
 use crate::{
     common::Position,
-    load::MineTextures,
+    cursor::{Cursor, CursorPosition},
+    load::{MineTextures, Textures},
     server::{ClientSocket, MessageSocket},
-    singleplayer::minefield::specific::CELL_SIZE,
+    singleplayer::minefield::{specific::CELL_SIZE, Minefield},
 };
 
 use super::{
@@ -17,32 +18,53 @@ pub fn listen_events(
     mut commands: Commands,
     mut sock: ResMut<ClientSocket>,
     tiles: Query<Entity, With<ClientTile>>,
-    textures: Res<MineTextures>,
+    fields: Query<Entity, With<Minefield>>,
+    cursors: Query<Entity, With<Cursor>>,
+    tile_textures: Res<MineTextures>,
+    misc_textures: Res<Textures>,
 ) {
     match sock.recv_message() {
         Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
-            // despawn all existing tiles
-            for tile in tiles.iter() {
-                commands.entity(tile).despawn();
+            // despawn previously constructed entities
+            for e in tiles.iter().chain(fields.iter()).chain(cursors.iter()) {
+                commands.entity(e).despawn();
             }
 
+            let init_position = template.center().unwrap_or(Position::ZERO);
+
             // spawn all received tiles
-            for position @ Position { x, y } in template.decode() {
-                commands.spawn(ClientTileBundle {
-                    tile: ClientTile::Unknown,
-                    position,
-                    sprite: textures.empty().tap_mut(|b| {
-                        b.transform = Transform {
-                            translation: Vec3::new(
-                                (x as f32) * CELL_SIZE,
-                                (y as f32) * CELL_SIZE,
-                                3.0,
-                            ),
-                            ..Default::default()
-                        };
-                    }),
-                });
-            }
+            let field = Minefield::new_shaped(
+                |&position| {
+                    commands
+                        .spawn(ClientTileBundle {
+                            tile: ClientTile::Unknown,
+                            position,
+                            sprite: tile_textures.empty().tap_mut(|b| {
+                                b.transform = Transform {
+                                    translation: position
+                                        .absolute(CELL_SIZE, CELL_SIZE)
+                                        .extend(3.0),
+                                    ..Default::default()
+                                };
+                            }),
+                        })
+                        .id()
+                },
+                &template,
+            );
+
+            let field_id = commands.spawn(field).id();
+
+            commands
+                .spawn(SpriteBundle {
+                    texture: misc_textures.cursor.clone(),
+                    transform: Transform {
+                        translation: init_position.absolute(32.0, 32.0).extend(3.0),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .insert(Cursor::new(CursorPosition(init_position, field_id)));
         }
         Some(Ok(AreaAttackUpdate::PlayerChange {
             id,

@@ -62,7 +62,10 @@ impl Div<isize> for Position {
 }
 
 impl Position {
-    pub fn new(x: isize, y: isize) -> Self {
+
+    pub const ZERO: Self = Self::new(0, 0);
+
+    pub const fn new(x: isize, y: isize) -> Self {
         Self { x, y }
     }
 
