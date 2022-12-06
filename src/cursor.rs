@@ -1,6 +1,7 @@
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use crate::singleplayer::minefield::specific::{MineCellState, CELL_SIZE};
 use crate::singleplayer::minefield::Minefield;
+use bevy::ecs::query::QueryEntityError;
 use bevy::{prelude::*, render::camera::Camera};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,9 +70,12 @@ pub fn pointer_cursor(
     windows: Res<Windows>,
     cameras: Query<(&Camera, &GlobalTransform)>,
     mut cursors: Query<&mut Cursor>,
-    mines: Query<&Transform, &MineCellState>,
+    tiles: Query<&Transform>, // Does not include only tiles, but can be queried for tiles
     minefields: Query<&Minefield>,
 ) {
+    let Ok(minefield) = minefields.get_single() else { return; };
+    let Ok(root_tile) = tiles.get(minefield[&Position::ZERO]) else { return; };
+
     // code borrowed from bevy cheatbook
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
@@ -97,14 +101,8 @@ pub fn pointer_cursor(
         // reduce it to a 2D value
         let world_pos = world_pos.truncate();
 
-        let minefield = minefields.single();
-
         // get the position of one corner of the board
-        let field_transform = mines
-            .get(minefield[&Position { x: 0, y: 0 }])
-            .unwrap()
-            .translation
-            .truncate();
+        let field_transform = root_tile.translation.truncate();
         let offset = world_pos - field_transform + Vec2::splat(CELL_SIZE) / 2.;
         let pos = Position {
             x: (offset.x / CELL_SIZE).floor() as isize,
@@ -132,7 +130,7 @@ pub fn translate_cursor(
         let cursor_translation = &mut cursor_transform.translation;
 
         // TODO: Use the offset of minefield to calculate `target_translation`
-        let target_translation = position.absolute(32.0, 32.0);
+        let target_translation = position.absolute(CELL_SIZE, CELL_SIZE);
         let cursor_diff = target_translation - cursor_translation.truncate();
 
         // translate cursor
@@ -151,16 +149,21 @@ pub fn track_cursor(
     mut camera: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
 ) {
-    let cursor_translation = cursor.get_single().unwrap().translation;
-    let camera_translation = &mut camera.single_mut().translation;
-    let camera_diff = (cursor_translation - *camera_translation).truncate();
+    if let Ok(&Transform {
+        translation: cursor_translation,
+        ..
+    }) = cursor.get_single()
+    {
+        let camera_translation = &mut camera.single_mut().translation;
+        let camera_diff = (cursor_translation - *camera_translation).truncate();
 
-    // tranlate camera
-    const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
-    let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
-    if transform_magnitude > 0.0 {
-        let scale = 0.4;
-        *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
+        // tranlate camera
+        const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
+        let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
+        if transform_magnitude > 0.0 {
+            let scale = 0.4;
+            *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
+        }
     }
 }
 
@@ -209,5 +212,15 @@ pub fn init_check_cell(
                     .collect(),
             })
         }
+    }
+}
+
+pub struct CursorPlugin;
+
+impl Plugin for CursorPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(track_cursor)
+            .add_system(translate_cursor)
+            .add_system(pointer_cursor);
     }
 }

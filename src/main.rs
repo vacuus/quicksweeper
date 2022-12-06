@@ -14,6 +14,7 @@ mod state;
 use bevy::prelude::*;
 
 use bevy_egui::EguiPlugin;
+use cursor::CursorPlugin;
 use main_menu::MainMenuPlugin;
 use registry::GameRegistry;
 pub use singleplayer::SingleplayerState;
@@ -29,6 +30,7 @@ fn main() {
             ..default()
         }))
         .add_plugin(EguiPlugin)
+        .add_plugin(CursorPlugin)
         .add_plugin(MainMenuPlugin)
         .add_plugin(singleplayer::SingleplayerMode)
         .add_plugin(common::QuicksweeperTypes)

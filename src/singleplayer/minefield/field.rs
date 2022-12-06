@@ -74,7 +74,7 @@ impl Minefield {
     }
 
     pub fn is_contained(&self, pos: &Position) -> bool {
-        matches!(self.get(pos), Ok(x) if x.is_some())
+        matches!(self.get(pos), Ok(Some(_)))
     }
 }
 
