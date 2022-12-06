@@ -3,12 +3,13 @@ use itertools::Itertools;
 use strum::IntoEnumIterator;
 
 use crate::{
+    common::Position,
     load::Field,
     server::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent,
         MessageSocket,
     },
-    singleplayer::minefield::FieldShape, common::Position,
+    singleplayer::minefield::FieldShape,
 };
 
 use super::{
@@ -86,7 +87,7 @@ pub fn prepare_player(
                 id: peer_id,
                 username: Some(username.clone()),
                 color: Some(color),
-                position: Some(position)
+                position: Some(position),
             });
         }
 
@@ -95,10 +96,10 @@ pub fn prepare_player(
             .unwrap();
 
         // initialize some player properties
-        let position = shape.center().unwrap_or(Position { x : 0, y : 0});
+        let position = shape.center().unwrap_or(Position { x: 0, y: 0 });
         commands.entity(*player).insert(PlayerBundle {
             color: assigned_color,
-            position
+            position,
         });
         let _ = this_connection.send_message(AreaAttackUpdate::SelfChange {
             color: assigned_color,

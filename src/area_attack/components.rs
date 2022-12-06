@@ -23,7 +23,6 @@ impl AreaAttackBundle {
         template: Handle<FieldShape>,
         template_set: &Res<Assets<FieldShape>>,
     ) -> Self {
-
         let template = template_set.get(&template).unwrap();
         Self {
             field: Minefield::new_shaped(

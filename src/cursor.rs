@@ -1,7 +1,6 @@
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
-use crate::singleplayer::minefield::specific::{MineCellState, CELL_SIZE};
+use crate::singleplayer::minefield::specific::CELL_SIZE;
 use crate::singleplayer::minefield::Minefield;
-use bevy::ecs::query::QueryEntityError;
 use bevy::{prelude::*, render::camera::Camera};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

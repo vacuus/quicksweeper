@@ -10,9 +10,10 @@ use iyes_loopless::prelude::*;
 use server_systems::*;
 
 use crate::{
+    cursor::{pointer_cursor, track_cursor, translate_cursor},
     main_menu::{MenuState, ToGame},
     registry::GameRegistry,
-    server::{GameDescriptor, GameMarker}, cursor::{track_cursor, pointer_cursor, translate_cursor},
+    server::{GameDescriptor, GameMarker},
 };
 
 use self::states::AreaAttackState;
