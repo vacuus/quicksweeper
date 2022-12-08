@@ -3,6 +3,7 @@ use bevy::{prelude::*, utils::Uuid};
 mod client_systems;
 mod components;
 mod protocol;
+mod puppet;
 mod server_systems;
 mod states;
 
@@ -10,7 +11,6 @@ use iyes_loopless::prelude::*;
 use server_systems::*;
 
 use crate::{
-    cursor::{pointer_cursor, track_cursor, translate_cursor},
     main_menu::{MenuState, ToGame},
     registry::GameRegistry,
     server::{GameDescriptor, GameMarker},
@@ -61,6 +61,7 @@ impl Plugin for AreaAttackClient {
                     commands.insert_resource(NextState(AreaAttackState::Selecting))
                 }
             })
+            .add_system(puppet::update_puppet_colors)
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(AreaAttackState::Inactive)
