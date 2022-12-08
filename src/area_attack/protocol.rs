@@ -11,11 +11,15 @@ pub enum AreaAttackUpdate {
     FieldShape(FieldShape),
     /// Can both be sent on the creation of a new player as well as when a player updates its
     /// properties, and will be sent in a batch to any player who joins the game
-    PlayerChange {
+    PlayerProperties {
         id: Entity,
-        username: Option<String>,
-        color: Option<PlayerColor>,
-        position: Option<Position>,
+        username: String,
+        color: PlayerColor,
+        position: Position,
+    },
+    Reposition {
+        id: Entity,
+        position: Position,
     },
     /// Will be sent to the player if the game autosets its properties (e.g. on initial join)
     SelfChange {

@@ -83,11 +83,11 @@ pub fn prepare_player(
             }
             let (ConnectionInfo { username }, &color, &position) = players.get(peer_id).unwrap();
             taken_colors.push(color);
-            let _ = this_connection.send_message(AreaAttackUpdate::PlayerChange {
+            let _ = this_connection.send_message(AreaAttackUpdate::PlayerProperties {
                 id: peer_id,
-                username: Some(username.clone()),
-                color: Some(color),
-                position: Some(position),
+                username: username.clone(),
+                color,
+                position,
             });
         }
 

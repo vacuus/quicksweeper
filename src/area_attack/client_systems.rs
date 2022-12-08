@@ -66,7 +66,7 @@ pub fn listen_events(
                 })
                 .insert(Cursor::new(CursorPosition(init_position, field_id)));
         }
-        Some(Ok(AreaAttackUpdate::PlayerChange {
+        Some(Ok(AreaAttackUpdate::PlayerProperties{
             id,
             username,
             color,
