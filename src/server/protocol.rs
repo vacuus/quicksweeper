@@ -13,7 +13,7 @@ pub struct ActiveGame {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage {
     Greet { username: String },
-    Create { game: GameMarker },
+    Create { game: GameMarker, args: Vec<u8> },
     Join { game: Entity },
     Ingame { data: Vec<u8> },
     ForceLeave,

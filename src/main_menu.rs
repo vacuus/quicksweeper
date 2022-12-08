@@ -247,7 +247,7 @@ fn game_select_menu(
     } else if response.reload.clicked() {
         let _ = socket.send_message(ClientMessage::Games); // TODO: Report error to user
     } else if let Some(mode) = response.create {
-        let _ = socket.send_message(ClientMessage::Create { game: mode });
+        let _ = socket.send_message(ClientMessage::Create { game: mode, args: Vec::new() });
         start_game.send(ToGame(mode));
         commands.insert_resource(NextState(MenuState::InGame));
     } else if let Some((game, marker)) = response.join_game {

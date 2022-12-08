@@ -103,7 +103,7 @@ pub fn server_messages(
                     registry.keys().copied().collect(),
                 ));
             }
-            Some(Ok(ClientMessage::Create { game })) => {
+            Some(Ok(ClientMessage::Create { game, args: _args, })) => {  //TODO: Pass arguments down
                 commands
                     .spawn(GameBundle {
                         marker: game,
