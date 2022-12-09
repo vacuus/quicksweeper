@@ -10,7 +10,7 @@ use iyes_loopless::{
 };
 use minefield::{systems::*, FieldShape, GameOutcome, Minefield};
 
-use self::minefield::specific::MineCell;
+use self::minefield::specific::{MineCell, CELL_SIZE};
 
 mod menu;
 pub mod minefield;
@@ -68,16 +68,18 @@ fn create_entities(
     let init_position = field_template.center().unwrap_or(Position { x: 0, y: 0 });
 
     // create cursor
-    commands
-        .spawn(SpriteBundle {
+    commands.spawn(CursorBundle {
+        cursor: Cursor::new(minefield_entity),
+        position: init_position,
+        texture: SpriteBundle {
             texture: textures.cursor.clone(),
             transform: Transform {
-                translation: init_position.absolute(32.0, 32.0).extend(3.0),
-                ..Default::default()
+                translation: init_position.absolute(CELL_SIZE, CELL_SIZE).extend(3.0),
+                ..default()
             },
-            ..Default::default()
-        })
-        .insert(Cursor::new(CursorPosition(init_position, minefield_entity)));
+            ..default()
+        },
+    });
 }
 
 pub struct SingleplayerMode;

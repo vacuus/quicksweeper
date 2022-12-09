@@ -3,7 +3,7 @@ use tap::Tap;
 
 use crate::{
     common::Position,
-    cursor::{Cursor, CursorPosition},
+    cursor::{Cursor, CursorBundle, CursorPosition},
     load::{MineTextures, Textures},
     server::{ClientSocket, MessageSocket},
     singleplayer::minefield::{specific::CELL_SIZE, Minefield},
@@ -59,16 +59,18 @@ pub fn listen_events(
 
             let field_id = commands.spawn(field).id();
 
-            commands
-                .spawn(SpriteBundle {
+            commands.spawn(CursorBundle {
+                cursor: Cursor::new(field_id),
+                position: init_position,
+                texture: SpriteBundle {
                     texture: misc_textures.cursor.clone(),
                     transform: Transform {
-                        translation: init_position.absolute(32.0, 32.0).extend(3.0),
-                        ..Default::default()
+                        translation: init_position.absolute(CELL_SIZE, CELL_SIZE).extend(3.0),
+                        ..default()
                     },
-                    ..Default::default()
-                })
-                .insert(Cursor::new(CursorPosition(init_position, field_id)));
+                    ..default()
+                },
+            });
         }
         Some(Ok(AreaAttackUpdate::PlayerProperties {
             id,
@@ -96,9 +98,7 @@ pub fn listen_events(
                         .id()
                 });
         }
-        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {
-
-        }
+        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {}
         Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {}
         _ => (),
     }

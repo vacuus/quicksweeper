@@ -1,6 +1,6 @@
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use crate::singleplayer::minefield::specific::CELL_SIZE;
-use crate::singleplayer::minefield::Minefield;
+use crate::singleplayer::minefield::{self, Minefield};
 use bevy::{prelude::*, render::camera::Camera};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,21 +37,28 @@ impl Default for Bindings {
     }
 }
 
+#[derive(Bundle)]
+pub struct CursorBundle {
+    pub cursor: Cursor,
+    pub position: Position,
+    pub texture: SpriteBundle,
+}
+
 #[derive(Component, Debug)]
 pub struct Cursor {
-    position: CursorPosition,
+    owning_minefield: Entity,
     check_key: KeyCode,
     flag_key: KeyCode,
 }
 
 impl Cursor {
-    pub fn new(position: CursorPosition) -> Self {
-        Self::new_with_keybindings(position, default())
+    pub fn new(owning_minefield: Entity) -> Self {
+        Self::new_with_keybindings(owning_minefield, default())
     }
 
-    pub fn new_with_keybindings(position: CursorPosition, bindings: Bindings) -> Self {
+    pub fn new_with_keybindings(owning_minefield: Entity, bindings: Bindings) -> Self {
         Cursor {
-            position,
+            owning_minefield,
             check_key: bindings.check,
             flag_key: bindings.flag,
         }
@@ -68,11 +75,12 @@ pub fn destroy_cursors(mut commands: Commands, cursors: Query<Entity, With<Curso
 pub fn pointer_cursor(
     windows: Res<Windows>,
     cameras: Query<(&Camera, &GlobalTransform)>,
-    mut cursors: Query<&mut Cursor>,
+    mut cursors: Query<(&Cursor, &mut Position)>,
     tiles: Query<&Transform>, // Does not include only tiles, but can be queried for tiles
     minefields: Query<&Minefield>,
 ) {
-    let Ok(minefield) = minefields.get_single() else { return; };
+    let Ok((cursor, mut position)) = cursors.get_single_mut() else { return; };
+    let Ok(minefield) = minefields.get(cursor.owning_minefield) else { return; };
     let Ok(root_tile) = tiles.get(minefield[&Position::ZERO]) else { return; };
 
     // code borrowed from bevy cheatbook
@@ -109,21 +117,22 @@ pub fn pointer_cursor(
         };
 
         if minefield.is_contained(&pos) {
-            cursors.single_mut().position.0 = pos;
+            *position = pos;
         }
     }
 }
 
 pub fn translate_cursor(
-    mut cursor: Query<(&mut Transform, &Cursor), Without<Camera>>,
+    mut cursor: Query<(&mut Transform, &Position), With<Cursor>>,
     time: Res<Time>,
 ) {
     for (
         mut cursor_transform,
-        Cursor {
-            position: CursorPosition(position, _),
-            ..
-        },
+        // Cursor {
+        //     position: CursorPosition(position, _),
+        //     ..
+        // },
+        position,
     ) in cursor.iter_mut()
     {
         let cursor_translation = &mut cursor_transform.translation;
@@ -167,47 +176,55 @@ pub fn track_cursor(
 }
 
 pub fn check_cell(
-    cursor: Query<&Cursor>,
+    cursor: Query<(&Cursor, &Position)>,
     kb: Res<Input<KeyCode>>,
     mut check: EventWriter<CheckCell>,
     mut flag: EventWriter<FlagCell>,
 ) {
-    for Cursor {
-        position,
-        check_key,
-        flag_key,
-        ..
-    } in cursor.iter()
+    for (
+        &Cursor {
+            owning_minefield,
+            check_key,
+            flag_key,
+            ..
+        },
+        &position,
+    ) in cursor.iter()
     {
-        if kb.just_pressed(*check_key) {
+        if kb.just_pressed(check_key) {
             println!("checking cell {position:?}");
-            check.send(CheckCell(position.clone()));
-        } else if kb.just_pressed(*flag_key) {
-            flag.send(FlagCell(position.clone()));
+            check.send(CheckCell(CursorPosition(position, owning_minefield)));
+        } else if kb.just_pressed(flag_key) {
+            flag.send(FlagCell(CursorPosition(position, owning_minefield)));
         }
     }
 }
 
 pub fn init_check_cell(
-    cursors: Query<&Cursor>,
+    cursors: Query<(&Cursor, &Position)>,
     kb: Res<Input<KeyCode>>,
     mut ev: EventWriter<InitCheckCell>,
     fields: Query<(Entity, &Minefield)>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
         println!("sending init check event");
-        for Cursor {
-            position: cursor_position @ CursorPosition(_, minefield),
-            ..
-        } in cursors.iter()
+        for (
+            &Cursor {
+                // position: cursor_position @ CursorPosition(_, minefield),
+                owning_minefield: minefield,
+                ..
+            },
+            &position,
+        ) in cursors.iter()
         {
+            let cursor_position = CursorPosition(position, minefield);
             ev.send(InitCheckCell {
-                minefield: *minefield,
+                minefield,
                 positions: cursor_position
                     .iter_neighbors(fields.iter())
                     .unwrap()
                     .map(|CursorPosition(pos, _)| pos)
-                    .chain(std::iter::once(cursor_position.0))
+                    .chain(std::iter::once(position))
                     .collect(),
             })
         }
