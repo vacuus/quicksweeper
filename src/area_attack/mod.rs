@@ -3,7 +3,7 @@ use bevy::{prelude::*, utils::Uuid};
 mod client_systems;
 mod components;
 mod protocol;
-mod puppet;
+pub mod puppet;
 mod server_systems;
 mod states;
 

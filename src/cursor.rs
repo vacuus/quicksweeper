@@ -1,3 +1,4 @@
+use crate::area_attack::puppet::PuppetCursor;
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use crate::singleplayer::minefield::specific::CELL_SIZE;
 use crate::singleplayer::minefield::{self, Minefield};
@@ -123,18 +124,10 @@ pub fn pointer_cursor(
 }
 
 pub fn translate_cursor(
-    mut cursor: Query<(&mut Transform, &Position), With<Cursor>>,
+    mut cursor: Query<(&mut Transform, &Position), Or<(With<Cursor>, With<PuppetCursor>)>>,
     time: Res<Time>,
 ) {
-    for (
-        mut cursor_transform,
-        // Cursor {
-        //     position: CursorPosition(position, _),
-        //     ..
-        // },
-        position,
-    ) in cursor.iter_mut()
-    {
+    for (mut cursor_transform, position) in cursor.iter_mut() {
         let cursor_translation = &mut cursor_transform.translation;
 
         // TODO: Use the offset of minefield to calculate `target_translation`
