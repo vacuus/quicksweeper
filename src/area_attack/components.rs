@@ -95,3 +95,14 @@ pub enum PlayerColor {
     Blue,
     Purple,
 }
+
+impl From<PlayerColor> for Color {
+    fn from(id: PlayerColor) -> Self {
+        match id {
+            PlayerColor::Yellow => Color::YELLOW,
+            PlayerColor::Green => Color::GREEN,
+            PlayerColor::Blue => Color::BLUE,
+            PlayerColor::Purple => Color::PURPLE,
+        }
+    }
+}

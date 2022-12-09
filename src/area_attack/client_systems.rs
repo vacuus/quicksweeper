@@ -12,8 +12,10 @@ use crate::{
 use super::{
     components::{ClientTile, ClientTileBundle},
     protocol::AreaAttackUpdate,
+    puppet::{PuppetCursor, PuppetCursorBundle, PuppetTable},
 };
 
+#[allow(clippy::too_many_arguments)]
 pub fn listen_events(
     mut commands: Commands,
     mut sock: ResMut<ClientSocket>,
@@ -22,6 +24,8 @@ pub fn listen_events(
     cursors: Query<Entity, With<Cursor>>,
     tile_textures: Res<MineTextures>,
     misc_textures: Res<Textures>,
+    mut puppet_map: ResMut<PuppetTable>,
+    mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
 ) {
     match sock.recv_message() {
         Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
@@ -66,13 +70,35 @@ pub fn listen_events(
                 })
                 .insert(Cursor::new(CursorPosition(init_position, field_id)));
         }
-        Some(Ok(AreaAttackUpdate::PlayerProperties{
+        Some(Ok(AreaAttackUpdate::PlayerProperties {
             id,
-            username,
+            username, // TODO display username somehow
             color,
             position,
-        })) => {}
-        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {}
+        })) => {
+            puppet_map
+                .entry(id)
+                .and_modify(|&mut puppet| {
+                    let (mut puppet, mut pos) = puppets.get_mut(puppet).unwrap();
+                    puppet.0 = color.into();
+                    *pos = position;
+                })
+                .or_insert_with(|| {
+                    commands
+                        .spawn(PuppetCursorBundle {
+                            cursor: PuppetCursor(color.into()),
+                            position,
+                            sprite_bundle: SpriteBundle {
+                                texture: misc_textures.cursor.clone(),
+                                ..default()
+                            },
+                        })
+                        .id()
+                });
+        }
+        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {
+
+        }
         Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {}
         _ => (),
     }

@@ -16,7 +16,7 @@ use crate::{
     server::{GameDescriptor, GameMarker},
 };
 
-use self::states::AreaAttackState;
+use self::{states::AreaAttackState, puppet::PuppetTable};
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
@@ -55,6 +55,7 @@ pub struct AreaAttackClient;
 impl Plugin for AreaAttackClient {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(AreaAttackState::Inactive)
+            .init_resource::<PuppetTable>()
             .add_system(|mut commands: Commands, mut ev: EventReader<ToGame>| {
                 if ev.iter().any(|e| **e == AREA_ATTACK_MARKER) {
                     // transition from menu into game

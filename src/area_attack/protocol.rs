@@ -36,5 +36,6 @@ pub enum AreaAttackUpdate {
 #[derive(Serialize, Deserialize)]
 pub enum AreaAttackRequest {
     Reveal(Position),
+    Position(Position),
     Color(PlayerColor),
 }
