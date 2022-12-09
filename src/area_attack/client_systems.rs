@@ -3,7 +3,7 @@ use tap::Tap;
 
 use crate::{
     common::Position,
-    cursor::{Cursor, CursorBundle, CursorPosition},
+    cursor::{Cursor, CursorBundle},
     load::{MineTextures, Textures},
     server::{ClientSocket, MessageSocket},
     singleplayer::minefield::{specific::CELL_SIZE, Minefield},
@@ -26,6 +26,7 @@ pub fn listen_events(
     misc_textures: Res<Textures>,
     mut puppet_map: ResMut<PuppetTable>,
     mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
+    mut field_id: Local<Option<Entity>>,
 ) {
     match sock.recv_message() {
         Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
@@ -33,8 +34,6 @@ pub fn listen_events(
             for e in tiles.iter().chain(fields.iter()).chain(cursors.iter()) {
                 commands.entity(e).despawn();
             }
-
-            let init_position = template.center().unwrap_or(Position::ZERO);
 
             // spawn all received tiles
             let field = Minefield::new_shaped(
@@ -57,20 +56,7 @@ pub fn listen_events(
                 &template,
             );
 
-            let field_id = commands.spawn(field).id();
-
-            commands.spawn(CursorBundle {
-                cursor: Cursor::new(field_id),
-                position: init_position,
-                texture: SpriteBundle {
-                    texture: misc_textures.cursor.clone(),
-                    transform: Transform {
-                        translation: init_position.absolute(CELL_SIZE, CELL_SIZE).extend(3.0),
-                        ..default()
-                    },
-                    ..default()
-                },
-            });
+            *field_id = Some(commands.spawn(field).id());
         }
         Some(Ok(AreaAttackUpdate::PlayerProperties {
             id,
@@ -98,7 +84,20 @@ pub fn listen_events(
                         .id()
                 });
         }
-        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {}
+        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {
+            commands.spawn(CursorBundle {
+                cursor: Cursor::new(color.into(), field_id.unwrap()),
+                position: Position::ZERO, // TODO: Randomize position
+                texture: SpriteBundle {
+                    texture: misc_textures.cursor.clone(),
+                    transform: Transform {
+                        translation: Position::ZERO.absolute(CELL_SIZE, CELL_SIZE).extend(3.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+            });
+        }
         Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {}
         _ => (),
     }

@@ -69,7 +69,7 @@ fn create_entities(
 
     // create cursor
     commands.spawn(CursorBundle {
-        cursor: Cursor::new(minefield_entity),
+        cursor: Cursor::new(Color::GREEN, minefield_entity),
         position: init_position,
         texture: SpriteBundle {
             texture: textures.cursor.clone(),

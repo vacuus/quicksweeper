@@ -62,7 +62,7 @@ impl Plugin for AreaAttackClient {
                     commands.insert_resource(NextState(AreaAttackState::Selecting))
                 }
             })
-            .add_system(puppet::update_puppet_colors)
+            .add_system(puppet::update_cursor_colors)
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(AreaAttackState::Inactive)

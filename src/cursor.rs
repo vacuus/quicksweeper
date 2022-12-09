@@ -47,18 +47,20 @@ pub struct CursorBundle {
 
 #[derive(Component, Debug)]
 pub struct Cursor {
+    pub color: Color,
     owning_minefield: Entity,
     check_key: KeyCode,
     flag_key: KeyCode,
 }
 
 impl Cursor {
-    pub fn new(owning_minefield: Entity) -> Self {
-        Self::new_with_keybindings(owning_minefield, default())
+    pub fn new(color: Color, owning_minefield: Entity) -> Self {
+        Self::new_with_keybindings(color, owning_minefield, default())
     }
 
-    pub fn new_with_keybindings(owning_minefield: Entity, bindings: Bindings) -> Self {
+    pub fn new_with_keybindings(color: Color, owning_minefield: Entity, bindings: Bindings) -> Self {
         Cursor {
+            color,
             owning_minefield,
             check_key: bindings.check,
             flag_key: bindings.flag,

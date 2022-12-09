@@ -3,7 +3,7 @@
 
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::common::Position;
+use crate::{common::Position, cursor::Cursor};
 
 #[derive(Component)]
 pub struct PuppetCursor(pub Color);
@@ -18,10 +18,23 @@ pub struct PuppetCursorBundle {
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct PuppetTable(HashMap<Entity, Entity>);
 
-pub fn update_puppet_colors(
-    mut q: Query<(&mut Sprite, &PuppetCursor), Or<(Added<PuppetCursor>, Changed<PuppetCursor>)>>,
+pub fn update_cursor_colors(
+    mut q_set: ParamSet<(
+        Query<(&mut Sprite, &PuppetCursor), Or<(Added<PuppetCursor>, Changed<PuppetCursor>)>>,
+        Query<(&mut Sprite, &Cursor), Or<(Added<Cursor>, Changed<Cursor>)>>,
+    )>,
 ) {
-    for (mut sprite, &PuppetCursor(color_src)) in q.iter_mut() {
+    for (mut sprite, &PuppetCursor(color_src)) in q_set.p0().iter_mut() {
+        sprite.color = color_src;
+    }
+
+    for (
+        mut sprite,
+        &Cursor {
+            color: color_src, ..
+        },
+    ) in q_set.p1().iter_mut()
+    {
         sprite.color = color_src;
     }
 }
