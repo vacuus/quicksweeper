@@ -8,7 +8,7 @@ use bevy::prelude::*;
 use serde::{de::DeserializeOwned, Serialize};
 use tungstenite::{Message, WebSocket};
 
-use super::protocol::ClientMessage;
+use super::{protocol::ClientMessage, Greeting};
 
 #[derive(thiserror::Error, Debug)]
 pub enum MessageError {
@@ -104,14 +104,10 @@ pub fn upgrade_connections(
     for (id, mut client) in partial_connections.iter_mut() {
         if let Some(result) = client.recv_message() {
             match result {
-                Ok(ClientMessage::Greet { username }) => {
+                Ok(Greeting { username }) => {
                     println!("Connection upgraded! It is now able to become a player");
                     println!("received name {username}");
                     commands.entity(id).insert((ConnectionInfo { username },));
-                }
-                Ok(_) => {
-                    println!("Improper connection negotiation, destroying...");
-                    commands.entity(id).despawn();
                 }
                 Err(e) => {
                     println!("Connection could not be validated, destroying...");

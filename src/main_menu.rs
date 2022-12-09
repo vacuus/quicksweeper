@@ -11,7 +11,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     registry::GameRegistry,
-    server::{ActiveGame, ClientMessage, ClientSocket, GameMarker, MessageSocket, ServerMessage},
+    server::{ActiveGame, ClientMessage, ClientSocket, GameMarker, MessageSocket, ServerMessage, Greeting},
     SingleplayerState,
 };
 
@@ -113,7 +113,7 @@ fn server_select_menu(
                 Ok((socket, _)) => {
                     let mut socket = ClientSocket(socket);
                     socket
-                        .send_message(ClientMessage::Greet {
+                        .send_message(Greeting {
                             username: fields.username.clone(),
                         })
                         .map_err(|_| {
