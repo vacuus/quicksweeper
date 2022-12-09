@@ -16,7 +16,7 @@ use super::{
 };
 
 #[allow(clippy::too_many_arguments)]
-pub fn listen_events(
+pub fn listen_net(
     mut commands: Commands,
     mut sock: ResMut<ClientSocket>,
     tiles: Query<Entity, With<ClientTile>>,
@@ -47,7 +47,7 @@ pub fn listen_events(
                                     translation: position
                                         .absolute(CELL_SIZE, CELL_SIZE)
                                         .extend(3.0),
-                                    ..Default::default()
+                                    ..default()
                                 };
                             }),
                         })
@@ -83,6 +83,9 @@ pub fn listen_events(
                         })
                         .id()
                 });
+        }
+        Some(Ok(AreaAttackUpdate::Reposition { id, position })) => {
+            *(puppets.get_mut(puppet_map[&id]).unwrap().1) = position;
         }
         Some(Ok(AreaAttackUpdate::SelfChange { color })) => {
             commands.spawn(CursorBundle {

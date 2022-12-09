@@ -66,7 +66,7 @@ impl Plugin for AreaAttackClient {
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(AreaAttackState::Inactive)
-                    .with_system(client_systems::listen_events)
+                    .with_system(client_systems::listen_net)
                     .into(),
             );
     }
