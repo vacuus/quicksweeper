@@ -5,6 +5,7 @@ mod area_attack;
 mod common;
 mod cursor;
 mod load;
+mod cser;
 mod main_menu;
 mod registry;
 mod server;
