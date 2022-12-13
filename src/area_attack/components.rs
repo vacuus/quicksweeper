@@ -88,7 +88,7 @@ pub struct ClientTileBundle {
     pub sprite: SpriteSheetBundle,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter, PartialEq, Eq, Debug)]
 pub enum PlayerColor {
     Yellow,
     Green,

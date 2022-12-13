@@ -6,7 +6,7 @@ use crate::{
     common::Position,
     load::Field,
     server::{
-        Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent,
+        Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent, LocalEvent,
         MessageSocket,
     },
     singleplayer::minefield::FieldShape,
@@ -14,12 +14,13 @@ use crate::{
 
 use super::{
     components::{AreaAttackBundle, PlayerBundle, PlayerColor},
-    protocol::AreaAttackUpdate,
+    protocol::{AreaAttackRequest, AreaAttackUpdate},
+    states::AreaAttackState,
     AreaAttackServer, AREA_ATTACK_MARKER,
 };
 
 #[derive(Component)]
-struct Host;
+pub struct Host;
 
 pub fn create_game(
     mut commands: Commands,
@@ -48,6 +49,43 @@ pub fn unmark_init_access(mut access: Query<&mut Access, Added<AreaAttackServer>
         println!("Opening access to area attack");
         *access = Access::Open;
     })
+}
+
+// transcribes incoming messages to area attack events
+pub fn net_events(
+    mut network: EventReader<IngameEvent>,
+    mut local: EventWriter<LocalEvent<AreaAttackRequest>>,
+    games: Query<Entity, With<AreaAttackServer>>,
+) {
+    eprintln!("{:?}", games.iter().collect_vec());
+    for ige @ IngameEvent { game, .. } in network.iter() {
+        println!("Got event, no filter");
+        if games.contains(*game) {
+            println!("Filter 1 passed");
+            if let Ok(msg) = ige.transcribe() {
+                println!("Area attack message received: {msg:?}");
+                local.send(msg);
+            }
+        }
+    }
+}
+
+pub fn selection_transition(
+    mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
+    mut games: Query<&mut AreaAttackState>,
+    maybe_host: Query<(), With<Host>>,
+) {
+    for ev in ev.iter() {
+        if !matches!(ev.data, AreaAttackRequest::StartGame) {
+            continue;
+        }
+        if let Ok(mut state) = games.get_mut(ev.game) {
+            if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
+                *state = AreaAttackState::Stage1;
+                println!("Selection transition begun!")
+            }
+        }
+    }
 }
 
 pub fn prepare_player(

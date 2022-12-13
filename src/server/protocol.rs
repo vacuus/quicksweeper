@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::server::GameMarker;
 
@@ -37,4 +37,24 @@ pub struct IngameEvent {
     pub player: Entity,
     pub game: Entity,
     pub data: Vec<u8>,
+}
+
+#[derive(Debug)]
+pub struct LocalEvent<T> {
+    pub player: Entity,
+    pub game: Entity,
+    pub data: T,
+}
+
+impl IngameEvent {
+    pub fn transcribe<T>(&self) -> Result<LocalEvent<T>, rmp_serde::decode::Error>
+    where
+        T: DeserializeOwned,
+    {
+        Ok(LocalEvent {
+            player: self.player,
+            game: self.game,
+            data: rmp_serde::from_slice(&self.data)?,
+        })
+    }
 }

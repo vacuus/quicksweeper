@@ -29,12 +29,15 @@ pub enum AreaAttackUpdate {
         position: Position,
         to: ClientTile,
     },
+    StartGame,
     /// Issued to a client when it attempts to join a full game
     Full,
+    NotHost,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum AreaAttackRequest {
+    StartGame,
     Reveal(Position),
     Position(Position),
     Color(PlayerColor),

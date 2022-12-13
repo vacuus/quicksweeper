@@ -1,19 +1,34 @@
 use bevy::prelude::*;
+use bevy_egui::EguiContext;
 use tap::Tap;
 
 use crate::{
     common::Position,
     cursor::{Cursor, CursorBundle},
     load::{MineTextures, Textures},
-    server::{ClientSocket, MessageSocket},
+    main_menu::standard_window,
+    server::{ClientMessage, ClientSocket, MessageSocket},
     singleplayer::minefield::{specific::CELL_SIZE, Minefield},
 };
 
 use super::{
     components::{ClientTile, ClientTileBundle},
-    protocol::AreaAttackUpdate,
+    protocol::{AreaAttackRequest, AreaAttackUpdate},
     puppet::{PuppetCursor, PuppetCursorBundle, PuppetTable},
 };
+
+pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<ClientSocket>>) {
+    standard_window(&mut ctx, |ui| {
+        ui.vertical_centered(|ui| {
+            if ui.button("Begin game").clicked() {
+                println!("Sening start transition");
+                let _ = sock.unwrap().send_message(ClientMessage::Ingame {
+                    data: rmp_serde::to_vec(&AreaAttackRequest::StartGame).unwrap(),
+                });
+            };
+        })
+    });
+}
 
 #[allow(clippy::too_many_arguments)]
 pub fn listen_net(

@@ -13,10 +13,10 @@ use server_systems::*;
 use crate::{
     main_menu::{MenuState, ToGame},
     registry::GameRegistry,
-    server::{GameDescriptor, GameMarker},
+    server::{GameDescriptor, GameMarker, LocalEvent},
 };
 
-use self::{states::AreaAttackState, puppet::PuppetTable};
+use self::{states::AreaAttackState, puppet::PuppetTable, protocol::AreaAttackRequest};
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
@@ -39,12 +39,15 @@ impl Plugin for AreaAttackServer {
                 },
             );
         })
+        .add_event::<LocalEvent<AreaAttackRequest>>()
         .add_system_set(
             ConditionSet::new()
                 .run_not_in_state(MenuState::Loading)
                 .with_system(create_game)
                 .with_system(unmark_init_access)
                 .with_system(prepare_player)
+                .with_system(net_events)
+                .with_system(selection_transition)
                 .into(),
         );
     }
@@ -62,6 +65,7 @@ impl Plugin for AreaAttackClient {
                     commands.insert_resource(NextState(AreaAttackState::Selecting))
                 }
             })
+            .add_system(client_systems::begin_game.run_in_state(AreaAttackState::Selecting))
             .add_system(puppet::update_cursor_colors)
             .add_system_set(
                 ConditionSet::new()
