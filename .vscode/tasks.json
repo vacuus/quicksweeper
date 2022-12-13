@@ -28,6 +28,29 @@
 		},
 		{
 			"type": "cargo",
+			"command": "run",
+			"args": [
+				"--features",
+				"bevy_dylib",
+				"--",
+				"srv"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"label": "cargo run server"
+		},
+		{
+			"type": "shell",
+			"label": "runall",
+			"dependsOn": [
+				"cargo run server",
+				"cargo run"
+			],
+			"problemMatcher": []
+		},
+		{
+			"type": "cargo",
 			"command": "build",
 			"args": [
 				"--target",
@@ -53,6 +76,6 @@
 			],
 			"group": "build",
 			"label": "cargo release for linux"
-		},
+		}
 	]
 }

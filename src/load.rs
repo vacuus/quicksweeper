@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
+use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::{seq::SliceRandom, Rng};
 
 use crate::{
@@ -57,11 +58,10 @@ impl MineTextures {
     }
 }
 
-pub struct LoadPlugin;
+pub struct ClientLoad;
 
-impl Plugin for LoadPlugin {
+impl Plugin for ClientLoad {
     fn build(&self, app: &mut App) {
-        // AssetLoader::new(MenuState::Loading)
         app.add_loading_state(
             LoadingState::new(MenuState::Loading)
                 .continue_to_state(MenuState::MainMenu)
@@ -69,5 +69,18 @@ impl Plugin for LoadPlugin {
                 .with_collection::<Field>()
                 .init_resource::<MineTextures>(),
         );
+    }
+}
+
+pub struct ServerLoad;
+
+impl Plugin for ServerLoad {
+    fn build(&self, app: &mut App) {
+        app.add_loopless_state(MenuState::Loading)
+            .add_loading_state(
+                LoadingState::new(MenuState::Loading)
+                    .continue_to_state(MenuState::MainMenu)
+                    .with_collection::<Field>(),
+            );
     }
 }

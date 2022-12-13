@@ -46,7 +46,6 @@ pub fn create_game(
 
 pub fn unmark_init_access(mut access: Query<&mut Access, Added<AreaAttackServer>>) {
     access.for_each_mut(|mut access| {
-        println!("Opening access to area attack");
         *access = Access::Open;
     })
 }
@@ -57,13 +56,9 @@ pub fn net_events(
     mut local: EventWriter<LocalEvent<AreaAttackRequest>>,
     games: Query<Entity, With<AreaAttackServer>>,
 ) {
-    eprintln!("{:?}", games.iter().collect_vec());
     for ige @ IngameEvent { game, .. } in network.iter() {
-        println!("Got event, no filter");
         if games.contains(*game) {
-            println!("Filter 1 passed");
             if let Ok(msg) = ige.transcribe() {
-                println!("Area attack message received: {msg:?}");
                 local.send(msg);
             }
         }
@@ -82,7 +77,7 @@ pub fn selection_transition(
         if let Ok(mut state) = games.get_mut(ev.game) {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
                 *state = AreaAttackState::Stage1;
-                println!("Selection transition begun!")
+                println!("Transitioned game to stage 1")
             }
         }
     }

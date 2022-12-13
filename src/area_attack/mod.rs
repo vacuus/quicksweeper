@@ -16,7 +16,7 @@ use crate::{
     server::{GameDescriptor, GameMarker, LocalEvent},
 };
 
-use self::{states::AreaAttackState, puppet::PuppetTable, protocol::AreaAttackRequest};
+use self::{protocol::AreaAttackRequest, puppet::PuppetTable, states::AreaAttackState};
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
@@ -25,20 +25,22 @@ pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     },
 );
 
+fn registry_entry(mut registry: ResMut<GameRegistry>) {
+    registry.insert(
+        AREA_ATTACK_MARKER,
+        GameDescriptor {
+            name: "Area Attack".to_string(),
+            description: "Race to claim the board for yourself".to_string(),
+        },
+    );
+}
+
 #[derive(Component)]
 pub struct AreaAttackServer;
 
 impl Plugin for AreaAttackServer {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(|mut registry: ResMut<GameRegistry>| {
-            registry.insert(
-                AREA_ATTACK_MARKER,
-                GameDescriptor {
-                    name: "Area Attack".to_string(),
-                    description: "Race to claim the board for yourself".to_string(),
-                },
-            );
-        })
+        app.add_startup_system(registry_entry)
         .add_event::<LocalEvent<AreaAttackRequest>>()
         .add_system_set(
             ConditionSet::new()
@@ -59,6 +61,7 @@ impl Plugin for AreaAttackClient {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(AreaAttackState::Inactive)
             .init_resource::<PuppetTable>()
+            .add_startup_system(registry_entry)
             .add_system(|mut commands: Commands, mut ev: EventReader<ToGame>| {
                 if ev.iter().any(|e| **e == AREA_ATTACK_MARKER) {
                     // transition from menu into game
