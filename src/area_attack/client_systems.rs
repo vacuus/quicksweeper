@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
+use iyes_loopless::state::NextState;
 use tap::Tap;
 
 use crate::{
@@ -117,6 +118,7 @@ pub fn listen_net(
             });
         }
         Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {}
+        Some(Ok(AreaAttackUpdate::Transition(to))) => commands.insert_resource(NextState(to)),
         _ => (),
     }
 }

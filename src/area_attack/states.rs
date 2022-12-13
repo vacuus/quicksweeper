@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Eq, Clone, Hash, Debug, Component)]
+#[derive(PartialEq, Eq, Clone, Hash, Debug, Component, Serialize, Deserialize)]
 pub enum AreaAttackState {
     /// Only for client -- to indicate that there is no Area Attack game in progress
     Inactive,

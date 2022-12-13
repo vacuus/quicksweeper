@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{common::Position, singleplayer::minefield::FieldShape};
 
-use super::components::{ClientTile, PlayerColor};
+use super::{components::{ClientTile, PlayerColor}, states::AreaAttackState};
 
 #[derive(Serialize, Deserialize)]
 pub enum AreaAttackUpdate {
@@ -29,7 +29,7 @@ pub enum AreaAttackUpdate {
         position: Position,
         to: ClientTile,
     },
-    StartGame,
+    Transition(AreaAttackState),
     /// Issued to a client when it attempts to join a full game
     Full,
     NotHost,

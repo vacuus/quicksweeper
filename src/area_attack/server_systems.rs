@@ -69,6 +69,7 @@ pub fn selection_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
     mut games: Query<&mut AreaAttackState>,
     maybe_host: Query<(), With<Host>>,
+    mut connections: Query<&mut Connection>,
 ) {
     for ev in ev.iter() {
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
@@ -76,7 +77,10 @@ pub fn selection_transition(
         }
         if let Ok(mut state) = games.get_mut(ev.game) {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
-                *state = AreaAttackState::Stage1;
+                *state = AreaAttackState::Stage1; // TODO Send this to all peers
+                connections.for_each_mut(|mut conn| {
+                    conn.send_message(AreaAttackUpdate::Transition(AreaAttackState::Stage1));
+                });
                 println!("Transitioned game to stage 1")
             }
         }
