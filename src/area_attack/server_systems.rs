@@ -92,7 +92,6 @@ pub fn send_tiles(
     mut players: Query<(Entity, &mut Connection)>,
 ) {
     for (tile, position) in v {
-        println!("Processing tile at {position:?}");
         match &tile {
             ClientTile::Unknown | ClientTile::HardMine => {
                 for (_, mut connection) in players.iter_mut() {
@@ -167,7 +166,6 @@ pub fn prepare_player(
     mut connections: Query<&mut Connection>,
 ) {
     for ev in ev.iter() {
-        println!("`prepare_player` received event {ev:?}");
         let ConnectionSwitch(HierarchyEvent::ChildAdded { child: player, parent: game }) = ev else {
             // TODO add ChildMoved variant as well
             continue;

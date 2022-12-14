@@ -22,7 +22,6 @@ pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<ClientSocket
     standard_window(&mut ctx, |ui| {
         ui.vertical_centered(|ui| {
             if ui.button("Begin game").clicked() {
-                println!("Sening start transition");
                 let _ = sock.unwrap().send_message(ClientMessage::Ingame {
                     data: rmp_serde::to_vec(&AreaAttackRequest::StartGame).unwrap(),
                 });
@@ -47,12 +46,10 @@ pub fn request_reveal(
     {
         if kb.just_pressed(check_key) {
             // check.send(CheckCell(CursorPosition(position, owning_minefield)));
-            println!("Revealing cell {position:?}");
             sock.send_message(ClientMessage::Ingame {
                 data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
             });
         } else if kb.just_pressed(flag_key) {
-            // flag.send(FlagCell(CursorPosition(position, owning_minefield)));
             println!("Flagging not yet implemented")
         }
     }
@@ -150,7 +147,6 @@ pub fn listen_net(
             });
         }
         Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {
-            println!("Modifying tile");
             *tiles.get_mut(fields.single().1[&position]).unwrap().1 = to;
         }
         Some(Ok(AreaAttackUpdate::Transition(to))) => commands.insert_resource(NextState(to)),
