@@ -112,9 +112,9 @@ impl Position {
     }
 }
 
-impl Into<Vec2> for &Position {
-    fn into(self) -> Vec2 {
-        Vec2::new(self.x as f32, self.y as f32)
+impl From<&Position> for Vec2 {
+    fn from(val: &Position) -> Self {
+        Vec2::new(val.x as f32, val.y as f32)
     }
 }
 

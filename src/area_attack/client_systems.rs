@@ -8,7 +8,7 @@ use crate::{
     cursor::{Cursor, CursorBundle},
     load::{MineTextures, Textures},
     main_menu::standard_window,
-    server::{ClientMessage, ClientSocket, MessageSocket, ServerMessage},
+    server::{ClientMessage, ClientSocket, MessageSocket},
     singleplayer::minefield::{specific::CELL_SIZE, Minefield},
 };
 
