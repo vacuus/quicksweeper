@@ -76,6 +76,7 @@ impl Plugin for AreaAttackClient {
                     .run_not_in_state(AreaAttackState::Inactive)
                     .with_system(client_systems::listen_net)
                     .with_system(client_systems::request_reveal)
+                    .with_system(client_systems::draw_mines)
                     .into(),
             );
     }

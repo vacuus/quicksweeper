@@ -62,8 +62,8 @@ pub fn request_reveal(
 pub fn listen_net(
     mut commands: Commands,
     mut sock: ResMut<ClientSocket>,
-    tiles: Query<Entity, With<ClientTile>>,
-    fields: Query<Entity, With<Minefield>>,
+    mut tiles: Query<(Entity, &mut ClientTile)>,
+    fields: Query<(Entity, &Minefield)>,
     cursors: Query<Entity, With<Cursor>>,
     tile_textures: Res<MineTextures>,
     misc_textures: Res<Textures>,
@@ -74,7 +74,12 @@ pub fn listen_net(
     match sock.recv_message() {
         Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
             // despawn previously constructed entities
-            for e in tiles.iter().chain(fields.iter()).chain(cursors.iter()) {
+            for e in tiles
+                .iter()
+                .map(|(e, _)| e)
+                .chain(fields.iter().map(|(e, _)| e))
+                .chain(cursors.iter())
+            {
                 commands.entity(e).despawn();
             }
 
@@ -144,8 +149,44 @@ pub fn listen_net(
                 },
             });
         }
-        Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {}
+        Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {
+            println!("Modifying tile");
+            *tiles.get_mut(fields.single().1[&position]).unwrap().1 = to;
+        }
         Some(Ok(AreaAttackUpdate::Transition(to))) => commands.insert_resource(NextState(to)),
         _ => (),
     }
+}
+
+pub fn draw_mines(
+    mut updated_tiles: Query<
+        (&mut TextureAtlasSprite, &ClientTile),
+        Or<(Added<ClientTile>, Changed<ClientTile>)>,
+    >,
+    own_cursor: Query<&Cursor>,
+    puppet_map: ResMut<PuppetTable>,
+    puppets: Query<&PuppetCursor>,
+) {
+    updated_tiles.for_each_mut(|(mut sprite, state)| {
+        *sprite = match state {
+            ClientTile::Unknown => {
+                TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::default())
+            }
+            ClientTile::Owned {
+                player,
+                num_neighbors,
+            } => TextureAtlasSprite::new(*num_neighbors as usize).tap_mut(|s| {
+                s.color = if let Some(&PuppetCursor(color)) =
+                    puppet_map.get(player).and_then(|e| puppets.get(*e).ok())
+                {
+                    color
+                } else {
+                    own_cursor.single().color
+                }
+            }),
+            ClientTile::HardMine => {
+                TextureAtlasSprite::new(0).tap_mut(|s| s.color = Color::default())
+            }
+        }
+    })
 }
