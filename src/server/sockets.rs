@@ -5,10 +5,14 @@ use std::{
 };
 
 use bevy::prelude::*;
+use itertools::Itertools;
 use serde::{de::DeserializeOwned, Serialize};
-use tungstenite::{Message, WebSocket};
+use tungstenite::{
+    handshake::{server::NoCallback, MidHandshake},
+    HandshakeError, Message, ServerHandshake, WebSocket,
+};
 
-use super::{protocol::ClientMessage, Greeting};
+use super::Greeting;
 
 #[derive(thiserror::Error, Debug)]
 pub enum MessageError {
@@ -82,7 +86,11 @@ pub struct ConnectionInfo {
     pub username: String,
 }
 
-pub fn receive_connections(listener: Res<OpenPort>, mut commands: Commands) {
+pub fn receive_connections(
+    listener: Res<OpenPort>,
+    mut commands: Commands,
+    mut conn_queue: Local<Vec<MidHandshake<ServerHandshake<TcpStream, NoCallback>>>>,
+) {
     if let Ok((client, _)) = listener.accept() {
         client.set_nonblocking(true).expect(
             "Connection failed for reason: Could not connect to client in nonblocking mode",
@@ -92,9 +100,28 @@ pub fn receive_connections(listener: Res<OpenPort>, mut commands: Commands) {
                 commands.spawn((Connection(socket),));
                 println!("Connection accepted!")
             }
+            Err(HandshakeError::Interrupted(handshake)) => conn_queue.push(handshake),
             Err(msg) => eprintln!("Connection failed for reason: {msg:?}"),
         };
     }
+
+    let new_queue = conn_queue
+        .drain(..)
+        .filter_map(|handshake| match handshake.handshake() {
+            Ok(socket) => {
+                commands.spawn((Connection(socket),));
+                println!("Connection accepted!");
+                None
+            }
+            Err(HandshakeError::Interrupted(handshake)) => Some(handshake),
+            Err(msg) => {
+                eprintln!("Connection failed for reason: {msg:?}");
+                None
+            }
+        })
+        .collect_vec();
+
+    drop(std::mem::replace(&mut *conn_queue, new_queue));
 }
 
 pub fn upgrade_connections(

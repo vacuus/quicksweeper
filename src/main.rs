@@ -12,7 +12,7 @@ mod server;
 mod singleplayer;
 mod state;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, time::TimePlugin, app::ScheduleRunnerPlugin, core_pipeline::CorePipelinePlugin};
 
 use bevy_egui::EguiPlugin;
 use cursor::CursorPlugin;
@@ -23,7 +23,12 @@ pub use singleplayer::SingleplayerState;
 fn run_server() {
     App::new()
         .init_resource::<GameRegistry>()
-        .add_plugins(DefaultPlugins)
+        // .add_plugins(DefaultPlugins)
+        .add_plugins(MinimalPlugins)
+        // .add_plugin(CorePlugin::default())
+        // .add_plugin(TimePlugin::default())
+        .add_plugin(AssetPlugin::default())
+        .add_plugin(HierarchyPlugin)
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(server::ServerPlugin)
         .add_plugin(load::ServerLoad)
