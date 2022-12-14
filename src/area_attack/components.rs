@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
@@ -13,6 +13,7 @@ use super::{states::AreaAttackState, AreaAttackServer};
 pub struct AreaAttackBundle {
     field: Minefield,
     template: FieldShape,
+    selections: InitialSelections,
     state: AreaAttackState,
     typed_marker: AreaAttackServer,
 }
@@ -37,6 +38,7 @@ impl AreaAttackBundle {
                 template,
             ),
             template: template.clone(),
+            selections: default(),
             state: AreaAttackState::Selecting,
             typed_marker: AreaAttackServer,
         }
@@ -67,7 +69,7 @@ pub struct ServerTileBundle {
     pub position: Position,
 }
 
-#[derive(Component, Serialize, Deserialize)]
+#[derive(Component, Serialize, Deserialize, Clone)]
 pub enum ClientTile {
     /// No one has claimed this tile, and it isn't known whether it is blank or contains a mine
     Unknown,
@@ -106,3 +108,6 @@ impl From<PlayerColor> for Color {
         }
     }
 }
+
+#[derive(Component, Debug, Deref, DerefMut, Default)]
+pub struct InitialSelections(pub HashMap<Entity, Position>);

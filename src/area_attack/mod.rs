@@ -41,17 +41,18 @@ pub struct AreaAttackServer;
 impl Plugin for AreaAttackServer {
     fn build(&self, app: &mut App) {
         app.add_startup_system(registry_entry)
-        .add_event::<LocalEvent<AreaAttackRequest>>()
-        .add_system_set(
-            ConditionSet::new()
-                .run_not_in_state(MenuState::Loading)
-                .with_system(create_game)
-                .with_system(unmark_init_access)
-                .with_system(prepare_player)
-                .with_system(net_events)
-                .with_system(selection_transition)
-                .into(),
-        );
+            .add_event::<LocalEvent<AreaAttackRequest>>()
+            .add_system_set(
+                ConditionSet::new()
+                    .run_not_in_state(MenuState::Loading)
+                    .with_system(create_game)
+                    .with_system(unmark_init_access)
+                    .with_system(prepare_player)
+                    .with_system(net_events)
+                    .with_system(selection_transition)
+                    .with_system(update_selecting_tile.pipe(send_tiles))
+                    .into(),
+            );
     }
 }
 
@@ -74,6 +75,7 @@ impl Plugin for AreaAttackClient {
                 ConditionSet::new()
                     .run_not_in_state(AreaAttackState::Inactive)
                     .with_system(client_systems::listen_net)
+                    .with_system(client_systems::request_reveal)
                     .into(),
             );
     }

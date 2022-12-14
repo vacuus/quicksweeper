@@ -8,7 +8,7 @@ use crate::{
     cursor::{Cursor, CursorBundle},
     load::{MineTextures, Textures},
     main_menu::standard_window,
-    server::{ClientMessage, ClientSocket, MessageSocket},
+    server::{ClientMessage, ClientSocket, MessageSocket, ServerMessage},
     singleplayer::minefield::{specific::CELL_SIZE, Minefield},
 };
 
@@ -29,6 +29,33 @@ pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<ClientSocket
             };
         })
     });
+}
+
+pub fn request_reveal(
+    cursor: Query<(&Cursor, &Position)>,
+    kb: Res<Input<KeyCode>>,
+    mut sock: ResMut<ClientSocket>,
+) {
+    for (
+        &Cursor {
+            check_key,
+            flag_key,
+            ..
+        },
+        &position,
+    ) in cursor.iter()
+    {
+        if kb.just_pressed(check_key) {
+            // check.send(CheckCell(CursorPosition(position, owning_minefield)));
+            println!("Revealing cell {position:?}");
+            sock.send_message(ClientMessage::Ingame {
+                data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
+            });
+        } else if kb.just_pressed(flag_key) {
+            // flag.send(FlagCell(CursorPosition(position, owning_minefield)));
+            println!("Flagging not yet implemented")
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

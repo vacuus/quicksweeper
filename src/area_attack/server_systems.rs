@@ -1,4 +1,4 @@
-use bevy::{hierarchy::HierarchyEvent, prelude::*};
+use bevy::{hierarchy::HierarchyEvent, prelude::*, utils::hashbrown::hash_map::Entry};
 use itertools::Itertools;
 use strum::IntoEnumIterator;
 
@@ -13,7 +13,7 @@ use crate::{
 };
 
 use super::{
-    components::{AreaAttackBundle, PlayerBundle, PlayerColor},
+    components::{AreaAttackBundle, ClientTile, InitialSelections, PlayerBundle, PlayerColor},
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttackState,
     AreaAttackServer, AREA_ATTACK_MARKER,
@@ -85,6 +85,72 @@ pub fn selection_transition(
             }
         }
     }
+}
+
+pub fn send_tiles(
+    In(v): In<Vec<(ClientTile, Position)>>,
+    mut players: Query<(Entity, &mut Connection)>,
+) {
+    for (tile, position) in v {
+        println!("Processing tile at {position:?}");
+        match &tile {
+            ClientTile::Unknown | ClientTile::HardMine => {
+                for (_, mut connection) in players.iter_mut() {
+                    connection.send_message(AreaAttackUpdate::TileChanged {
+                        position,
+                        to: tile.clone(),
+                    });
+                }
+            }
+            ClientTile::Owned {
+                player: owner,
+                num_neighbors,
+            } => {
+                for (player, mut connection) in players.iter_mut() {
+                    connection.send_message(AreaAttackUpdate::TileChanged {
+                        position,
+                        to: ClientTile::Owned {
+                            player,
+                            num_neighbors: if player == *owner { *num_neighbors } else { 0 },
+                        },
+                    });
+                }
+            }
+        }
+    }
+}
+
+pub fn update_selecting_tile(
+    mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
+    mut games: Query<(&AreaAttackState, &mut InitialSelections)>,
+) -> Vec<(ClientTile, Position)> {
+    requests
+        .iter()
+        .filter_map(|LocalEvent { player, game, data }| {
+            println!("Received event {data:?}");
+            if let AreaAttackRequest::Reveal(requested) = data {
+                let Ok((AreaAttackState::Selecting, mut selections)) = games.get_mut(*game) else {return None;};
+
+                Some(match selections.entry(*player) {
+                    Entry::Occupied(mut current_position) => {
+                        let out = vec![
+                            (ClientTile::Unknown, *current_position.get()),
+                            (ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested)
+                        ];
+                        current_position.insert(*requested);
+                        out
+                    },
+                    Entry::Vacant(entry) => {
+                        entry.insert(*requested);
+                        vec![(ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested)]
+                    },
+                })
+            } else {
+                None
+            }
+        })
+        .flatten()
+        .collect_vec()
 }
 
 pub fn prepare_player(

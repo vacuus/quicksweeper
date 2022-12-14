@@ -11,7 +11,9 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     registry::GameRegistry,
-    server::{ActiveGame, ClientMessage, ClientSocket, GameMarker, MessageSocket, ServerMessage, Greeting},
+    server::{
+        ActiveGame, ClientMessage, ClientSocket, GameMarker, Greeting, MessageSocket, ServerMessage,
+    },
     SingleplayerState,
 };
 
@@ -247,7 +249,10 @@ fn game_select_menu(
     } else if response.reload.clicked() {
         let _ = socket.send_message(ClientMessage::Games); // TODO: Report error to user
     } else if let Some(mode) = response.create {
-        let _ = socket.send_message(ClientMessage::Create { game: mode, args: Vec::new() });
+        let _ = socket.send_message(ClientMessage::Create {
+            game: mode,
+            args: Vec::new(),
+        });
         start_game.send(ToGame(mode));
         commands.insert_resource(NextState(MenuState::InGame));
     } else if let Some((game, marker)) = response.join_game {

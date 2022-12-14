@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{common::Position, singleplayer::minefield::FieldShape};
 
-use super::{components::{ClientTile, PlayerColor}, states::AreaAttackState};
+use super::{
+    components::{ClientTile, PlayerColor},
+    states::AreaAttackState,
+};
 
 #[derive(Serialize, Deserialize)]
 pub enum AreaAttackUpdate {

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug, Component, Serialize, Deserialize)]
 pub enum AreaAttackState {
