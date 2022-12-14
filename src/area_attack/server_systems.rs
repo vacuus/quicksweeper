@@ -1,4 +1,4 @@
-use bevy::{hierarchy::HierarchyEvent, prelude::*, utils::hashbrown::hash_map::Entry};
+use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
 use strum::IntoEnumIterator;
 
@@ -127,24 +127,30 @@ pub fn update_selecting_tile(
     requests
         .iter()
         .filter_map(|LocalEvent { player, game, data }| {
-            println!("Received event {data:?}");
             if let AreaAttackRequest::Reveal(requested) = data {
                 let Ok((AreaAttackState::Selecting, mut selections)) = games.get_mut(*game) else {return None;};
 
-                Some(match selections.entry(*player) {
-                    Entry::Occupied(mut current_position) => {
-                        let out = vec![
-                            (ClientTile::Unknown, *current_position.get()),
-                            (ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested)
-                        ];
-                        current_position.insert(*requested);
-                        out
-                    },
-                    Entry::Vacant(entry) => {
-                        entry.insert(*requested);
-                        vec![(ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested)]
-                    },
-                })
+                for selection in selections.iter()
+                    .filter_map(|(owner, pos)| (owner != player).then_some(pos))
+                {
+                    if selection.distance(requested) < 10.0 {
+                        println!("Tried to select a cell too close to someone else");
+                        // TODO Notify client or make client 
+                        return None;
+                    }
+                };
+
+                let out = if let Some(prev) = selections.remove(player) {
+                    selections.insert(*player, *requested);
+                    vec![
+                        (ClientTile::Unknown, prev),
+                        (ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested),
+                    ]
+                } else {
+                    vec![(ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested)]
+                };
+                selections.insert(*player, *requested);
+                Some(out)
             } else {
                 None
             }

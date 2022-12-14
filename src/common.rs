@@ -68,6 +68,10 @@ impl Position {
         Self { x, y }
     }
 
+    pub fn distance(&self, other: &Position) -> f32 {
+        Vec2::distance(self.into(), other.into())
+    }
+
     pub fn neighbor_direction(&self, direction: Direction) -> Option<Position> {
         match direction {
             Direction::North => self.y.checked_add(1).map(|y| Position::new(self.x, y)),
@@ -105,6 +109,12 @@ impl Position {
 
     pub fn absolute(&self, size_x: f32, size_y: f32) -> Vec2 {
         Vec2::new(self.x as f32 * size_x, self.y as f32 * size_y)
+    }
+}
+
+impl Into<Vec2> for &Position {
+    fn into(self) -> Vec2 {
+        Vec2::new(self.x as f32, self.y as f32)
     }
 }
 
