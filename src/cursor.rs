@@ -123,7 +123,7 @@ pub fn pointer_cursor(
             y: (offset.y / CELL_SIZE).floor() as isize,
         };
 
-        if minefield.is_contained(&pos) {
+        if minefield.is_contained(&pos) && *position != pos {
             *position = pos;
         }
     }
