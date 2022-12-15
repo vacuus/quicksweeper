@@ -171,6 +171,7 @@ pub fn prepare_player(
     mut ev: EventReader<ConnectionSwitch>,
     mut games: Query<(&Children, &FieldShape, &mut Access), With<AreaAttackServer>>,
     players: Query<(&ConnectionInfo, &mut PlayerColor, &Position)>,
+    partial_connection_info: Query<&ConnectionInfo>,
     mut connections: Query<&mut Connection>,
 ) {
     for ev in ev.iter() {
@@ -180,6 +181,8 @@ pub fn prepare_player(
         };
         let Ok((peers, shape, mut access)) = games.get_mut(*game) else { continue; };
         let Ok(mut this_connection) = connections.get_mut(*player) else {continue; };
+
+        let peers = peers.iter().filter(|e| **e != *player).collect_vec();
 
         // guard if there are too many players
         if peers.len() >= 4 {
@@ -192,7 +195,7 @@ pub fn prepare_player(
         let _ = this_connection.send_message(AreaAttackUpdate::FieldShape(shape.clone()));
 
         // send list of players and player properties
-        for &peer_id in peers {
+        for &&peer_id in peers.iter() {
             if peer_id == *player {
                 continue;
             }
@@ -209,12 +212,29 @@ pub fn prepare_player(
         let assigned_color = PlayerColor::iter()
             .find(|co| !taken_colors.contains(co))
             .unwrap();
+        let assigned_position = shape.center().unwrap_or(Position { x: 0, y: 0 });
+
+        let this_username = &partial_connection_info.get(*player).unwrap().username;
+        // send this player's properties to peers
+        for &peer_id in peers {
+            connections.get_mut(peer_id).unwrap().send_message(
+                AreaAttackUpdate::PlayerProperties {
+                    id: *player,
+                    username: this_username.clone(),
+                    color: assigned_color,
+                    position: assigned_position,
+                },
+            );
+        }
+
+        // reobtain this connection to respect the lifetime of the query (since the previous loop
+        // reuses this query)
+        let mut this_connection = connections.get_mut(*player).unwrap();
 
         // initialize some player properties
-        let position = shape.center().unwrap_or(Position { x: 0, y: 0 });
         commands.entity(*player).insert(PlayerBundle {
             color: assigned_color,
-            position,
+            position: assigned_position,
         });
         let _ = this_connection.send_message(AreaAttackUpdate::SelfChange {
             color: assigned_color,
