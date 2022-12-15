@@ -121,41 +121,50 @@ pub fn send_tiles(
 
 pub fn update_selecting_tile(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<(&AreaAttackState, &mut InitialSelections)>,
-) -> Vec<(ClientTile, Position)> {
-    requests
-        .iter()
-        .filter_map(|LocalEvent { player, game, data }| {
-            if let AreaAttackRequest::Reveal(requested) = data {
-                let Ok((AreaAttackState::Selecting, mut selections)) = games.get_mut(*game) else {return None;};
+    mut games: Query<(&AreaAttackState, &mut InitialSelections, &Children)>,
+    mut players: Query<(Entity, &mut Connection)>,
+) {
+    for LocalEvent { player, game, data } in requests.iter() {
+        if let AreaAttackRequest::Reveal(requested) = data {
+            let Ok((AreaAttackState::Selecting, mut selections, children)) = games.get_mut(*game) else { continue; };
 
-                for selection in selections.iter()
-                    .filter_map(|(owner, pos)| (owner != player).then_some(pos))
-                {
-                    if selection.distance(requested) < 10.0 {
-                        println!("Tried to select a cell too close to someone else");
-                        // TODO Notify client or make client 
-                        return None;
-                    }
-                };
-
-                let out = if let Some(prev) = selections.remove(player) {
-                    selections.insert(*player, *requested);
-                    vec![
-                        (ClientTile::Unknown, prev),
-                        (ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested),
-                    ]
-                } else {
-                    vec![(ClientTile::Owned { player: *player, num_neighbors: 0 }, *requested)]
-                };
-                selections.insert(*player, *requested);
-                Some(out)
-            } else {
-                None
+            for selection in selections
+                .iter()
+                .filter_map(|(owner, pos)| (owner != player).then_some(pos))
+            {
+                if selection.distance(requested) < 10.0 {
+                    println!("Tried to select a cell too close to someone else");
+                    // TODO Notify client or have client indicate this itself
+                    continue;
+                }
             }
-        })
-        .flatten()
-        .collect_vec()
+
+            if let Some(previous_position) = selections.remove(player) {
+                for mut conn in players
+                    .iter_mut()
+                    .filter_map(|(e, it)| (children.contains(&e)).then_some(it))
+                {
+                    conn.send_message(AreaAttackUpdate::TileChanged {
+                        position: previous_position,
+                        to: ClientTile::Unknown,
+                    });
+                }
+            }
+            for mut conn in players
+                .iter_mut()
+                .filter_map(|(e, it)| (children.contains(&e)).then_some(it))
+            {
+                conn.send_message(AreaAttackUpdate::TileChanged {
+                    position: *requested,
+                    to: ClientTile::Owned {
+                        player: *player,
+                        num_neighbors: 0,
+                    },
+                });
+            }
+            selections.insert(*player, *requested);
+        }
+    }
 }
 
 pub fn prepare_player(

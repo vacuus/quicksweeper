@@ -111,3 +111,8 @@ impl From<PlayerColor> for Color {
 
 #[derive(Component, Debug, Deref, DerefMut, Default)]
 pub struct InitialSelections(pub HashMap<Entity, Position>);
+
+pub struct ModifyTile {
+    tile: ServerTile,
+    position: Position,
+}
