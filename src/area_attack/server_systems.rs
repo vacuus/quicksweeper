@@ -124,7 +124,7 @@ pub fn update_selecting_tile(
     mut games: Query<(&AreaAttackState, &mut InitialSelections, &Children)>,
     mut players: Query<(Entity, &mut Connection)>,
 ) {
-    for LocalEvent { player, game, data } in requests.iter() {
+    'event_loop: for LocalEvent { player, game, data } in requests.iter() {
         if let AreaAttackRequest::Reveal(requested) = data {
             let Ok((AreaAttackState::Selecting, mut selections, children)) = games.get_mut(*game) else { continue; };
 
@@ -133,9 +133,8 @@ pub fn update_selecting_tile(
                 .filter_map(|(owner, pos)| (owner != player).then_some(pos))
             {
                 if selection.distance(requested) < 10.0 {
-                    println!("Tried to select a cell too close to someone else");
                     // TODO Notify client or have client indicate this itself
-                    continue;
+                    continue 'event_loop;
                 }
             }
 
