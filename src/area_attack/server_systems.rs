@@ -119,6 +119,29 @@ pub fn send_tiles(
     }
 }
 
+pub fn broadcast_positions(
+    mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
+    mut connections: Query<&mut Connection>,
+    q_game: Query<&Children, With<AreaAttackServer>>,
+) {
+    for LocalEvent { player, game, data } in requests.iter() {
+        if let AreaAttackRequest::Position(pos) = data {
+            println!("Received position request");
+            let peers = q_game.get(*game).unwrap();
+            peers
+                .iter()
+                .filter(|&&e| *player != e)
+                .for_each(|&conn_id| {
+                    let mut sock = connections.get_mut(conn_id).unwrap();
+                    sock.send_message(AreaAttackUpdate::Reposition {
+                        id: *player,
+                        position: *pos,
+                    });
+                })
+        }
+    }
+}
+
 pub fn update_selecting_tile(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
     mut games: Query<(&AreaAttackState, &mut InitialSelections, &Children)>,

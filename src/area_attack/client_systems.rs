@@ -8,7 +8,7 @@ use crate::{
     cursor::{Cursor, CursorBundle},
     load::{MineTextures, Textures},
     main_menu::standard_window,
-    server::{ClientMessage, ClientSocket, MessageSocket},
+    server::{ClientMessage, ClientSocket, MessageSocket, ServerMessage},
     singleplayer::minefield::{specific::CELL_SIZE, Minefield},
 };
 
@@ -185,4 +185,16 @@ pub fn draw_mines(
             }
         }
     })
+}
+
+pub fn send_position(
+    pos: Query<&Position, (With<Cursor>, Changed<Position>)>,
+    mut sock: ResMut<ClientSocket>,
+) {
+    for pos in pos.iter() {
+        println!("Sending position update {pos:?}");
+        sock.send_message(ClientMessage::Ingame {
+            data: rmp_serde::to_vec(&AreaAttackRequest::Position(*pos)).unwrap(),
+        });
+    }
 }

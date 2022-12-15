@@ -45,6 +45,7 @@ impl Plugin for AreaAttackServer {
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(MenuState::Loading)
+                    .with_system(broadcast_positions)
                     .with_system(create_game)
                     .with_system(unmark_init_access)
                     .with_system(prepare_player)
@@ -75,6 +76,7 @@ impl Plugin for AreaAttackClient {
                 ConditionSet::new()
                     .run_not_in_state(AreaAttackState::Inactive)
                     .with_system(client_systems::listen_net)
+                    .with_system(client_systems::send_position)
                     .with_system(client_systems::request_reveal)
                     .with_system(client_systems::draw_mines)
                     .into(),
