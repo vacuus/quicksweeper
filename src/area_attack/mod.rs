@@ -48,7 +48,7 @@ impl Plugin for AreaAttackServer {
                     .run_not_in_state(MenuState::Loading)
                     .with_system(broadcast_positions)
                     .with_system(create_game)
-                    .with_system(send_tiles)
+                    .with_system(set_tiles)
                     .with_system(unmark_init_access)
                     .with_system(prepare_player)
                     .with_system(net_events)

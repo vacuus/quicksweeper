@@ -117,9 +117,9 @@ pub fn selection_transition(
     }
 }
 
-pub fn send_tiles(
+pub fn set_tiles(
     mut new_tiles: EventReader<ModifyTile>,
-    tiles: Query<&mut ServerTile>,
+    mut tiles: Query<&mut ServerTile>,
     games: Query<(&Minefield, &Children)>,
     mut players: Query<(Entity, &mut Connection)>,
 ) {
@@ -131,6 +131,9 @@ pub fn send_tiles(
     {
         if let Ok((minefield, children)) = games.get(*game) {
             let peers = players.iter_mut().filter(|(id, _)| children.contains(id));
+
+            *tiles.get_mut(minefield[position]).unwrap() = *tile;
+
             match tile {
                 ServerTile::Empty | ServerTile::Mine => {
                     for (_, mut connection) in peers {

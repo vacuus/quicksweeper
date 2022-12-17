@@ -51,7 +51,7 @@ pub struct PlayerBundle {
     pub position: Position,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone, Copy)]
 pub enum ServerTile {
     /// No one has claimed the tile, and the tile does not contain a mine
     Empty,
