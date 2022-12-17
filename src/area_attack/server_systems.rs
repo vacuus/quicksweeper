@@ -115,42 +115,6 @@ pub fn selection_transition(
     }
 }
 
-// pub fn recursive_reveal(
-//     mut tile_events: ParamSet<(EventReader<SendTile>, EventWriter<SendTile>)>,
-//     games: Query<&Minefield>,
-//     tiles: Query<&ServerTile>,
-//     mut tile_buffer: Local<Vec<SendTile>>,
-// ) {
-//     for SendTile {
-//         tile,
-//         position,
-//         game,
-//     } in tile_events.p0().iter()
-//     {
-//         let Ok(field) = games.get(*game) else { continue; };
-//         let ServerTile::Owned { player: owner } = tile else { continue; };
-
-//         let mine_count = field
-//             .iter_neighbors(*position)
-//             .filter_map(|ent| tiles.get(ent).ok())
-//             .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
-//             .count();
-
-//         if mine_count == 0 {
-//             tile_buffer.extend(
-//                 field
-//                     .iter_neighbor_positions(*position)
-//                     .map(|position| SendTile {
-//                         tile: ServerTile::Owned { player: *owner },
-//                         position,
-//                         game: *game,
-//                     }),
-//             );
-//         }
-//     }
-
-// }
-
 pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
     games: Query<&Minefield>,
@@ -332,6 +296,23 @@ pub fn update_selecting_tile(
             }
             selections.insert(*player, *requested);
         }
+    }
+}
+
+pub fn update_stage1_tile(
+    mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
+    mut games: Query<&AreaAttackState>,
+    mut reveal: EventWriter<RevealTile>,
+) {
+    for LocalEvent { player, game, data } in requests.iter() {
+        let AreaAttackRequest::Reveal(pos) = data else {continue;};
+        let Ok(AreaAttackState::Stage1) = games.get_mut(*game) else { continue; };
+
+        reveal.send(RevealTile {
+            position: *pos,
+            player: *player,
+            game: *game,
+        })
     }
 }
 
