@@ -14,8 +14,8 @@ use crate::{
 
 use super::{
     components::{
-        AreaAttackBundle, ClientTile, InitialSelections, ModifyTile, PlayerBundle, PlayerColor,
-        ServerTile,
+        AreaAttackBundle, ClientTile, InitialSelections, PlayerBundle, PlayerColor, RevealTile,
+        SendTile, ServerTile,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttackState,
@@ -74,7 +74,7 @@ pub fn selection_transition(
     mut tiles: Query<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
-    mut request_tile: EventWriter<ModifyTile>,
+    mut request_tile: EventWriter<RevealTile>,
 ) {
     for ev in ev.iter() {
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
@@ -99,13 +99,11 @@ pub fn selection_transition(
                     });
 
                 for (owner, selection) in selections.iter() {
-                    for position in selection.local_group() {
-                        request_tile.send(ModifyTile {
-                            tile: ServerTile::Owned { player: *owner },
-                            position,
-                            game: ev.game,
-                        })
-                    }
+                    request_tile.send(RevealTile {
+                        position: *selection,
+                        player: *owner,
+                        game: ev.game,
+                    })
                 }
 
                 connections.for_each_mut(|mut conn| {
@@ -117,13 +115,110 @@ pub fn selection_transition(
     }
 }
 
-pub fn set_tiles(
-    mut new_tiles: EventReader<ModifyTile>,
+// pub fn recursive_reveal(
+//     mut tile_events: ParamSet<(EventReader<SendTile>, EventWriter<SendTile>)>,
+//     games: Query<&Minefield>,
+//     tiles: Query<&ServerTile>,
+//     mut tile_buffer: Local<Vec<SendTile>>,
+// ) {
+//     for SendTile {
+//         tile,
+//         position,
+//         game,
+//     } in tile_events.p0().iter()
+//     {
+//         let Ok(field) = games.get(*game) else { continue; };
+//         let ServerTile::Owned { player: owner } = tile else { continue; };
+
+//         let mine_count = field
+//             .iter_neighbors(*position)
+//             .filter_map(|ent| tiles.get(ent).ok())
+//             .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
+//             .count();
+
+//         if mine_count == 0 {
+//             tile_buffer.extend(
+//                 field
+//                     .iter_neighbor_positions(*position)
+//                     .map(|position| SendTile {
+//                         tile: ServerTile::Owned { player: *owner },
+//                         position,
+//                         game: *game,
+//                     }),
+//             );
+//         }
+//     }
+
+// }
+
+pub fn reveal_tiles(
+    mut requested: EventReader<RevealTile>,
+    games: Query<&Minefield>,
+    mut tiles: Query<&mut ServerTile>,
+    mut send: EventWriter<SendTile>,
+    // swtich between request buffers for each iteration
+    mut request_buffer: Local<Vec<RevealTile>>,
+    mut request_buffer2: Local<Vec<RevealTile>>,
+) {
+    std::mem::swap(&mut *request_buffer, &mut *request_buffer2);
+    request_buffer.extend(requested.iter());
+
+    for RevealTile {
+        position,
+        player,
+        game,
+    } in request_buffer2.drain(..)
+    {
+        if let Ok(field) = games.get(game) {
+            let mut tile = tiles.get_mut(field[&position]).unwrap();
+            match *tile {
+                ServerTile::Empty => {
+                    *tile = ServerTile::Owned { player };
+                    let mine_count = field // TODO: Extract to function
+                        .iter_neighbors(position)
+                        .filter_map(|ent| tiles.get(ent).ok())
+                        .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
+                        .count() as u8;
+
+                    if mine_count == 0 {
+                        request_buffer.extend(field.iter_neighbor_positions(position).map(
+                            |position| RevealTile {
+                                position,
+                                player,
+                                game,
+                            },
+                        ))
+                    }
+
+                    send.send(SendTile {
+                        tile: ServerTile::Owned { player },
+                        position,
+                        game,
+                    })
+                }
+                ServerTile::Mine => {
+                    *tile = ServerTile::HardMine;
+                    send.send(SendTile {
+                        tile: ServerTile::HardMine,
+                        position,
+                        game,
+                    });
+                }
+                ServerTile::HardMine | ServerTile::Owned { .. } => {
+                    // do nothing
+                }
+            }
+        }
+    }
+}
+
+pub fn send_tiles(
+    mut new_tiles: EventReader<SendTile>,
     mut tiles: Query<&mut ServerTile>,
     games: Query<(&Minefield, &Children)>,
     mut players: Query<(Entity, &mut Connection)>,
 ) {
-    for ModifyTile {
+    for SendTile {
         tile,
         position,
         game,
@@ -131,8 +226,6 @@ pub fn set_tiles(
     {
         if let Ok((minefield, children)) = games.get(*game) {
             let peers = players.iter_mut().filter(|(id, _)| children.contains(id));
-
-            *tiles.get_mut(minefield[position]).unwrap() = *tile;
 
             match tile {
                 ServerTile::Empty | ServerTile::Mine => {
