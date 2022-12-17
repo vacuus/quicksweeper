@@ -81,6 +81,7 @@ pub enum ClientTile {
     Owned { player: Entity, num_neighbors: u8 },
     /// There is a mine on this tile, and it has been revealed
     HardMine,
+    Flag,
 }
 
 #[derive(Bundle)]

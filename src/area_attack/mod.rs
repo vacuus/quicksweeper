@@ -83,7 +83,7 @@ impl Plugin for AreaAttackClient {
                     .with_system(client_systems::listen_net)
                     .with_system(client_systems::send_position)
                     .with_system(client_systems::request_reveal)
-                    .with_system(client_systems::draw_mines)
+                    .with_system(client_systems::draw_tiles)
                     .into(),
             );
     }

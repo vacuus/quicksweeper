@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
-use iyes_loopless::state::NextState;
+use iyes_loopless::state::{CurrentState, NextState};
 use tap::Tap;
 
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     cursor::{Cursor, CursorBundle},
     load::{MineTextures, Textures},
     main_menu::standard_window,
-    server::{ClientMessage, ClientSocket, MessageSocket, ServerMessage},
+    server::{ClientMessage, ClientSocket, MessageSocket},
     singleplayer::minefield::{specific::CELL_SIZE, Minefield},
 };
 
@@ -16,6 +16,7 @@ use super::{
     components::{ClientTile, ClientTileBundle},
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     puppet::{PuppetCursor, PuppetCursorBundle, PuppetTable},
+    states::AreaAttackState,
 };
 
 pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<ClientSocket>>) {
@@ -34,6 +35,9 @@ pub fn request_reveal(
     cursor: Query<(&Cursor, &Position)>,
     kb: Res<Input<KeyCode>>,
     mut sock: ResMut<ClientSocket>,
+    field: Query<&Minefield>,
+    state: Res<CurrentState<AreaAttackState>>,
+    mut tiles: Query<&mut ClientTile>,
 ) {
     for (
         &Cursor {
@@ -49,8 +53,16 @@ pub fn request_reveal(
             sock.send_message(ClientMessage::Ingame {
                 data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
             });
-        } else if kb.just_pressed(flag_key) {
-            println!("Flagging not yet implemented")
+        } else if kb.just_pressed(flag_key)
+            && !matches!(
+                state.0,
+                // truthfully the last of these three should be impossible, but check it anyway
+                AreaAttackState::Selecting | AreaAttackState::Finishing | AreaAttackState::Inactive
+            )
+        {
+            tiles
+                .get_mut(field.single()[&position])
+                .map(|mut tile| *tile = ClientTile::Flag);
         }
     }
 }
@@ -154,7 +166,7 @@ pub fn listen_net(
     }
 }
 
-pub fn draw_mines(
+pub fn draw_tiles(
     mut updated_tiles: Query<
         (&mut TextureAtlasSprite, &ClientTile),
         Or<(Added<ClientTile>, Changed<ClientTile>)>,
@@ -163,6 +175,7 @@ pub fn draw_mines(
     puppet_map: ResMut<PuppetTable>,
     puppets: Query<&PuppetCursor>,
 ) {
+    let own_color = own_cursor.get_single().map(|c| c.color).map_err(|_| ());
     updated_tiles.for_each_mut(|(mut sprite, state)| {
         *sprite = match state {
             ClientTile::Unknown => {
@@ -177,11 +190,14 @@ pub fn draw_mines(
                 {
                     color
                 } else {
-                    own_cursor.single().color
+                    own_color.unwrap()
                 }
             }),
             ClientTile::HardMine => {
                 TextureAtlasSprite::new(0).tap_mut(|s| s.color = Color::default())
+            }
+            ClientTile::Flag => {
+                TextureAtlasSprite::new(10).tap_mut(|s| s.color = own_color.unwrap())
             }
         }
     })
