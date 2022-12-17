@@ -178,7 +178,7 @@ pub fn reveal_tiles(
 
 pub fn send_tiles(
     mut new_tiles: EventReader<SendTile>,
-    mut tiles: Query<&mut ServerTile>,
+    tiles: Query<&ServerTile>,
     games: Query<(&Minefield, &Children)>,
     mut players: Query<(Entity, &mut Connection)>,
 ) {
