@@ -9,11 +9,14 @@ use crate::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent, LocalEvent,
         MessageSocket,
     },
-    singleplayer::minefield::FieldShape,
+    singleplayer::minefield::{FieldShape, Minefield},
 };
 
 use super::{
-    components::{AreaAttackBundle, ClientTile, InitialSelections, PlayerBundle, PlayerColor},
+    components::{
+        AreaAttackBundle, ClientTile, InitialSelections, ModifyTile, PlayerBundle, PlayerColor,
+        ServerTile,
+    },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttackState,
     AreaAttackServer, AREA_ATTACK_MARKER,
@@ -67,17 +70,44 @@ pub fn net_events(
 
 pub fn selection_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<&mut AreaAttackState>,
+    mut games: Query<(&mut AreaAttackState, &InitialSelections, &Minefield)>,
+    mut tiles: Query<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
+    mut request_tile: EventWriter<ModifyTile>,
 ) {
     for ev in ev.iter() {
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
             continue;
         }
-        if let Ok(mut state) = games.get_mut(ev.game) {
+        if let Ok((mut state, selections, field)) = games.get_mut(ev.game) {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
-                *state = AreaAttackState::Stage1; // TODO Send this to all peers
+                *state = AreaAttackState::Stage1;
+
+                let mut ignore = Vec::with_capacity(selections.len() * 16);
+
+                // generate minefield while ignoring selected tiles
+                for selection in selections.values() {
+                    ignore.extend(selection.local_group());
+                }
+
+                field
+                    .choose_multiple(&ignore, &mut rand::thread_rng())
+                    .into_iter()
+                    .for_each(|(_, tile_id)| {
+                        *tiles.get_mut(tile_id).unwrap() = ServerTile::Mine;
+                    });
+
+                for (owner, selection) in selections.iter() {
+                    for position in selection.local_group() {
+                        request_tile.send(ModifyTile {
+                            tile: ServerTile::Owned { player: *owner },
+                            position,
+                            game: ev.game,
+                        })
+                    }
+                }
+
                 connections.for_each_mut(|mut conn| {
                     conn.send_message(AreaAttackUpdate::Transition(AreaAttackState::Stage1));
                 });
@@ -88,31 +118,52 @@ pub fn selection_transition(
 }
 
 pub fn send_tiles(
-    In(v): In<Vec<(ClientTile, Position)>>,
+    mut new_tiles: EventReader<ModifyTile>,
+    tiles: Query<&mut ServerTile>,
+    games: Query<(&Minefield, &Children)>,
     mut players: Query<(Entity, &mut Connection)>,
 ) {
-    for (tile, position) in v {
-        match &tile {
-            ClientTile::Unknown | ClientTile::HardMine => {
-                for (_, mut connection) in players.iter_mut() {
-                    connection.send_message(AreaAttackUpdate::TileChanged {
-                        position,
-                        to: tile.clone(),
-                    });
+    for ModifyTile {
+        tile,
+        position,
+        game,
+    } in new_tiles.iter()
+    {
+        if let Ok((minefield, children)) = games.get(*game) {
+            let peers = players.iter_mut().filter(|(id, _)| children.contains(id));
+            match tile {
+                ServerTile::Empty | ServerTile::Mine => {
+                    for (_, mut connection) in peers {
+                        connection.send_message(AreaAttackUpdate::TileChanged {
+                            position: *position,
+                            to: ClientTile::Unknown,
+                        });
+                    }
                 }
-            }
-            ClientTile::Owned {
-                player: owner,
-                num_neighbors,
-            } => {
-                for (player, mut connection) in players.iter_mut() {
-                    connection.send_message(AreaAttackUpdate::TileChanged {
-                        position,
-                        to: ClientTile::Owned {
-                            player,
-                            num_neighbors: if player == *owner { *num_neighbors } else { 0 },
-                        },
-                    });
+                ServerTile::Owned { player: owner } => {
+                    let mine_count = minefield
+                        .iter_neighbors(*position)
+                        .filter_map(|ent| tiles.get(ent).ok())
+                        .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
+                        .count() as u8;
+
+                    for (player_id, mut connection) in peers {
+                        connection.send_message(AreaAttackUpdate::TileChanged {
+                            position: *position,
+                            to: ClientTile::Owned {
+                                player: *owner,
+                                num_neighbors: if player_id == *owner { mine_count } else { 0 },
+                            },
+                        });
+                    }
+                }
+                ServerTile::HardMine => {
+                    for (_, mut connection) in peers {
+                        connection.send_message(AreaAttackUpdate::TileChanged {
+                            position: *position,
+                            to: ClientTile::HardMine,
+                        });
+                    }
                 }
             }
         }
@@ -126,7 +177,6 @@ pub fn broadcast_positions(
 ) {
     for LocalEvent { player, game, data } in requests.iter() {
         if let AreaAttackRequest::Position(pos) = data {
-            println!("Received position request");
             let peers = q_game.get(*game).unwrap();
             peers
                 .iter()

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use std::{
     hash::Hash,
-    ops::{Add, Div, Sub},
+    ops::{Add, Div, Sub, Deref},
 };
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -107,6 +107,13 @@ impl Position {
             .collect()
     }
 
+    pub fn local_group(&self) -> ArrayVec<Position, 9> {
+        Direction::iter()
+            .filter_map(|direction| self.neighbor_direction(direction))
+            .chain(std::iter::once(*self))
+            .collect()
+    }
+
     pub fn absolute(&self, size_x: f32, size_y: f32) -> Vec2 {
         Vec2::new(self.x as f32 * size_x, self.y as f32 * size_y)
     }
@@ -142,6 +149,22 @@ West,                      East,
 
 fn init_cameras(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+}
+
+pub trait Contains<T> {
+    fn contains(&self, _: &T) -> bool;
+}
+
+impl <T: PartialEq> Contains<T> for [T] {
+    fn contains(&self, t: &T) -> bool {
+        self.contains(t)
+    }
+} 
+
+impl <U: PartialEq, T> Contains<U> for T where T: Deref<Target = [U]> {
+    fn contains(&self, t: &U) -> bool {
+        <[U]>::contains(self, t) 
+    }
 }
 
 pub struct QuicksweeperTypes;

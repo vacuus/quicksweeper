@@ -192,7 +192,6 @@ pub fn send_position(
     mut sock: ResMut<ClientSocket>,
 ) {
     for pos in pos.iter() {
-        println!("Sending position update {pos:?}");
         sock.send_message(ClientMessage::Ingame {
             data: rmp_serde::to_vec(&AreaAttackRequest::Position(*pos)).unwrap(),
         });

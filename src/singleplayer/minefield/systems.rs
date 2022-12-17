@@ -42,20 +42,10 @@ pub fn generate_minefield(
         }
 
         if let Some((_, field)) = minefields.iter().find(|(field, _)| *field == ev.minefield) {
-            let minefield_vec = field
-                .occupied_entries()
-                .filter_map(|(a, b)| b.map(|b| (a, b)))
-                .collect_vec();
-
-            minefield_vec
-                .iter()
-                .filter(|&(&pos, _)| !exclude.contains(&pos.into()))
-                .choose_multiple(
-                    &mut rand::thread_rng(),
-                    minefield_vec.len() - field.remaining_blank,
-                )
+            field
+                .choose_multiple(&exclude, &mut rand::thread_rng())
                 .into_iter()
-                .for_each(|&(_, cell)| {
+                .for_each(|(_, cell)| {
                     *states.get_mut(cell).unwrap() = MineCellState::Mine;
                 });
         }

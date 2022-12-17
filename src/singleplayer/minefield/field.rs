@@ -6,8 +6,9 @@ use gridly::{
     vector::{Columns, Rows},
 };
 use gridly_grids::SparseGrid;
+use rand::{seq::IteratorRandom, Rng};
 
-use crate::common::Position;
+use crate::common::{Contains, Position};
 use std::ops::{Deref, DerefMut};
 
 use super::FieldShape;
@@ -57,6 +58,19 @@ impl Minefield {
         }
     }
 
+    pub fn choose_multiple(
+        &self,
+        exclude: &impl Contains<Position>,
+        rng: &mut impl Rng,
+    ) -> impl IntoIterator<Item = (&Location, Entity)> {
+        let num_entries = self.field.occupied_entries().count();
+
+        self.occupied_entries()
+            .filter_map(|(a, b)| b.map(|b| (a, b)))
+            .filter(|&(&pos, _)| !exclude.contains(&pos.into()))
+            .choose_multiple(rng, num_entries - self.remaining_blank)
+    }
+
     pub fn iter_neighbors_enumerated(
         &self,
         pos: Position,
@@ -71,6 +85,10 @@ impl Minefield {
 
     pub fn iter_neighbor_positions(&self, pos: Position) -> impl Iterator<Item = Position> + '_ {
         self.iter_neighbors_enumerated(pos).map(|(pos, _)| pos)
+    }
+
+    pub fn iter_neighbors(&self, pos: Position) -> impl Iterator<Item = Entity> + '_ {
+        self.iter_neighbors_enumerated(pos).map(|(_, ent)| ent)
     }
 
     pub fn is_contained(&self, pos: &Position) -> bool {

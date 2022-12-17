@@ -51,7 +51,7 @@ pub struct PlayerBundle {
     pub position: Position,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub enum ServerTile {
     /// No one has claimed the tile, and the tile does not contain a mine
     Empty,
@@ -112,7 +112,9 @@ impl From<PlayerColor> for Color {
 #[derive(Component, Debug, Deref, DerefMut, Default)]
 pub struct InitialSelections(pub HashMap<Entity, Position>);
 
+#[derive(Debug)]
 pub struct ModifyTile {
-    tile: ServerTile,
-    position: Position,
+    pub tile: ServerTile,
+    pub position: Position,
+    pub game: Entity,
 }

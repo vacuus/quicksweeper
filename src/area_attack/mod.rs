@@ -16,7 +16,7 @@ use crate::{
     server::{GameDescriptor, GameMarker, LocalEvent},
 };
 
-use self::{protocol::AreaAttackRequest, puppet::PuppetTable, states::AreaAttackState};
+use self::{protocol::AreaAttackRequest, puppet::PuppetTable, states::AreaAttackState, components::ModifyTile};
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
@@ -42,11 +42,13 @@ impl Plugin for AreaAttackServer {
     fn build(&self, app: &mut App) {
         app.add_startup_system(registry_entry)
             .add_event::<LocalEvent<AreaAttackRequest>>()
+            .add_event::<ModifyTile>()
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(MenuState::Loading)
                     .with_system(broadcast_positions)
                     .with_system(create_game)
+                    .with_system(send_tiles)
                     .with_system(unmark_init_access)
                     .with_system(prepare_player)
                     .with_system(net_events)
