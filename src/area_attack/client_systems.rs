@@ -55,7 +55,7 @@ pub fn request_reveal(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)] // TODO Split this up
 pub fn listen_net(
     mut commands: Commands,
     mut sock: ResMut<ClientSocket>,
