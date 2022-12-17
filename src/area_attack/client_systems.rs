@@ -91,9 +91,13 @@ pub fn request_reveal(
                 AreaAttackState::Selecting | AreaAttackState::Finishing | AreaAttackState::Inactive
             )
         {
-            tiles
-                .get_mut(field.single()[&position])
-                .map(|mut tile| *tile = ClientTile::Flag);
+            if let Ok(mut tile) = tiles.get_mut(field.single()[&position]) {
+                match *tile {
+                    ClientTile::Unknown => *tile = ClientTile::Flag,
+                    ClientTile::Flag => *tile = ClientTile::Unknown,
+                    _ => () // do nothing, since these tiles are nonsensical to flag
+                }
+            }
         }
     }
 }
