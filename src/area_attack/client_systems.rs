@@ -38,6 +38,7 @@ pub fn request_reveal(
     field: Query<&Minefield>,
     state: Res<CurrentState<AreaAttackState>>,
     mut tiles: Query<&mut ClientTile>,
+    puppet_table: Res<PuppetTable>,
 ) {
     for (
         &Cursor {
@@ -49,10 +50,40 @@ pub fn request_reveal(
     ) in cursor.iter()
     {
         if kb.just_pressed(check_key) {
-            // check.send(CheckCell(CursorPosition(position, owning_minefield)));
-            sock.send_message(ClientMessage::Ingame {
-                data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
-            });
+            match tiles.get(field.single()[&position]).unwrap() {
+                ClientTile::Unknown => {
+                    sock.send_message(ClientMessage::Ingame {
+                        data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
+                    });
+                }
+                ClientTile::Owned {
+                    player,
+                    num_neighbors,
+                } => {
+                    if !puppet_table.contains_key(player) {
+                        let field = field.single();
+                        let flag_count = field
+                            .iter_neighbors(position)
+                            .filter_map(|ent| tiles.get(ent).ok())
+                            .filter(|tile| matches!(tile, ClientTile::Flag))
+                            .count() as u8;
+
+                        if flag_count == *num_neighbors {
+                            for (position, tile_id) in field.iter_neighbors_enumerated(position) {
+                                if !matches!(tiles.get(tile_id).unwrap(), ClientTile::Flag) {
+                                    sock.send_message(ClientMessage::Ingame {
+                                        data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(
+                                            position,
+                                        ))
+                                        .unwrap(),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                _ => (), // do nothing, since these tiles semantically contains mines
+            }
         } else if kb.just_pressed(flag_key)
             && !matches!(
                 state.0,
