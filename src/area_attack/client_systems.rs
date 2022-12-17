@@ -194,7 +194,7 @@ pub fn draw_tiles(
                 }
             }),
             ClientTile::HardMine => {
-                TextureAtlasSprite::new(0).tap_mut(|s| s.color = Color::default())
+                TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default())
             }
             ClientTile::Flag => {
                 TextureAtlasSprite::new(10).tap_mut(|s| s.color = own_color.unwrap())
