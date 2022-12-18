@@ -12,7 +12,7 @@ opt-level = 1
 opt-level = 3
 
 [features]
-bevy_dylib = [ "bevy/dynamic" ]
+default = [ "bevy/dynamic" ]
 
 [dependencies]
 bevy = { version = "0.9" }
