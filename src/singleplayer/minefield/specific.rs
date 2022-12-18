@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{common::Position, load::MineTextures};
+use crate::{common::Position, cursor::Cursor, load::MineTextures};
 use tap::Tap;
 
 /// Size of a single cell containing or not containing a mine. For now the display size of the mine
@@ -61,12 +61,18 @@ pub fn render_mines(
         (&mut TextureAtlasSprite, &MineCellState),
         Or<(Added<MineCellState>, Changed<MineCellState>)>,
     >,
+    cursor: Query<&Cursor>,
 ) {
+    let color = cursor.get_single().map(|c| c.color).unwrap_or(Color::WHITE);
     changed_cells.for_each_mut(|(mut sprite, state)| {
         *sprite = match state {
             MineCellState::Empty | MineCellState::Mine => TextureAtlasSprite::new(9),
-            MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => TextureAtlasSprite::new(10),
-            &MineCellState::Revealed(x) => TextureAtlasSprite::new(x as usize),
+            MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => {
+                TextureAtlasSprite::new(10).tap_mut(|s| s.color = color)
+            }
+            &MineCellState::Revealed(x) => {
+                TextureAtlasSprite::new(x as usize).tap_mut(|s| s.color = color)
+            }
         };
     })
 }
