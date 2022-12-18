@@ -5,7 +5,6 @@ use crate::{
 };
 use bevy::prelude::*;
 use itertools::Itertools;
-use rand::seq::IteratorRandom;
 use std::collections::VecDeque;
 
 pub fn destroy_minefields(
