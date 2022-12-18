@@ -163,7 +163,6 @@ fn server_select_menu(
 #[derive(Deref)]
 pub struct ToGame(pub GameMarker);
 
-/// Same thing as [run_menu], but only safe to run with socket access
 fn game_select_menu(
     mut commands: Commands,
     mut ctx: ResMut<EguiContext>,
