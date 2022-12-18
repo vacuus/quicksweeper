@@ -1,6 +1,6 @@
 use std::{
     io::{Read, Write},
-    net::{TcpListener, TcpStream},
+    net::{TcpListener, TcpStream, IpAddr},
     ops::DerefMut,
 };
 
@@ -33,7 +33,7 @@ pub struct ClientSocket(pub WebSocket<TcpStream>);
 pub struct OpenPort(TcpListener);
 
 impl OpenPort {
-    pub fn generate() -> Self {
+    pub fn generate(addr: &IpAddr) -> Self {
         let ip = local_ip_address::local_ip().unwrap();
         let listener = TcpListener::bind((ip, 0)).unwrap();
         listener

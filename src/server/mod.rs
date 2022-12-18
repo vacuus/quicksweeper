@@ -1,3 +1,5 @@
+use std::{net::IpAddr, str::FromStr};
+
 use bevy::prelude::*;
 
 use self::sockets::*;
@@ -10,7 +12,9 @@ pub use game::*;
 pub use protocol::*;
 pub use sockets::{ClientSocket, Connection, ConnectionInfo, MessageSocket};
 
-pub struct ServerPlugin;
+pub struct ServerPlugin {
+    pub address_name: Option<String>,
+}
 
 fn test_added(q: Query<&GameMarker, Added<GameMarker>>) {
     for item in q.iter() {
@@ -20,7 +24,13 @@ fn test_added(q: Query<&GameMarker, Added<GameMarker>>) {
 
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(OpenPort::generate())
+        let address = self
+            .address_name
+            .clone()
+            .map(|name| IpAddr::from_str(&name).unwrap())
+            .unwrap_or_else(|| local_ip_address::local_ip().unwrap());
+
+        app.insert_resource(OpenPort::generate(&address))
             .add_event::<IngameEvent>()
             .add_event::<ConnectionSwitch>()
             .add_system_to_stage(CoreStage::PostUpdate, delay_hierarchy_events)

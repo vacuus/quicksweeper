@@ -15,29 +15,45 @@ mod state;
 use bevy::prelude::*;
 
 use bevy_egui::EguiPlugin;
+use clap::{Parser, Subcommand};
 use cursor::CursorPlugin;
 use main_menu::MainMenuPlugin;
 use registry::GameRegistry;
 pub use singleplayer::SingleplayerState;
 
-fn run_server() {
-    App::new()
-        .init_resource::<GameRegistry>()
+#[derive(Parser)]
+#[command(author, version)]
+#[command(propagate_version = true)]
+struct Args {
+    #[command(subcommand)]
+    mode: Option<Mode>,
+}
+
+#[derive(Subcommand)]
+enum Mode {
+    Client,
+    Server { address: Option<String> },
+}
+
+fn server_app(address_name: Option<String>) -> App {
+    let mut app = App::new();
+    app.init_resource::<GameRegistry>()
         .add_plugins(MinimalPlugins)
         .add_plugin(AssetPlugin::default())
         .add_plugin(HierarchyPlugin)
         .add_plugin(common::QuicksweeperTypes)
-        .add_plugin(server::ServerPlugin)
+        .add_plugin(server::ServerPlugin { address_name })
         .add_plugin(load::ServerLoad)
         .add_plugin(singleplayer::minefield::MinefieldPlugin)
         // gamemodes
-        .add_plugin(area_attack::AreaAttackServer)
-        .run();
+        .add_plugin(area_attack::AreaAttackServer);
+
+    app
 }
 
-fn run_client() {
-    App::new()
-        .init_resource::<GameRegistry>()
+fn client_app() -> App {
+    let mut app = App::new();
+    app.init_resource::<GameRegistry>()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Quicksweeper".to_string(),
@@ -53,14 +69,14 @@ fn run_client() {
         .add_plugin(singleplayer::minefield::MinefieldPlugin)
         // gamemodes
         .add_plugin(singleplayer::SingleplayerMode)
-        .add_plugin(area_attack::AreaAttackClient)
-        .run();
+        .add_plugin(area_attack::AreaAttackClient);
+    app
 }
 
 fn main() {
-    if matches!(std::env::args().nth(1), Some(x) if x == "srv") {
-        run_server()
-    } else {
-        run_client()
+    match Args::parse().mode {
+        None | Some(Mode::Client) => client_app(),
+        Some(Mode::Server { address }) => server_app(address),
     }
+    .run();
 }
