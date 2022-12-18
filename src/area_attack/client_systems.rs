@@ -62,13 +62,14 @@ pub fn request_reveal(
                 } => {
                     if !puppet_table.contains_key(player) {
                         let field = field.single();
-                        let flag_count = field
+                        // counts both flags and known mines
+                        let marked_count = field
                             .iter_neighbors(position)
                             .filter_map(|ent| tiles.get(ent).ok())
-                            .filter(|tile| matches!(tile, ClientTile::Flag))
+                            .filter(|tile| matches!(tile, ClientTile::Flag | ClientTile::HardMine))
                             .count() as u8;
 
-                        if flag_count == *num_neighbors {
+                        if marked_count == *num_neighbors {
                             for (position, tile_id) in field.iter_neighbors_enumerated(position) {
                                 if !matches!(tiles.get(tile_id).unwrap(), ClientTile::Flag) {
                                     sock.send_message(ClientMessage::Ingame {
