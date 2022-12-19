@@ -1,7 +1,7 @@
 use arrayvec::ArrayVec;
 use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
-    prelude::*,
+    prelude::*, render::render_resource::FilterMode,
 };
 use gridly::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -160,7 +160,7 @@ fn zoom_camera(
     mut scale: Local<f32>,
 ) {
     for scroll in scroll.iter() {
-        *scale = (*scale + scroll.y).clamp(-30f32, 6f32);
+        *scale = (*scale + scroll.y).clamp(-3f32, 3f32);
         if let Ok(mut proj) = camera.get_single_mut() {
             proj.scale = 2f32.powf(*scale);
         }

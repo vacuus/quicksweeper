@@ -1,7 +1,7 @@
 use crate::{
-    common::{InitCheckCell, Position},
+    common::{InitCheckCell},
     cursor::*,
-    load::{Field, MineTextures, Textures},
+    load::{Field, Textures},
 };
 use bevy::prelude::*;
 use iyes_loopless::{
@@ -47,7 +47,6 @@ fn create_entities(
     mut commands: Commands,
     field_templates: Res<Assets<FieldShape>>,
     template_handles: Res<Field>,
-    mine_textures: Res<MineTextures>,
     textures: Res<Textures>,
     mut camera: Query<&mut Transform, With<Camera2d>>,
 ) {
@@ -58,7 +57,7 @@ fn create_entities(
     let minefield = Minefield::new_shaped(
         |&pos| {
             commands
-                .spawn(MineCell::new_empty(pos, &mine_textures))
+                .spawn(MineCell::new_empty(pos, &textures))
                 .id()
         },
         field_template,

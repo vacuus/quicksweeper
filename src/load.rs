@@ -5,13 +5,14 @@ use rand::{seq::SliceRandom, Rng};
 
 use crate::{
     main_menu::MenuState,
-    singleplayer::minefield::{specific::TILE_SIZE, FieldShape},
+    singleplayer::minefield::FieldShape,
 };
 
 #[derive(AssetCollection, Resource)]
 pub struct Textures {
+    #[asset(texture_atlas(tile_size_x=32.0, tile_size_y=32.0, columns=4, rows=3))]
     #[asset(path = "textures.png")]
-    pub mines: Handle<Image>,
+    pub mines: Handle<TextureAtlas>,
     #[asset(path = "cursor.png")]
     pub cursor: Handle<Image>,
     #[asset(path = "FiraSans-Bold.ttf")]
@@ -30,29 +31,11 @@ impl Field {
     }
 }
 
-#[derive(Deref, Resource)]
-pub struct MineTextures(Handle<TextureAtlas>);
-
-impl FromWorld for MineTextures {
-    fn from_world(world: &mut World) -> Self {
-        let atlas = TextureAtlas::from_grid(
-            world.resource::<Textures>().mines.clone(),
-            Vec2::splat(TILE_SIZE),
-            4,
-            3,
-            None,
-            None,
-        );
-        let handle = world.resource_mut::<Assets<TextureAtlas>>().add(atlas);
-        MineTextures(handle)
-    }
-}
-
-impl MineTextures {
-    pub fn empty(&self) -> SpriteSheetBundle {
+impl Textures {
+    pub fn empty_mine(&self) -> SpriteSheetBundle {
         SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(9),
-            texture_atlas: (*self).clone(),
+            texture_atlas: self.mines.clone(),
             ..Default::default()
         }
     }
@@ -67,7 +50,6 @@ impl Plugin for ClientLoad {
                 .continue_to_state(MenuState::MainMenu)
                 .with_collection::<Textures>()
                 .with_collection::<Field>()
-                .init_resource::<MineTextures>(),
         );
     }
 }

@@ -6,7 +6,7 @@ use tap::Tap;
 use crate::{
     common::Position,
     cursor::{Cursor, CursorBundle},
-    load::{MineTextures, Textures},
+    load::Textures,
     main_menu::standard_window,
     server::{ClientMessage, ClientSocket, MessageSocket},
     singleplayer::minefield::{specific::TILE_SIZE, Minefield},
@@ -110,8 +110,7 @@ pub fn listen_net(
     mut tiles: Query<(Entity, &mut ClientTile)>,
     fields: Query<(Entity, &Minefield)>,
     cursors: Query<Entity, With<Cursor>>,
-    tile_textures: Res<MineTextures>,
-    misc_textures: Res<Textures>,
+    textures: Res<Textures>,
     mut puppet_map: ResMut<PuppetTable>,
     mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
     mut field_id: Local<Option<Entity>>,
@@ -136,7 +135,7 @@ pub fn listen_net(
                         .spawn(ClientTileBundle {
                             tile: ClientTile::Unknown,
                             position,
-                            sprite: tile_textures.empty().tap_mut(|b| {
+                            sprite: textures.empty_mine().tap_mut(|b| {
                                 b.transform = Transform {
                                     translation: position
                                         .absolute(TILE_SIZE, TILE_SIZE)
@@ -171,7 +170,7 @@ pub fn listen_net(
                             cursor: PuppetCursor(color.into()),
                             position,
                             sprite_bundle: SpriteBundle {
-                                texture: misc_textures.cursor.clone(),
+                                texture: textures.cursor.clone(),
                                 ..default()
                             },
                         })
@@ -186,9 +185,9 @@ pub fn listen_net(
             camera.single_mut().translation = translation;
             commands.spawn(CursorBundle {
                 cursor: Cursor::new(color.into(), field_id.unwrap()),
-                position, 
+                position,
                 texture: SpriteBundle {
-                    texture: misc_textures.cursor.clone(),
+                    texture: textures.cursor.clone(),
                     transform: Transform {
                         translation,
                         ..default()

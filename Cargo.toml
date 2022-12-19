@@ -16,7 +16,7 @@ default = [ "bevy/dynamic" ]
 
 [dependencies]
 bevy = { version = "0.9" }
-bevy_asset_loader = { version = "0.14", features = ["stageless"] }
+bevy_asset_loader = { version = "0.14", features = ["stageless", "2d"] }
 bevy_egui = "0.18"
 iyes_loopless = "0.9"
 
