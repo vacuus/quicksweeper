@@ -150,11 +150,9 @@ pub fn delay_hierarchy_events(
     targets: Query<&Access>,
     mut store: Local<Vec<HierarchyEvent>>,
 ) {
-    store.e_drain_where(|stored| {
-        !matches!(access(stored, &targets), Some(Access::Initializing))
-    }).for_each(|ev| {
-        connection_events.send(ConnectionSwitch(ev))
-    });
+    store
+        .e_drain_where(|stored| !matches!(access(stored, &targets), Some(Access::Initializing)))
+        .for_each(|ev| connection_events.send(ConnectionSwitch(ev)));
 
     for event in hierarchy_events.iter() {
         if matches!(access(event, &targets), Some(Access::Initializing)) {

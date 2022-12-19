@@ -1,6 +1,6 @@
 use std::{
     io::{Read, Write},
-    net::{TcpListener, TcpStream, IpAddr},
+    net::{IpAddr, TcpListener, TcpStream},
     ops::DerefMut,
 };
 

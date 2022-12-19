@@ -1,7 +1,8 @@
 use arrayvec::ArrayVec;
 use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
-    prelude::*, render::render_resource::FilterMode,
+    prelude::*,
+    render::render_resource::FilterMode,
 };
 use gridly::prelude::*;
 use serde::{Deserialize, Serialize};

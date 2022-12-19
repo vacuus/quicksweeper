@@ -84,7 +84,10 @@ pub enum ClientTile {
     /// neighboring this tile which have mines (`num_neighbors`), which can also be zero, in which
     /// case a filled tile without numbers will be shown. If this tile is not owned by the client,
     /// then this field will always be zero.
-    Owned { player: Entity, num_neighbors: u8 },
+    Owned {
+        player: Entity,
+        num_neighbors: u8,
+    },
     /// There is a mine on this tile, and it has been revealed
     HardMine,
     Flag,

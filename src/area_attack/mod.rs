@@ -16,7 +16,12 @@ use crate::{
     server::{GameDescriptor, GameMarker, LocalEvent},
 };
 
-use self::{protocol::AreaAttackRequest, puppet::PuppetTable, states::AreaAttackState, components::{SendTile, RevealTile}};
+use self::{
+    components::{RevealTile, SendTile},
+    protocol::AreaAttackRequest,
+    puppet::PuppetTable,
+    states::AreaAttackState,
+};
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {

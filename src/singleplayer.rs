@@ -1,5 +1,5 @@
 use crate::{
-    common::{InitCheckCell},
+    common::InitCheckCell,
     cursor::*,
     load::{Field, Textures},
 };
@@ -55,11 +55,7 @@ fn create_entities(
         .get(template_handles.take_one(&mut rand::thread_rng()))
         .unwrap();
     let minefield = Minefield::new_shaped(
-        |&pos| {
-            commands
-                .spawn(MineCell::new_empty(pos, &textures))
-                .id()
-        },
+        |&pos| commands.spawn(MineCell::new_empty(pos, &textures)).id(),
         field_template,
     );
 

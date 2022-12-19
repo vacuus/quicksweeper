@@ -20,10 +20,7 @@ pub struct Field {
     pub handles: Vec<Handle<FieldShape>>,
 }
 
-fn set_texture_mode(
-    image_assets: &mut ResMut<Assets<Image>>,
-    handle: &Handle<Image>,
-) {
+fn set_texture_mode(image_assets: &mut ResMut<Assets<Image>>, handle: &Handle<Image>) {
     image_assets.get_mut(handle).unwrap().sampler_descriptor = ImageSampler::nearest();
 }
 
@@ -32,7 +29,10 @@ fn set_texture_modes(
     mut image: ResMut<Assets<Image>>,
     textures: Res<Textures>,
 ) {
-    set_texture_mode(&mut image, &texture_atlas.get(&textures.mines).unwrap().texture);
+    set_texture_mode(
+        &mut image,
+        &texture_atlas.get(&textures.mines).unwrap().texture,
+    );
     set_texture_mode(&mut image, &textures.cursor);
 }
 
