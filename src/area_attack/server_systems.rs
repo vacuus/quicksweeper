@@ -232,7 +232,7 @@ pub fn send_tiles(
 
 pub fn broadcast_positions(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut connections: Query<&mut Connection>,
+    mut connections: Query<(&mut Position, &mut Connection)>,
     q_game: Query<&Children, With<AreaAttackServer>>,
 ) {
     for LocalEvent { player, game, data } in requests.iter() {
@@ -242,7 +242,8 @@ pub fn broadcast_positions(
                 .iter()
                 .filter(|&&e| *player != e)
                 .for_each(|&conn_id| {
-                    let mut sock = connections.get_mut(conn_id).unwrap();
+                    let (mut player_pos, mut sock) = connections.get_mut(conn_id).unwrap();
+                    *player_pos = *pos;
                     sock.send_message(AreaAttackUpdate::Reposition {
                         id: *player,
                         position: *pos,
@@ -319,7 +320,7 @@ pub fn update_stage1_tile(
 pub fn prepare_player(
     mut commands: Commands,
     mut ev: EventReader<ConnectionSwitch>,
-    mut games: Query<(&Children, &FieldShape, &mut Access), With<AreaAttackServer>>,
+    mut games: Query<(&Children, &Minefield, &FieldShape, &mut Access), With<AreaAttackServer>>,
     players: Query<(&ConnectionInfo, &mut PlayerColor, &Position)>,
     partial_connection_info: Query<&ConnectionInfo>,
     mut connections: Query<&mut Connection>,
@@ -329,7 +330,7 @@ pub fn prepare_player(
             // TODO add ChildMoved variant as well
             continue;
         };
-        let Ok((peers, shape, mut access)) = games.get_mut(*game) else { continue; };
+        let Ok((peers, minefield, shape, mut access)) = games.get_mut(*game) else { continue; };
         let Ok(mut this_connection) = connections.get_mut(*player) else {continue; };
 
         let peers = peers.iter().filter(|e| **e != *player).collect_vec();
@@ -362,7 +363,9 @@ pub fn prepare_player(
         let assigned_color = PlayerColor::iter()
             .find(|co| !taken_colors.contains(co))
             .unwrap();
-        let assigned_position = shape.center().unwrap_or(Position { x: 0, y: 0 });
+        let assigned_position = shape
+            .center()
+            .unwrap_or_else(|| minefield.iter_positions().next().unwrap());
 
         let this_username = &partial_connection_info.get(*player).unwrap().username;
         // send this player's properties to peers
@@ -388,6 +391,7 @@ pub fn prepare_player(
         });
         let _ = this_connection.send_message(AreaAttackUpdate::SelfChange {
             color: assigned_color,
+            position: assigned_position,
         });
     }
 }

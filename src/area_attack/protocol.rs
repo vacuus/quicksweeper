@@ -27,6 +27,7 @@ pub enum AreaAttackUpdate {
     /// Will be sent to the player if the game autosets its properties (e.g. on initial join)
     SelfChange {
         color: PlayerColor,
+        position: Position,
     },
     TileChanged {
         position: Position,

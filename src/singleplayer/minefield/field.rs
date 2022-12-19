@@ -71,6 +71,10 @@ impl Minefield {
             .choose_multiple(rng, num_entries - self.remaining_blank)
     }
 
+    pub fn iter_positions(&self) -> impl Iterator<Item = Position> + '_ {
+        self.occupied_entries().map(|(&loc, _)| loc.into())
+    }
+
     pub fn iter_neighbors_enumerated(
         &self,
         pos: Position,

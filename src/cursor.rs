@@ -88,7 +88,8 @@ pub fn pointer_cursor(
 ) {
     let Ok((cursor, mut position)) = cursors.get_single_mut() else { return; };
     let Ok(minefield) = minefields.get(cursor.owning_minefield) else { return; };
-    let Ok(root_tile) = tiles.get(minefield[&Position::ZERO]) else { return; };
+    let open_position = minefield.iter_positions().next().unwrap();
+    let Ok(root_tile) = tiles.get(minefield[&open_position]) else { return; };
 
     // code borrowed from bevy cheatbook
     // get the camera info and transform
@@ -115,8 +116,9 @@ pub fn pointer_cursor(
         // reduce it to a 2D value
         let world_pos = world_pos.truncate();
 
-        // get the position of one corner of the board
-        let field_transform = root_tile.translation.truncate();
+        // get the position relative to one tile on the board
+        let field_transform =
+            root_tile.translation.truncate() - open_position.absolute(CELL_SIZE, CELL_SIZE);
         let offset = world_pos - field_transform + Vec2::splat(CELL_SIZE) / 2.;
         let pos = Position {
             x: (offset.x / CELL_SIZE).floor() as isize,

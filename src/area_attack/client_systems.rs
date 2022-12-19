@@ -96,7 +96,7 @@ pub fn request_reveal(
                 match *tile {
                     ClientTile::Unknown => *tile = ClientTile::Flag,
                     ClientTile::Flag => *tile = ClientTile::Unknown,
-                    _ => () // do nothing, since these tiles are nonsensical to flag
+                    _ => (), // do nothing, since these tiles are nonsensical to flag
                 }
             }
         }
@@ -115,6 +115,7 @@ pub fn listen_net(
     mut puppet_map: ResMut<PuppetTable>,
     mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
     mut field_id: Local<Option<Entity>>,
+    mut camera: Query<&mut Transform, With<Camera2d>>,
 ) {
     match sock.recv_message() {
         Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
@@ -180,14 +181,16 @@ pub fn listen_net(
         Some(Ok(AreaAttackUpdate::Reposition { id, position })) => {
             *(puppets.get_mut(puppet_map[&id]).unwrap().1) = position;
         }
-        Some(Ok(AreaAttackUpdate::SelfChange { color })) => {
+        Some(Ok(AreaAttackUpdate::SelfChange { color, position })) => {
+            let translation = position.absolute(CELL_SIZE, CELL_SIZE).extend(3.0);
+            camera.single_mut().translation = translation;
             commands.spawn(CursorBundle {
                 cursor: Cursor::new(color.into(), field_id.unwrap()),
-                position: Position::ZERO, // TODO: Randomize position
+                position, 
                 texture: SpriteBundle {
                     texture: misc_textures.cursor.clone(),
                     transform: Transform {
-                        translation: Position::ZERO.absolute(CELL_SIZE, CELL_SIZE).extend(3.0),
+                        translation,
                         ..default()
                     },
                     ..default()
@@ -240,7 +243,7 @@ pub fn draw_tiles(
 }
 
 pub fn send_position(
-    pos: Query<&Position, (With<Cursor>, Changed<Position>)>,
+    pos: Query<&Position, (With<Cursor>, Or<(Added<Position>, Changed<Position>)>)>,
     mut sock: ResMut<ClientSocket>,
 ) {
     for pos in pos.iter() {
