@@ -1,11 +1,14 @@
 use arrayvec::ArrayVec;
-use bevy::prelude::*;
+use bevy::{
+    input::mouse::{MouseScrollUnit, MouseWheel},
+    prelude::*,
+};
 use gridly::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use std::{
     hash::Hash,
-    ops::{Add, Div, Sub, Deref},
+    ops::{Add, Deref, Div, Sub},
 };
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -151,19 +154,35 @@ fn init_cameras(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
+fn zoom_camera(
+    mut camera: Query<&mut OrthographicProjection, With<Camera2d>>,
+    mut scroll: EventReader<MouseWheel>,
+    mut scale: Local<f32>,
+) {
+    for scroll in scroll.iter() {
+        *scale = (*scale + scroll.y).clamp(-30f32, 6f32);
+        if let Ok(mut proj) = camera.get_single_mut() {
+            proj.scale = 2f32.powf(*scale);
+        }
+    }
+}
+
 pub trait Contains<T> {
     fn contains(&self, _: &T) -> bool;
 }
 
-impl <T: PartialEq> Contains<T> for [T] {
+impl<T: PartialEq> Contains<T> for [T] {
     fn contains(&self, t: &T) -> bool {
         self.contains(t)
     }
-} 
+}
 
-impl <U: PartialEq, T> Contains<U> for T where T: Deref<Target = [U]> {
+impl<U: PartialEq, T> Contains<U> for T
+where
+    T: Deref<Target = [U]>,
+{
     fn contains(&self, t: &U) -> bool {
-        <[U]>::contains(self, t) 
+        <[U]>::contains(self, t)
     }
 }
 
@@ -174,6 +193,7 @@ impl Plugin for QuicksweeperTypes {
         app.init_resource::<Events<CheckCell>>()
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>()
+            .add_system(zoom_camera)
             .add_startup_system(init_cameras);
     }
 }

@@ -168,7 +168,7 @@ pub fn reveal_tiles(
                     })
                 }
                 ServerTile::Mine => {
-                    *tile = ServerTile::HardMine; // TODO Freeze player
+                    *tile = ServerTile::HardMine;
                     **frozen = Some(time.elapsed());
                     send.send(SendTile {
                         tile: ServerTile::HardMine,
