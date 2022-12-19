@@ -15,8 +15,6 @@ pub struct Textures {
     pub mines: Handle<TextureAtlas>,
     #[asset(path = "cursor.png")]
     pub cursor: Handle<Image>,
-    #[asset(path = "FiraSans-Bold.ttf")]
-    pub font: Handle<Font>,
 }
 
 #[derive(AssetCollection, Resource)]
