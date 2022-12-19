@@ -98,7 +98,6 @@ pub fn receive_connections(
         match tungstenite::accept(client) {
             Ok(socket) => {
                 commands.spawn((Connection(socket),));
-                println!("Connection accepted!")
             }
             Err(HandshakeError::Interrupted(handshake)) => conn_queue.push(handshake),
             Err(msg) => eprintln!("Connection failed for reason: {msg:?}"),
@@ -110,7 +109,6 @@ pub fn receive_connections(
         .filter_map(|handshake| match handshake.handshake() {
             Ok(socket) => {
                 commands.spawn((Connection(socket),));
-                println!("Connection accepted!");
                 None
             }
             Err(HandshakeError::Interrupted(handshake)) => Some(handshake),
@@ -133,7 +131,6 @@ pub fn upgrade_connections(
             match result {
                 Ok(Greeting { username }) => {
                     println!("Connection upgraded! It is now able to become a player");
-                    println!("received name {username}");
                     commands.entity(id).insert((ConnectionInfo { username },));
                 }
                 Err(e) => {

@@ -16,12 +16,6 @@ pub struct ServerPlugin {
     pub address_name: Option<String>,
 }
 
-fn test_added(q: Query<&GameMarker, Added<GameMarker>>) {
-    for item in q.iter() {
-        println!("added: {item:?}")
-    }
-}
-
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         let address = self
@@ -34,7 +28,6 @@ impl Plugin for ServerPlugin {
             .add_event::<IngameEvent>()
             .add_event::<ConnectionSwitch>()
             .add_system_to_stage(CoreStage::PostUpdate, delay_hierarchy_events)
-            .add_system(test_added)
             .add_system(receive_connections)
             .add_system(upgrade_connections)
             .add_system(game_messages)

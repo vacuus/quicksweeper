@@ -194,7 +194,6 @@ pub fn check_cell(
     ) in cursor.iter()
     {
         if kb.just_pressed(check_key) {
-            println!("checking cell {position:?}");
             check.send(CheckCell(CursorPosition(position, owning_minefield)));
         } else if kb.just_pressed(flag_key) {
             flag.send(FlagCell(CursorPosition(position, owning_minefield)));

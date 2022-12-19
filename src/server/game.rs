@@ -156,7 +156,6 @@ pub fn delay_hierarchy_events(
 
     for event in hierarchy_events.iter() {
         if matches!(access(event, &targets), Some(Access::Initializing)) {
-            println!("Delaying event {event:?}");
             store.push(event.clone());
         } else if access(event, &targets).is_some() {
             // That is, the entity is a game at all
