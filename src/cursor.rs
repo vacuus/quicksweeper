@@ -1,6 +1,6 @@
 use crate::area_attack::puppet::PuppetCursor;
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
-use crate::singleplayer::minefield::specific::CELL_SIZE;
+use crate::singleplayer::minefield::specific::TILE_SIZE;
 use crate::singleplayer::minefield::Minefield;
 use bevy::{prelude::*, render::camera::Camera};
 
@@ -118,11 +118,11 @@ pub fn pointer_cursor(
 
         // get the position relative to one tile on the board
         let field_transform =
-            root_tile.translation.truncate() - open_position.absolute(CELL_SIZE, CELL_SIZE);
-        let offset = world_pos - field_transform + Vec2::splat(CELL_SIZE) / 2.;
+            root_tile.translation.truncate() - open_position.absolute(TILE_SIZE, TILE_SIZE);
+        let offset = world_pos - field_transform + Vec2::splat(TILE_SIZE) / 2.;
         let pos = Position {
-            x: (offset.x / CELL_SIZE).floor() as isize,
-            y: (offset.y / CELL_SIZE).floor() as isize,
+            x: (offset.x / TILE_SIZE).floor() as isize,
+            y: (offset.y / TILE_SIZE).floor() as isize,
         };
 
         if minefield.is_contained(&pos) && *position != pos {
@@ -139,7 +139,7 @@ pub fn translate_cursor(
         let cursor_translation = &mut cursor_transform.translation;
 
         // TODO: Use the offset of minefield to calculate `target_translation`
-        let target_translation = position.absolute(CELL_SIZE, CELL_SIZE);
+        let target_translation = position.absolute(TILE_SIZE, TILE_SIZE);
         let cursor_diff = target_translation - cursor_translation.truncate();
 
         // translate cursor

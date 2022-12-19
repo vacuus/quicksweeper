@@ -5,7 +5,7 @@ use rand::{seq::SliceRandom, Rng};
 
 use crate::{
     main_menu::MenuState,
-    singleplayer::minefield::{specific::CELL_SIZE, FieldShape},
+    singleplayer::minefield::{specific::TILE_SIZE, FieldShape},
 };
 
 #[derive(AssetCollection, Resource)]
@@ -37,7 +37,7 @@ impl FromWorld for MineTextures {
     fn from_world(world: &mut World) -> Self {
         let atlas = TextureAtlas::from_grid(
             world.resource::<Textures>().mines.clone(),
-            Vec2::splat(CELL_SIZE),
+            Vec2::splat(TILE_SIZE),
             4,
             3,
             None,

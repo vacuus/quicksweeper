@@ -9,7 +9,7 @@ use crate::{
     load::{MineTextures, Textures},
     main_menu::standard_window,
     server::{ClientMessage, ClientSocket, MessageSocket},
-    singleplayer::minefield::{specific::CELL_SIZE, Minefield},
+    singleplayer::minefield::{specific::TILE_SIZE, Minefield},
 };
 
 use super::{
@@ -139,7 +139,7 @@ pub fn listen_net(
                             sprite: tile_textures.empty().tap_mut(|b| {
                                 b.transform = Transform {
                                     translation: position
-                                        .absolute(CELL_SIZE, CELL_SIZE)
+                                        .absolute(TILE_SIZE, TILE_SIZE)
                                         .extend(3.0),
                                     ..default()
                                 };
@@ -182,7 +182,7 @@ pub fn listen_net(
             *(puppets.get_mut(puppet_map[&id]).unwrap().1) = position;
         }
         Some(Ok(AreaAttackUpdate::SelfChange { color, position })) => {
-            let translation = position.absolute(CELL_SIZE, CELL_SIZE).extend(3.0);
+            let translation = position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0);
             camera.single_mut().translation = translation;
             commands.spawn(CursorBundle {
                 cursor: Cursor::new(color.into(), field_id.unwrap()),

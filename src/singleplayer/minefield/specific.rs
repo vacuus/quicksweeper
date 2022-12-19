@@ -6,7 +6,7 @@ use tap::Tap;
 /// Size of a single cell containing or not containing a mine. For now the display size of the mine
 /// will be kept the same as the actual size of the sprite, but of course this will be subject to
 /// change.
-pub const CELL_SIZE: f32 = 32.0;
+pub const TILE_SIZE: f32 = 32.0;
 
 #[derive(Clone, Bundle)]
 pub struct MineCell {
@@ -20,7 +20,7 @@ impl MineCell {
         MineCell {
             sprite: textures.empty().tap_mut(|b| {
                 b.transform = Transform {
-                    translation: Vec3::new((x as f32) * CELL_SIZE, (y as f32) * CELL_SIZE, 3.0),
+                    translation: Vec3::new((x as f32) * TILE_SIZE, (y as f32) * TILE_SIZE, 3.0),
                     ..Default::default()
                 };
             }),

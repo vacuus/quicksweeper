@@ -10,7 +10,7 @@ use iyes_loopless::{
 };
 use minefield::{systems::*, FieldShape, GameOutcome, Minefield};
 
-use self::minefield::specific::{MineCell, CELL_SIZE};
+use self::minefield::specific::{MineCell, TILE_SIZE};
 
 mod menu;
 pub mod minefield;
@@ -72,7 +72,7 @@ fn create_entities(
     let minefield_entity = commands.spawn(()).insert(minefield).id();
 
     // move camera to cursor
-    camera.single_mut().translation = init_position.absolute(CELL_SIZE, CELL_SIZE).extend(100.0);
+    camera.single_mut().translation = init_position.absolute(TILE_SIZE, TILE_SIZE).extend(100.0);
 
     // create cursor
     commands.spawn(CursorBundle {
@@ -81,7 +81,7 @@ fn create_entities(
         texture: SpriteBundle {
             texture: textures.cursor.clone(),
             transform: Transform {
-                translation: init_position.absolute(CELL_SIZE, CELL_SIZE).extend(3.0),
+                translation: init_position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0),
                 ..default()
             },
             ..default()
