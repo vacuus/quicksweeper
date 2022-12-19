@@ -14,8 +14,8 @@ use crate::{
 
 use super::{
     components::{
-        AreaAttackBundle, ClientTile, InitialSelections, PlayerBundle, PlayerColor, RevealTile,
-        SendTile, ServerTile,
+        AreaAttackBundle, ClientTile, Frozen, InitialSelections, PlayerBundle, PlayerColor,
+        RevealTile, SendTile, ServerTile,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttackState,
@@ -115,11 +115,14 @@ pub fn selection_transition(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
     games: Query<&Minefield>,
     mut tiles: Query<&mut ServerTile>,
     mut send: EventWriter<SendTile>,
+    time: Res<Time>,
+    mut freeze: Query<&mut Frozen>,
     // swtich between request buffers for each iteration
     mut request_buffer: Local<Vec<RevealTile>>,
     mut request_buffer2: Local<Vec<RevealTile>>,
@@ -134,6 +137,10 @@ pub fn reveal_tiles(
     } in request_buffer2.drain(..)
     {
         if let Ok(field) = games.get(game) {
+            let mut frozen = freeze.get_mut(player).unwrap();
+            if frozen.is_some() {
+                continue;
+            }
             let mut tile = tiles.get_mut(field[&position]).unwrap();
             match *tile {
                 ServerTile::Empty => {
@@ -162,6 +169,7 @@ pub fn reveal_tiles(
                 }
                 ServerTile::Mine => {
                     *tile = ServerTile::HardMine; // TODO Freeze player
+                    **frozen = Some(time.elapsed());
                     send.send(SendTile {
                         tile: ServerTile::HardMine,
                         position,
@@ -171,6 +179,17 @@ pub fn reveal_tiles(
                 ServerTile::HardMine | ServerTile::Owned { .. } => {
                     // do nothing
                 }
+            }
+        }
+    }
+}
+
+pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
+    let instant = time.elapsed();
+    for mut f in freeze.iter_mut() {
+        if let Some(start) = **f {
+            if (instant - start).as_secs() > 5 {
+                **f = None;
             }
         }
     }
@@ -388,6 +407,7 @@ pub fn prepare_player(
         commands.entity(*player).insert(PlayerBundle {
             color: assigned_color,
             position: assigned_position,
+            frozen: Frozen::default(),
         });
         let _ = this_connection.send_message(AreaAttackUpdate::SelfChange {
             color: assigned_color,
