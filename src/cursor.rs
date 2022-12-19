@@ -2,6 +2,7 @@ use crate::area_attack::puppet::PuppetCursor;
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
 use crate::singleplayer::minefield::specific::TILE_SIZE;
 use crate::singleplayer::minefield::Minefield;
+use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, render::camera::Camera};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -232,12 +233,26 @@ pub fn init_check_cell(
     }
 }
 
+fn zoom_camera(
+    mut camera: Query<&mut OrthographicProjection, With<Camera2d>>,
+    mut scroll: EventReader<MouseWheel>,
+    mut scale: Local<f32>,
+) {
+    for scroll in scroll.iter() {
+        *scale = (*scale + scroll.y).clamp(-3f32, 3f32);
+        if let Ok(mut proj) = camera.get_single_mut() {
+            proj.scale = 2f32.powf(*scale);
+        }
+    }
+}
+
 pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(track_cursor)
             .add_system(translate_cursor)
+            .add_system(zoom_camera)
             .add_system(pointer_cursor);
     }
 }

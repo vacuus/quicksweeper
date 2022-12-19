@@ -1,9 +1,5 @@
 use arrayvec::ArrayVec;
-use bevy::{
-    input::mouse::{MouseScrollUnit, MouseWheel},
-    prelude::*,
-    render::render_resource::FilterMode,
-};
+use bevy::prelude::*;
 use gridly::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -155,19 +151,6 @@ fn init_cameras(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn zoom_camera(
-    mut camera: Query<&mut OrthographicProjection, With<Camera2d>>,
-    mut scroll: EventReader<MouseWheel>,
-    mut scale: Local<f32>,
-) {
-    for scroll in scroll.iter() {
-        *scale = (*scale + scroll.y).clamp(-3f32, 3f32);
-        if let Ok(mut proj) = camera.get_single_mut() {
-            proj.scale = 2f32.powf(*scale);
-        }
-    }
-}
-
 pub trait Contains<T> {
     fn contains(&self, _: &T) -> bool;
 }
@@ -194,7 +177,6 @@ impl Plugin for QuicksweeperTypes {
         app.init_resource::<Events<CheckCell>>()
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>()
-            .add_system(zoom_camera)
             .add_startup_system(init_cameras);
     }
 }
