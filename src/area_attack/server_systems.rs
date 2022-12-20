@@ -70,7 +70,7 @@ pub fn net_events(
 
 pub fn selection_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<(&mut AreaAttackState, &InitialSelections, &Minefield)>,
+    mut games: Query<(&mut AreaAttackState, &InitialSelections, &Minefield, &mut Access)>,
     mut tiles: Query<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
@@ -80,7 +80,7 @@ pub fn selection_transition(
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
             continue;
         }
-        if let Ok((mut state, selections, field)) = games.get_mut(ev.game) {
+        if let Ok((mut state, selections, field, mut access)) = games.get_mut(ev.game) {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
                 *state = AreaAttackState::Stage1;
 
@@ -109,6 +109,10 @@ pub fn selection_transition(
                 connections.for_each_mut(|mut conn| {
                     conn.send_message(AreaAttackUpdate::Transition(AreaAttackState::Stage1));
                 });
+
+                // close joins
+                *access = Access::Ingame;
+
                 println!("Transitioned game to stage 1")
             }
         }
