@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use serde::{
     ser::{
         SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant, SerializeTuple,
