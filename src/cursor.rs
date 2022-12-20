@@ -237,10 +237,11 @@ fn zoom_camera(
     mut scroll: EventReader<MouseWheel>,
     mut scale: Local<f32>,
 ) {
+    const PLACE: f32 = 10.;
     for scroll in scroll.iter() {
         *scale = (*scale + scroll.y).clamp(-3f32, 3f32);
         if let Ok(mut proj) = camera.get_single_mut() {
-            proj.scale = 2f32.powf(*scale);
+            proj.scale = (1.3f32.powf(*scale) * PLACE).ceil() / PLACE;
         }
     }
 }
