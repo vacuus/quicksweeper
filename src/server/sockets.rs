@@ -33,9 +33,8 @@ pub struct ClientSocket(pub WebSocket<TcpStream>);
 pub struct OpenPort(TcpListener);
 
 impl OpenPort {
-    pub fn generate(addr: &IpAddr) -> Self {
-        let ip = local_ip_address::local_ip().unwrap();
-        let listener = TcpListener::bind((ip, 0)).unwrap();
+    pub fn generate(addr: IpAddr) -> Self {
+        let listener = TcpListener::bind((addr, 0)).unwrap();
         listener
             .set_nonblocking(true)
             .expect("could not start server in nonblocking mode");
