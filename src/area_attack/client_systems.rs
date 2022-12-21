@@ -165,6 +165,17 @@ pub fn listen_net(
                     *pos = position;
                 })
                 .or_insert_with(|| {
+                    let name = commands
+                        .spawn(TextBundle::from_section(
+                            username,
+                            TextStyle {
+                                font: textures.roboto.clone(),
+                                font_size: 10.0,
+                                color: color.into(),
+                            },
+                        ))
+                        .id();
+
                     commands
                         .spawn(PuppetCursorBundle {
                             cursor: PuppetCursor(color.into()),
@@ -174,6 +185,7 @@ pub fn listen_net(
                                 ..default()
                             },
                         })
+                        .add_child(name)
                         .id()
                 });
         }
