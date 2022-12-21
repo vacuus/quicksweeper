@@ -1,4 +1,7 @@
-use std::net::{IpAddr, TcpListener, TcpStream};
+use std::{
+    collections::VecDeque,
+    net::{IpAddr, TcpListener, TcpStream},
+};
 
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -36,18 +39,25 @@ impl OpenPort {
     }
 }
 
-#[derive(Resource, Component, Deref, DerefMut)]
-pub struct Connection(pub WebSocket<TcpStream>);
+#[derive(Resource, Component)]
+pub struct Connection {
+    socket: WebSocket<TcpStream>,
+    repeat_buffer: VecDeque<Vec<u8>>, // TODO use buffer in continuous sending system
+}
 
-// pub trait MessageSocket<S>: DerefMut<Target = WebSocket<S>>
-// where
-//     S: Read + Write,
 impl Connection {
+    pub fn new(socket: WebSocket<TcpStream>) -> Self {
+        Self {
+            socket,
+            repeat_buffer: default(),
+        }
+    }
+
     pub fn recv_message<D>(&mut self) -> Option<Result<D, MessageError>>
     where
         D: DeserializeOwned,
     {
-        let msg = match self.read_message() {
+        let msg = match self.socket.read_message() {
             Ok(msg) => Some(msg),
             Err(tungstenite::Error::Io(_)) => None,
             Err(e) => return Some(Err(e.into())),
@@ -61,17 +71,18 @@ impl Connection {
             _ => Some(Err(MessageError::Encoding)),
         }
     }
-    pub fn send_message(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
-        Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
+
+    pub fn repeat_send(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
+        self.repeat_buffer.push_back(rmp_serde::to_vec(&msg)?);
+        Ok(())
+    }
+
+    pub fn try_send(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
+        self.socket
+            .write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?;
+        Ok(())
     }
 }
-
-// impl<T, S> MessageSocket<S> for T
-// where
-//     T: DerefMut<Target = WebSocket<S>>,
-//     S: Read + Write,
-// {
-// }
 
 #[derive(Component)]
 pub struct ConnectionInfo {
@@ -89,7 +100,7 @@ pub fn receive_connections(
         );
         match tungstenite::accept(client) {
             Ok(socket) => {
-                commands.spawn((Connection(socket),));
+                commands.spawn((Connection::new(socket),));
             }
             Err(HandshakeError::Interrupted(handshake)) => conn_queue.push(handshake),
             Err(msg) => eprintln!("Connection failed for reason: {msg:?}"),
@@ -100,7 +111,7 @@ pub fn receive_connections(
         .drain(..)
         .filter_map(|handshake| match handshake.handshake() {
             Ok(socket) => {
-                commands.spawn((Connection(socket),));
+                commands.spawn((Connection::new(socket),));
                 None
             }
             Err(HandshakeError::Interrupted(handshake)) => Some(handshake),

@@ -113,16 +113,16 @@ fn server_select_menu(
             let maybe_handshake = std::mem::replace(&mut fields.trying_connection, None).unwrap();
             match maybe_handshake {
                 Ok((socket, _)) => {
-                    let mut socket = Connection(socket);
+                    let mut socket = Connection::new(socket);
                     socket
-                        .send_message(Greeting {
+                        .try_send(Greeting {
                             username: fields.username.clone(),
                         })
                         .map_err(|_| {
                             fields.remote_select_err = "Failure in initializing connection";
                         })?;
 
-                    socket.send_message(ClientMessage::Games).map_err(|_| {
+                    socket.try_send(ClientMessage::Games).map_err(|_| {
                         fields.remote_select_err = "Could not retrieve games on the server"
                     })?;
 
@@ -246,16 +246,16 @@ fn game_select_menu(
     if response.go_back.clicked() {
         commands.insert_resource(NextState(MenuState::MainMenu));
     } else if response.reload.clicked() {
-        let _ = socket.send_message(ClientMessage::Games); // TODO: Report error to user
+        let _ = socket.try_send(ClientMessage::Games); // TODO: Report error to user
     } else if let Some(mode) = response.create {
-        let _ = socket.send_message(ClientMessage::Create {
+        let _ = socket.try_send(ClientMessage::Create {
             game: mode,
             args: Vec::new(),
         });
         start_game.send(ToGame(mode));
         commands.insert_resource(NextState(MenuState::InGame));
     } else if let Some((game, marker)) = response.join_game {
-        let _ = socket.send_message(ClientMessage::Join { game });
+        let _ = socket.try_send(ClientMessage::Join { game });
         start_game.send(ToGame(marker));
         commands.insert_resource(NextState(MenuState::InGame));
     }

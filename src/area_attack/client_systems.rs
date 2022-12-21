@@ -23,7 +23,7 @@ pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<Connection>>
     standard_window(&mut ctx, |ui| {
         ui.vertical_centered(|ui| {
             if ui.button("Begin game").clicked() {
-                let _ = sock.unwrap().send_message(ClientMessage::Ingame {
+                let _ = sock.unwrap().try_send(ClientMessage::Ingame {
                     data: rmp_serde::to_vec(&AreaAttackRequest::StartGame).unwrap(),
                 });
             };
@@ -52,7 +52,7 @@ pub fn request_reveal(
         if kb.just_pressed(check_key) {
             match tiles.get(field.single()[&position]).unwrap() {
                 ClientTile::Unknown => {
-                    sock.send_message(ClientMessage::Ingame {
+                    sock.try_send(ClientMessage::Ingame {
                         data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
                     });
                 }
@@ -72,7 +72,7 @@ pub fn request_reveal(
                         if marked_count == *num_neighbors {
                             for (position, tile_id) in field.iter_neighbors_enumerated(position) {
                                 if !matches!(tiles.get(tile_id).unwrap(), ClientTile::Flag) {
-                                    sock.send_message(ClientMessage::Ingame {
+                                    sock.try_send(ClientMessage::Ingame {
                                         data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(
                                             position,
                                         ))
@@ -269,7 +269,7 @@ pub fn send_position(
     mut sock: ResMut<Connection>,
 ) {
     for pos in pos.iter() {
-        sock.send_message(ClientMessage::Ingame {
+        sock.try_send(ClientMessage::Ingame {
             data: rmp_serde::to_vec(&AreaAttackRequest::Position(*pos)).unwrap(),
         });
     }

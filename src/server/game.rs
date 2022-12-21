@@ -63,7 +63,7 @@ pub fn game_messages(
                 commands.entity(**game).remove_children(&[player]);
             }
             Some(_) => {
-                let _ = socket.send_message(ServerMessage::Malformed); // TODO report this later
+                let _ = socket.try_send(ServerMessage::Malformed); // TODO report this later
             }
             None => (),
         }
@@ -97,10 +97,10 @@ pub fn server_messages(
                         .collect(),
                 );
 
-                let _ = socket.send_message(msg);
+                let _ = socket.try_send(msg);
             }
             Some(Ok(ClientMessage::GameTypes)) => {
-                let _ = socket.send_message(ServerMessage::AvailableGames(
+                let _ = socket.try_send(ServerMessage::AvailableGames(
                     registry.keys().copied().collect(),
                 ));
             }
@@ -117,11 +117,11 @@ pub fn server_messages(
                 if let Some(mut ent) = commands.get_entity(game) {
                     ent.add_child(player);
                 } else {
-                    let _ = socket.send_message(ServerMessage::Malformed);
+                    let _ = socket.try_send(ServerMessage::Malformed);
                 }
             }
             Some(_) => {
-                let _ = socket.send_message(ServerMessage::Malformed); // TODO report this later
+                let _ = socket.try_send(ServerMessage::Malformed); // TODO report this later
             }
             _ => (),
         };
