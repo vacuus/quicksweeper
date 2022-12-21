@@ -166,14 +166,25 @@ pub fn listen_net(
                 })
                 .or_insert_with(|| {
                     let name = commands
-                        .spawn(TextBundle::from_section(
-                            username,
-                            TextStyle {
-                                font: textures.roboto.clone(),
-                                font_size: 10.0,
-                                color: color.into(),
+                        .spawn(Text2dBundle {
+                            text: Text::from_section(
+                                username,
+                                TextStyle {
+                                    font: textures.roboto.clone(),
+                                    font_size: 10.0,
+                                    color: color.into(),
+                                },
+                            ),
+                            transform: Transform {
+                                translation: Vec3 {
+                                    x: 10.0,
+                                    y: 10.0,
+                                    z: 0.0,
+                                },
+                                ..default()
                             },
-                        ))
+                            ..default()
+                        })
                         .id();
 
                     commands
