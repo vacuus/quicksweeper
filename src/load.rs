@@ -1,9 +1,9 @@
 use bevy::{prelude::*, render::texture::ImageSampler};
 use bevy_asset_loader::prelude::*;
-use iyes_loopless::prelude::AppLooplessStateExt;
+use iyes_loopless::prelude::{AppLooplessStateExt, IntoConditionalSystem};
 use rand::{seq::SliceRandom, Rng};
 
-use crate::{main_menu::MenuState, singleplayer::minefield::FieldShape};
+use crate::{cursor::ScaleFactor, main_menu::MenuState, singleplayer::minefield::FieldShape};
 
 #[derive(AssetCollection, Resource)]
 pub struct Textures {
@@ -22,20 +22,34 @@ pub struct Field {
     pub handles: Vec<Handle<FieldShape>>,
 }
 
-fn set_texture_mode(image_assets: &mut ResMut<Assets<Image>>, handle: &Handle<Image>) {
-    image_assets.get_mut(handle).unwrap().sampler_descriptor = ImageSampler::nearest();
+fn set_texture_mode(
+    image_assets: &mut ResMut<Assets<Image>>,
+    handle: &Handle<Image>,
+    mode: ImageSampler,
+) {
+    image_assets.get_mut(handle).unwrap().sampler_descriptor = mode;
 }
 
 fn set_texture_modes(
     texture_atlas: Res<Assets<TextureAtlas>>,
     mut image: ResMut<Assets<Image>>,
     textures: Res<Textures>,
+    scale_factor: Res<ScaleFactor>,
 ) {
-    set_texture_mode(
-        &mut image,
-        &texture_atlas.get(&textures.mines).unwrap().texture,
-    );
-    set_texture_mode(&mut image, &textures.cursor);
+    let mode = if **scale_factor > 1. {
+        ImageSampler::linear()
+    } else {
+        ImageSampler::nearest()
+    };
+
+    if scale_factor.is_added() || scale_factor.is_changed() {
+        set_texture_mode(
+            &mut image,
+            &texture_atlas.get(&textures.mines).unwrap().texture,
+            mode.clone(),
+        );
+        set_texture_mode(&mut image, &textures.cursor, mode);
+    }
 }
 
 impl Field {
@@ -64,7 +78,7 @@ impl Plugin for ClientLoad {
                 .with_collection::<Textures>()
                 .with_collection::<Field>(),
         )
-        .add_exit_system(MenuState::Loading, set_texture_modes);
+        .add_system(set_texture_modes.run_not_in_state(MenuState::Loading));
     }
 }
 
