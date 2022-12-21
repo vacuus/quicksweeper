@@ -7,7 +7,6 @@ use crate::{
     load::Field,
     server::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent, LocalEvent,
-        MessageSocket,
     },
     singleplayer::minefield::{FieldShape, Minefield},
 };
@@ -70,7 +69,12 @@ pub fn net_events(
 
 pub fn selection_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<(&mut AreaAttackState, &InitialSelections, &Minefield, &mut Access)>,
+    mut games: Query<(
+        &mut AreaAttackState,
+        &InitialSelections,
+        &Minefield,
+        &mut Access,
+    )>,
     mut tiles: Query<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,

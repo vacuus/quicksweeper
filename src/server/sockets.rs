@@ -1,8 +1,4 @@
-use std::{
-    io::{Read, Write},
-    net::{IpAddr, TcpListener, TcpStream},
-    ops::DerefMut,
-};
+use std::net::{IpAddr, TcpListener, TcpStream};
 
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -26,9 +22,6 @@ pub enum MessageError {
     Encoding,
 }
 
-#[derive(Resource, Deref, DerefMut)]
-pub struct ClientSocket(pub WebSocket<TcpStream>);
-
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
 
@@ -43,14 +36,14 @@ impl OpenPort {
     }
 }
 
-#[derive(Component, Deref, DerefMut)]
-pub struct Connection(WebSocket<TcpStream>);
+#[derive(Resource, Component, Deref, DerefMut)]
+pub struct Connection(pub WebSocket<TcpStream>);
 
-pub trait MessageSocket<S>: DerefMut<Target = WebSocket<S>>
-where
-    S: Read + Write,
-{
-    fn recv_message<D>(&mut self) -> Option<Result<D, MessageError>>
+// pub trait MessageSocket<S>: DerefMut<Target = WebSocket<S>>
+// where
+//     S: Read + Write,
+impl Connection {
+    pub fn recv_message<D>(&mut self) -> Option<Result<D, MessageError>>
     where
         D: DeserializeOwned,
     {
@@ -68,17 +61,17 @@ where
             _ => Some(Err(MessageError::Encoding)),
         }
     }
-    fn send_message(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
+    pub fn send_message(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
         Ok(self.write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?)
     }
 }
 
-impl<T, S> MessageSocket<S> for T
-where
-    T: DerefMut<Target = WebSocket<S>>,
-    S: Read + Write,
-{
-}
+// impl<T, S> MessageSocket<S> for T
+// where
+//     T: DerefMut<Target = WebSocket<S>>,
+//     S: Read + Write,
+// {
+// }
 
 #[derive(Component)]
 pub struct ConnectionInfo {

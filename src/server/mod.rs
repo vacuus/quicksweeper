@@ -10,7 +10,7 @@ mod sockets;
 
 pub use game::*;
 pub use protocol::*;
-pub use sockets::{ClientSocket, Connection, ConnectionInfo, MessageSocket};
+pub use sockets::{Connection, ConnectionInfo};
 
 pub struct ServerPlugin {
     pub address_name: Option<String>,

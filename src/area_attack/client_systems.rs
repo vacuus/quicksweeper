@@ -8,7 +8,7 @@ use crate::{
     cursor::{Cursor, CursorBundle},
     load::Textures,
     main_menu::standard_window,
-    server::{ClientMessage, ClientSocket, MessageSocket},
+    server::{ClientMessage, Connection},
     singleplayer::minefield::{specific::TILE_SIZE, Minefield},
 };
 
@@ -19,7 +19,7 @@ use super::{
     states::AreaAttackState,
 };
 
-pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<ClientSocket>>) {
+pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<Connection>>) {
     standard_window(&mut ctx, |ui| {
         ui.vertical_centered(|ui| {
             if ui.button("Begin game").clicked() {
@@ -34,7 +34,7 @@ pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<ClientSocket
 pub fn request_reveal(
     cursor: Query<(&Cursor, &Position)>,
     kb: Res<Input<KeyCode>>,
-    mut sock: ResMut<ClientSocket>,
+    mut sock: ResMut<Connection>,
     field: Query<&Minefield>,
     state: Res<CurrentState<AreaAttackState>>,
     mut tiles: Query<&mut ClientTile>,
@@ -106,7 +106,7 @@ pub fn request_reveal(
 #[allow(clippy::too_many_arguments)] // TODO Split this up
 pub fn listen_net(
     mut commands: Commands,
-    mut sock: ResMut<ClientSocket>,
+    mut sock: ResMut<Connection>,
     mut tiles: Query<(Entity, &mut ClientTile)>,
     fields: Query<(Entity, &Minefield)>,
     cursors: Query<Entity, With<Cursor>>,
@@ -266,7 +266,7 @@ pub fn draw_tiles(
 
 pub fn send_position(
     pos: Query<&Position, (With<Cursor>, Or<(Added<Position>, Changed<Position>)>)>,
-    mut sock: ResMut<ClientSocket>,
+    mut sock: ResMut<Connection>,
 ) {
     for pos in pos.iter() {
         sock.send_message(ClientMessage::Ingame {

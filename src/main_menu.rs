@@ -12,7 +12,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 use crate::{
     registry::GameRegistry,
     server::{
-        ActiveGame, ClientMessage, ClientSocket, GameMarker, Greeting, MessageSocket, ServerMessage,
+        ActiveGame, ClientMessage, Connection, GameMarker, Greeting, ServerMessage,
     },
     SingleplayerState,
 };
@@ -113,7 +113,7 @@ fn server_select_menu(
             let maybe_handshake = std::mem::replace(&mut fields.trying_connection, None).unwrap();
             match maybe_handshake {
                 Ok((socket, _)) => {
-                    let mut socket = ClientSocket(socket);
+                    let mut socket = Connection(socket);
                     socket
                         .send_message(Greeting {
                             username: fields.username.clone(),
@@ -168,7 +168,7 @@ fn game_select_menu(
     mut ctx: ResMut<EguiContext>,
     mut games: Local<Vec<ActiveGame>>,
     mut selected_gamemode: Local<(Option<String>, Option<GameMarker>)>,
-    mut socket: ResMut<ClientSocket>,
+    mut socket: ResMut<Connection>,
     mut start_game: EventWriter<ToGame>,
     registry: Res<GameRegistry>,
 ) {
@@ -272,7 +272,7 @@ impl Plugin for MainMenuPlugin {
             .add_system(server_select_menu.run_in_state(MenuState::ServerSelect))
             .add_system(game_select_menu.run_in_state(MenuState::GameSelect))
             .add_enter_system(MenuState::MainMenu, |mut commands: Commands| {
-                commands.remove_resource::<ClientSocket>()
+                commands.remove_resource::<Connection>()
             });
     }
 }

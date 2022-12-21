@@ -15,7 +15,7 @@ use crate::registry::GameRegistry;
 use super::{
     protocol::{ActiveGame, ClientMessage, ServerMessage},
     sockets::{Connection, ConnectionInfo},
-    IngameEvent, MessageSocket,
+    IngameEvent,
 };
 
 #[derive(Component, Serialize, Deserialize, Debug, Clone)]
