@@ -232,16 +232,21 @@ pub fn init_check_cell(
     }
 }
 
+#[derive(Resource, Deref, DerefMut)]
+pub struct ScaleFactor(pub f32);
+
 fn zoom_camera(
     mut camera: Query<&mut OrthographicProjection, With<Camera2d>>,
     mut scroll: EventReader<MouseWheel>,
-    mut scale: Local<f32>,
+    mut scale_tracker: Local<f32>,
+    mut scale_factor: ResMut<ScaleFactor>,
 ) {
     const PLACE: f32 = 10.;
     for scroll in scroll.iter() {
-        *scale = (*scale + scroll.y).clamp(-3f32, 3f32);
+        *scale_tracker = (*scale_tracker + scroll.y).clamp(-3f32, 3f32);
         if let Ok(mut proj) = camera.get_single_mut() {
-            proj.scale = (1.3f32.powf(*scale) * PLACE).ceil() / PLACE;
+            **scale_factor = (1.3f32.powf(*scale_tracker) * PLACE).ceil() / PLACE;
+            proj.scale = **scale_factor;
         }
     }
 }
@@ -250,7 +255,8 @@ pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(track_cursor)
+        app.insert_resource(ScaleFactor(1.0))
+            .add_system(track_cursor)
             .add_system(translate_cursor)
             .add_system(zoom_camera)
             .add_system(pointer_cursor);
