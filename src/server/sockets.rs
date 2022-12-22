@@ -99,7 +99,7 @@ impl Connection {
         if let Some(data) = self.repeat_buffer.front().cloned() {
             if let Err(e) = self.try_send_buf(data) {
                 if self.trials > 10 {
-                    let _ = e; // TODO: Log e
+                    log::error!("Message failed to send for reason: {e}");
                     self.trials = 0;
                 } else {
                     self.trials += 1;
@@ -116,7 +116,7 @@ impl Connection {
     /// is logged using the current logging implementation.
     pub fn send_logged(&mut self, msg: impl Serialize) {
         if let Err(e) = self.try_send(msg) {
-            let _ = e; // TODO use log
+            log::error!("Message failed to send for reason: {e}");
         }
     }
 

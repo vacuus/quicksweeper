@@ -2966,6 +2966,7 @@ dependencies = [
  "itertools",
  "iyes_loopless",
  "local-ip-address",
+ "log",
  "rand",
  "rmp-serde",
  "serde",

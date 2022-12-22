@@ -40,4 +40,5 @@ rmp-serde = "1.1"
 anyhow = "*"
 serde = "*"
 thiserror = "*"
+log = "*"
 clap = { version = "4.0.29", features = ["derive"] }
