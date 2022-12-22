@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 mod field;
 mod load;
+pub mod query;
 pub mod specific;
 pub mod systems;
 

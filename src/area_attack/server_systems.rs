@@ -1,14 +1,19 @@
-use bevy::{hierarchy::HierarchyEvent, prelude::*};
+#![allow(non_snake_case)]
+
+use bevy::{
+    hierarchy::HierarchyEvent,
+    prelude::*,
+};
 use itertools::Itertools;
 use strum::IntoEnumIterator;
 
 use crate::{
-    common::Position,
+    common::{Contains, Position},
     load::Field,
     server::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent, LocalEvent,
     },
-    singleplayer::minefield::{FieldShape, Minefield},
+    singleplayer::minefield::{FieldShape, Minefield, query::MinefieldQuery},
 };
 
 use super::{
@@ -70,12 +75,14 @@ pub fn net_events(
 pub fn selection_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
     mut games: Query<(
+        Entity,
         &mut AreaAttackState,
         &InitialSelections,
         &Minefield,
         &mut Access,
     )>,
     mut tiles: Query<&mut ServerTile>,
+    mut minefields: MinefieldQuery<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
     mut request_tile: EventWriter<RevealTile>,
@@ -84,7 +91,7 @@ pub fn selection_transition(
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
             continue;
         }
-        if let Ok((mut state, selections, field, mut access)) = games.get_mut(ev.game) {
+        if let Ok((game_id, mut state, selections, field, mut access)) = games.get_mut(ev.game) {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
                 *state = AreaAttackState::Stage1;
 
@@ -94,13 +101,6 @@ pub fn selection_transition(
                 for selection in selections.values() {
                     ignore.extend(selection.local_group());
                 }
-
-                field
-                    .choose_multiple(&ignore, &mut rand::thread_rng())
-                    .into_iter()
-                    .for_each(|(_, tile_id)| {
-                        *tiles.get_mut(tile_id).unwrap() = ServerTile::Mine;
-                    });
 
                 for (owner, selection) in selections.iter() {
                     request_tile.send(RevealTile {
@@ -399,15 +399,14 @@ pub fn prepare_player(
         let this_username = &partial_connection_info.get(*player).unwrap().username;
         // send this player's properties to peers
         for &peer_id in peers {
-            connections
-                .get_mut(peer_id)
-                .unwrap()
-                .repeat_send_unchecked(AreaAttackUpdate::PlayerProperties {
+            connections.get_mut(peer_id).unwrap().repeat_send_unchecked(
+                AreaAttackUpdate::PlayerProperties {
                     id: *player,
                     username: this_username.clone(),
                     color: assigned_color,
                     position: assigned_position,
-                });
+                },
+            );
         }
 
         // reobtain this connection to respect the lifetime of the query (since the previous loop

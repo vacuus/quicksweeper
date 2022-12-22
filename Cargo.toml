@@ -28,6 +28,7 @@ strum = "0.24"
 strum_macros = "0.24"
 arrayvec = "0.7"
 vec-drain-where = "1.0"
+ouroboros = "0.15"
 
 gridly = "0.9"
 gridly_grids = "0.5"
