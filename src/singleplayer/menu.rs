@@ -3,7 +3,7 @@ use bevy_egui::EguiContext;
 use egui::{Color32, RichText};
 use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
-use super::minefield::Minefield;
+use crate::minefield::Minefield;
 use crate::{
     main_menu::{standard_window, MenuState},
     SingleplayerState,

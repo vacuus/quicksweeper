@@ -1,3 +1,8 @@
+use crate::minefield::{
+    specific::{MineCell, TILE_SIZE},
+    systems::*,
+    FieldShape, GameOutcome, Minefield,
+};
 use crate::{
     common::InitCheckCell,
     cursor::*,
@@ -8,12 +13,8 @@ use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
     state::NextState,
 };
-use minefield::{systems::*, FieldShape, GameOutcome, Minefield};
-
-use self::minefield::specific::{MineCell, TILE_SIZE};
 
 mod menu;
-pub mod minefield;
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SingleplayerState {

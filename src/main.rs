@@ -11,6 +11,7 @@ mod registry;
 mod server;
 mod singleplayer;
 mod state;
+mod minefield;
 
 use bevy::prelude::*;
 
@@ -44,7 +45,7 @@ fn server_app(address_name: Option<String>) -> App {
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(server::ServerPlugin { address_name })
         .add_plugin(load::ServerLoad)
-        .add_plugin(singleplayer::minefield::MinefieldPlugin)
+        .add_plugin(minefield::MinefieldPlugin)
         // gamemodes
         .add_plugin(area_attack::AreaAttackServer);
 
@@ -66,7 +67,7 @@ fn client_app() -> App {
         .add_plugin(MainMenuPlugin)
         .add_plugin(common::QuicksweeperTypes)
         .add_plugin(load::ClientLoad)
-        .add_plugin(singleplayer::minefield::MinefieldPlugin)
+        .add_plugin(minefield::MinefieldPlugin)
         // gamemodes
         .add_plugin(singleplayer::SingleplayerMode)
         .add_plugin(area_attack::AreaAttackClient);

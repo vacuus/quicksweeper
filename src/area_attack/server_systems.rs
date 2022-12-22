@@ -1,19 +1,14 @@
-#![allow(non_snake_case)]
-
-use bevy::{
-    hierarchy::HierarchyEvent,
-    prelude::*,
-};
+use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
 use strum::IntoEnumIterator;
 
 use crate::{
     common::{Contains, Position},
     load::Field,
+    minefield::{query::MinefieldQuery, FieldShape, Minefield},
     server::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent, LocalEvent,
     },
-    singleplayer::minefield::{FieldShape, Minefield, query::MinefieldQuery},
 };
 
 use super::{

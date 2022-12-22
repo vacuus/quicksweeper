@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{common::Position, singleplayer::minefield::FieldShape};
+use crate::{common::Position, minefield::FieldShape};
 
 use super::{
     components::{ClientTile, PlayerColor},

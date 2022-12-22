@@ -3,7 +3,7 @@ use bevy_asset_loader::prelude::*;
 use iyes_loopless::prelude::{AppLooplessStateExt, IntoConditionalSystem};
 use rand::{seq::SliceRandom, Rng};
 
-use crate::{cursor::ScaleFactor, main_menu::MenuState, singleplayer::minefield::FieldShape};
+use crate::{cursor::ScaleFactor, main_menu::MenuState, minefield::FieldShape};
 
 #[derive(AssetCollection, Resource)]
 pub struct Textures {

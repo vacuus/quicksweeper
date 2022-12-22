@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use std::ops::Deref;
 
 use bevy::{prelude::*, ecs::{system::SystemParam, query::WorldQuery}};
@@ -73,7 +75,7 @@ where
     'w: 'a,
     's: 'a,
 {
-    fn choose_multiple(
+    pub fn choose_multiple(
         &'a mut self,
         exclude: &'a impl Contains<Position>,
         rng: &'a mut impl Rng,
@@ -89,7 +91,7 @@ where
             });
     }
 
-    fn get_tile(&'a mut self, position: &Position) -> <T as WorldQuery>::Item<'a> {
+    pub fn get_tile(&'a mut self, position: &Position) -> <T as WorldQuery>::Item<'a> {
         self.tile_query.get_mut(self.minefield[position]).unwrap()
     }
 }

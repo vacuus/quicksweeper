@@ -1,7 +1,7 @@
 use crate::area_attack::puppet::PuppetCursor;
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
-use crate::singleplayer::minefield::specific::TILE_SIZE;
-use crate::singleplayer::minefield::Minefield;
+use crate::minefield::specific::TILE_SIZE;
+use crate::minefield::Minefield;
 use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, render::camera::Camera};
 

@@ -9,7 +9,7 @@ use crate::{
     load::Textures,
     main_menu::standard_window,
     server::{ClientMessage, Connection},
-    singleplayer::minefield::{specific::TILE_SIZE, Minefield},
+    minefield::{specific::TILE_SIZE, Minefield},
 };
 
 use super::{

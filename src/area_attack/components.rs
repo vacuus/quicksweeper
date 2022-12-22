@@ -6,7 +6,7 @@ use strum_macros::EnumIter;
 
 use crate::{
     common::Position,
-    singleplayer::minefield::{FieldShape, Minefield},
+    minefield::{FieldShape, Minefield},
 };
 
 use super::{states::AreaAttackState, AreaAttackServer};
