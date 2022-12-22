@@ -7,11 +7,11 @@ mod cser;
 mod cursor;
 mod load;
 mod main_menu;
+mod minefield;
 mod registry;
 mod server;
 mod singleplayer;
 mod state;
-mod minefield;
 
 use bevy::prelude::*;
 

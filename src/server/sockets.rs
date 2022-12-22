@@ -109,7 +109,6 @@ impl Connection {
                 self.trials = 0;
             }
         }
-
     }
 
     /// Asks the connection to send the message immediately, but instead of returning the error it

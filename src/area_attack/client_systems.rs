@@ -8,8 +8,8 @@ use crate::{
     cursor::{Cursor, CursorBundle},
     load::Textures,
     main_menu::standard_window,
-    server::{ClientMessage, Connection},
     minefield::{specific::TILE_SIZE, Minefield},
+    server::{ClientMessage, Connection},
 };
 
 use super::{

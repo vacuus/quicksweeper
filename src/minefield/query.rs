@@ -2,7 +2,10 @@
 
 use std::ops::Deref;
 
-use bevy::{prelude::*, ecs::{system::SystemParam, query::WorldQuery}};
+use bevy::{
+    ecs::{query::WorldQuery, system::SystemParam},
+    prelude::*,
+};
 use ouroboros::self_referencing;
 use rand::Rng;
 
@@ -48,7 +51,7 @@ where
     minefield_query: Query<'w, 's, &'static Minefield>,
     #[borrows(minefield_query)]
     minefield: &'this Minefield,
-    _phantom: std::marker::PhantomData< &'a()>,
+    _phantom: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a, 'w, 's> Deref for BorrowedMinefield<'a, 'w, 's> {
