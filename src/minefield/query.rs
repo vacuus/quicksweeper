@@ -14,20 +14,20 @@ use crate::common::{Contains, Position};
 use super::Minefield;
 
 #[derive(SystemParam)]
-pub struct MinefieldQuery<'w, 's, T>
+pub struct MinefieldQuery<'w, 's, Tile>
 where
-    T: WorldQuery + 'static,
+    Tile: WorldQuery + 'static,
 {
     minefield_query: Query<'w, 's, &'static Minefield>,
-    tile_query: Query<'w, 's, T>,
+    tile_query: Query<'w, 's, Tile>,
 }
 
-impl<'a, 'w, 's, T> MinefieldQuery<'w, 's, T>
+impl<'all, 'world, 'state, Tile> MinefieldQuery<'world, 'state, Tile>
 where
-    T: WorldQuery + 'static,
-    'a: 'w + 's,
+    Tile: WorldQuery + 'static,
+    'all: 'world + 'state,
 {
-    fn get(self, entity: Entity) -> Option<AdjoinedMinefield<'a, 'w, 's, T>> {
+    fn get(self, entity: Entity) -> Option<AdjoinedMinefield<'all, 'world, 'state, Tile>> {
         self.minefield_query
             .contains(entity)
             .then_some(AdjoinedMinefield {
@@ -43,18 +43,18 @@ where
 }
 
 #[self_referencing]
-struct BorrowedMinefield<'a, 'w, 's>
+struct BorrowedMinefield<'all, 'world, 'state>
 where
-    'w: 'a,
-    's: 'a,
+    'world: 'all,
+    'state: 'all,
 {
-    minefield_query: Query<'w, 's, &'static Minefield>,
+    minefield_query: Query<'world, 'state, &'static Minefield>,
     #[borrows(minefield_query)]
     minefield: &'this Minefield,
-    _phantom: std::marker::PhantomData<&'a ()>,
+    _phantom: std::marker::PhantomData<&'all ()>,
 }
 
-impl<'a, 'w, 's> Deref for BorrowedMinefield<'a, 'w, 's> {
+impl<'all, 'world, 'state> Deref for BorrowedMinefield<'all, 'world, 'state> {
     type Target = Minefield;
 
     fn deref(&self) -> &Self::Target {
@@ -62,27 +62,27 @@ impl<'a, 'w, 's> Deref for BorrowedMinefield<'a, 'w, 's> {
     }
 }
 
-struct AdjoinedMinefield<'a, 'w, 's, T>
+struct AdjoinedMinefield<'all, 'world, 'state, Tile>
 where
-    T: WorldQuery,
-    'w: 'a,
-    's: 'a,
+    Tile: WorldQuery,
+    'world: 'all,
+    'state: 'all,
 {
-    minefield: BorrowedMinefield<'a, 'w, 's>,
-    tile_query: Query<'w, 's, T>,
+    minefield: BorrowedMinefield<'all, 'world, 'state>,
+    tile_query: Query<'world, 'state, Tile>,
 }
 
-impl<'a, 'w, 's, T> AdjoinedMinefield<'a, 'w, 's, T>
+impl<'all, 'world, 'state, Tile> AdjoinedMinefield<'all, 'world, 'state, Tile>
 where
-    T: WorldQuery,
-    'w: 'a,
-    's: 'a,
+    Tile: WorldQuery,
+    'world: 'all,
+    'state: 'all,
 {
     pub fn choose_multiple(
-        &'a mut self,
-        exclude: &'a impl Contains<Position>,
-        rng: &'a mut impl Rng,
-        mut op: impl for<'u> FnMut(Position, <T as WorldQuery>::Item<'u>),
+        &'all mut self,
+        exclude: &'all impl Contains<Position>,
+        rng: &'all mut impl Rng,
+        mut op: impl for<'every> FnMut(Position, <Tile as WorldQuery>::Item<'every>),
     ) {
         self.minefield
             .choose_multiple(exclude, rng)
@@ -94,7 +94,7 @@ where
             });
     }
 
-    pub fn get_tile(&'a mut self, position: &Position) -> <T as WorldQuery>::Item<'a> {
+    pub fn get_tile(&'all mut self, position: &Position) -> <Tile as WorldQuery>::Item<'all> {
         self.tile_query.get_mut(self.minefield[position]).unwrap()
     }
 }
