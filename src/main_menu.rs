@@ -11,9 +11,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     registry::GameRegistry,
-    server::{
-        ActiveGame, ClientMessage, Connection, GameMarker, Greeting, ServerMessage,
-    },
+    server::{ActiveGame, ClientMessage, Connection, GameMarker, Greeting, ServerMessage},
     SingleplayerState,
 };
 
@@ -246,18 +244,24 @@ fn game_select_menu(
     if response.go_back.clicked() {
         commands.insert_resource(NextState(MenuState::MainMenu));
     } else if response.reload.clicked() {
-        let _ = socket.try_send(ClientMessage::Games); // TODO: Report error to user
+        socket.send_logged(ClientMessage::Games); // TODO: Report error to user
     } else if let Some(mode) = response.create {
-        let _ = socket.try_send(ClientMessage::Create {
+        socket.send_logged(ClientMessage::Create {
             game: mode,
             args: Vec::new(),
         });
         start_game.send(ToGame(mode));
         commands.insert_resource(NextState(MenuState::InGame));
     } else if let Some((game, marker)) = response.join_game {
-        let _ = socket.try_send(ClientMessage::Join { game });
+        socket.send_logged(ClientMessage::Join { game });
         start_game.send(ToGame(marker));
         commands.insert_resource(NextState(MenuState::InGame));
+    }
+}
+
+fn poll_connection(connection: Option<ResMut<Connection>>) {
+    if let Some(mut connection) = connection {
+        connection.repetition();
     }
 }
 
@@ -268,6 +272,7 @@ impl Plugin for MainMenuPlugin {
         app.add_loopless_state(MenuState::Loading)
             .add_event::<ToGame>()
             .init_resource::<MenuFields>()
+            .add_system(poll_connection)
             .add_system(run_main_menu.run_in_state(MenuState::MainMenu))
             .add_system(server_select_menu.run_in_state(MenuState::ServerSelect))
             .add_system(game_select_menu.run_in_state(MenuState::GameSelect))

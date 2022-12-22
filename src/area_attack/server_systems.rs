@@ -111,7 +111,9 @@ pub fn selection_transition(
                 }
 
                 connections.for_each_mut(|mut conn| {
-                    conn.try_send(AreaAttackUpdate::Transition(AreaAttackState::Stage1));
+                    conn.repeat_send_unchecked(AreaAttackUpdate::Transition(
+                        AreaAttackState::Stage1,
+                    ));
                 });
 
                 // close joins
@@ -221,7 +223,7 @@ pub fn send_tiles(
             match tile {
                 ServerTile::Empty | ServerTile::Mine => {
                     for (_, mut connection) in peers {
-                        connection.try_send(AreaAttackUpdate::TileChanged {
+                        connection.send_logged(AreaAttackUpdate::TileChanged {
                             position: *position,
                             to: ClientTile::Unknown,
                         });
@@ -235,7 +237,7 @@ pub fn send_tiles(
                         .count() as u8;
 
                     for (player_id, mut connection) in peers {
-                        connection.try_send(AreaAttackUpdate::TileChanged {
+                        connection.send_logged(AreaAttackUpdate::TileChanged {
                             position: *position,
                             to: ClientTile::Owned {
                                 player: *owner,
@@ -246,7 +248,7 @@ pub fn send_tiles(
                 }
                 ServerTile::HardMine => {
                     for (_, mut connection) in peers {
-                        connection.try_send(AreaAttackUpdate::TileChanged {
+                        connection.send_logged(AreaAttackUpdate::TileChanged {
                             position: *position,
                             to: ClientTile::HardMine,
                         });
@@ -271,7 +273,7 @@ pub fn broadcast_positions(
                 .for_each(|&conn_id| {
                     let (mut player_pos, mut sock) = connections.get_mut(conn_id).unwrap();
                     *player_pos = *pos;
-                    sock.try_send(AreaAttackUpdate::Reposition {
+                    sock.send_logged(AreaAttackUpdate::Reposition {
                         id: *player,
                         position: *pos,
                     });
@@ -304,7 +306,7 @@ pub fn update_selecting_tile(
                     .iter_mut()
                     .filter_map(|(e, it)| (children.contains(&e)).then_some(it))
                 {
-                    conn.try_send(AreaAttackUpdate::TileChanged {
+                    conn.send_logged(AreaAttackUpdate::TileChanged {
                         position: previous_position,
                         to: ClientTile::Unknown,
                     });
@@ -314,7 +316,7 @@ pub fn update_selecting_tile(
                 .iter_mut()
                 .filter_map(|(e, it)| (children.contains(&e)).then_some(it))
             {
-                conn.try_send(AreaAttackUpdate::TileChanged {
+                conn.send_logged(AreaAttackUpdate::TileChanged {
                     position: *requested,
                     to: ClientTile::Owned {
                         player: *player,
@@ -370,7 +372,7 @@ pub fn prepare_player(
         let mut taken_colors = Vec::new();
 
         // send the selected board
-        let _ = this_connection.try_send(AreaAttackUpdate::FieldShape(shape.clone()));
+        this_connection.repeat_send_unchecked(AreaAttackUpdate::FieldShape(shape.clone()));
 
         // send list of players and player properties
         for &&peer_id in peers.iter() {
@@ -379,7 +381,7 @@ pub fn prepare_player(
             }
             let (ConnectionInfo { username }, &color, &position) = players.get(peer_id).unwrap();
             taken_colors.push(color);
-            let _ = this_connection.try_send(AreaAttackUpdate::PlayerProperties {
+            this_connection.repeat_send_unchecked(AreaAttackUpdate::PlayerProperties {
                 id: peer_id,
                 username: username.clone(),
                 color,
@@ -397,14 +399,15 @@ pub fn prepare_player(
         let this_username = &partial_connection_info.get(*player).unwrap().username;
         // send this player's properties to peers
         for &peer_id in peers {
-            connections.get_mut(peer_id).unwrap().try_send(
-                AreaAttackUpdate::PlayerProperties {
+            connections
+                .get_mut(peer_id)
+                .unwrap()
+                .repeat_send_unchecked(AreaAttackUpdate::PlayerProperties {
                     id: *player,
                     username: this_username.clone(),
                     color: assigned_color,
                     position: assigned_position,
-                },
-            );
+                });
         }
 
         // reobtain this connection to respect the lifetime of the query (since the previous loop
@@ -417,7 +420,7 @@ pub fn prepare_player(
             position: assigned_position,
             frozen: Frozen::default(),
         });
-        let _ = this_connection.try_send(AreaAttackUpdate::SelfChange {
+        this_connection.repeat_send_unchecked(AreaAttackUpdate::SelfChange {
             color: assigned_color,
             position: assigned_position,
         });

@@ -30,6 +30,8 @@ impl Plugin for ServerPlugin {
             .add_system_to_stage(CoreStage::PostUpdate, delay_hierarchy_events)
             .add_system(receive_connections)
             .add_system(upgrade_connections)
+            .add_system(clean_dead_connections)
+            .add_system(try_send_repeated)
             .add_system(game_messages)
             .add_system(server_messages);
     }

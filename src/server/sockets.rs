@@ -25,6 +25,17 @@ pub enum MessageError {
     Encoding,
 }
 
+impl MessageError {
+    pub fn disconnected(&self) -> bool {
+        use tungstenite::Error;
+        match self {
+            //TODO: Find all outcomes which suggest the socket cannot be used
+            Self::Tungstenite(Error::ConnectionClosed | Error::AlreadyClosed) => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Resource, DerefMut, Deref)]
 pub struct OpenPort(TcpListener);
 
@@ -43,6 +54,8 @@ impl OpenPort {
 pub struct Connection {
     socket: WebSocket<TcpStream>,
     repeat_buffer: VecDeque<Vec<u8>>, // TODO use buffer in continuous sending system
+    trials: u8,
+    disconnected: bool,
 }
 
 impl Connection {
@@ -50,6 +63,8 @@ impl Connection {
         Self {
             socket,
             repeat_buffer: default(),
+            disconnected: false,
+            trials: 0,
         }
     }
 
@@ -72,14 +87,52 @@ impl Connection {
         }
     }
 
-    pub fn repeat_send(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
-        self.repeat_buffer.push_back(rmp_serde::to_vec(&msg)?);
-        Ok(())
+    /// Asks the connection to attempt sending the message as long as possible. Message failure will
+    /// be recorded in the given logging implementation. In general this should be used for messages
+    /// which are sent less frequently and should not be dropped.
+    pub fn repeat_send_unchecked(&mut self, msg: impl Serialize) {
+        self.repeat_buffer
+            .push_back(rmp_serde::to_vec(&msg).unwrap());
+    }
+
+    pub fn repetition(&mut self) {
+        if let Some(data) = self.repeat_buffer.front().cloned() {
+            if let Err(e) = self.try_send_buf(data) {
+                if self.trials > 10 {
+                    let _ = e; // TODO: Log e
+                    self.trials = 0;
+                } else {
+                    self.trials += 1;
+                }
+            } else {
+                self.repeat_buffer.pop_front();
+                self.trials = 0;
+            }
+        }
+
+    }
+
+    /// Asks the connection to send the message immediately, but instead of returning the error it
+    /// is logged using the current logging implementation.
+    pub fn send_logged(&mut self, msg: impl Serialize) {
+        if let Err(e) = self.try_send(msg) {
+            let _ = e; // TODO use log
+        }
     }
 
     pub fn try_send(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
-        self.socket
-            .write_message(Message::Binary(rmp_serde::to_vec(&msg)?))?;
+        self.try_send_buf(rmp_serde::to_vec(&msg)?)
+    }
+
+    fn try_send_buf(&mut self, msg: Vec<u8>) -> Result<(), MessageError> {
+        if let Err(e) = self
+            .socket
+            .write_message(Message::Binary(msg))
+            .map_err(MessageError::from)
+        {
+            self.disconnected = e.disconnected();
+            return Err(e);
+        }
         Ok(())
     }
 }
@@ -87,6 +140,23 @@ impl Connection {
 #[derive(Component)]
 pub struct ConnectionInfo {
     pub username: String,
+}
+
+pub fn clean_dead_connections(mut commands: Commands, connections: Query<(Entity, &Connection)>) {
+    for (id, connection) in connections.iter() {
+        if connection.disconnected {
+            commands.entity(id).despawn_recursive()
+        }
+    }
+}
+
+/// Acts on the messages given to connections by [Connection::repeat_send]. It will try a certain
+/// number of times to send the message through the connection, and upon failing afterward will log
+/// the latest error.
+pub fn try_send_repeated(mut connections: Query<&mut Connection>) {
+    for mut connection in connections.iter_mut() {
+        connection.repetition();
+    }
 }
 
 pub fn receive_connections(
