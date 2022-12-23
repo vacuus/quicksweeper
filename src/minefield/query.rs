@@ -29,7 +29,10 @@ where
     'state: 'all,
     'all: 'query,
 {
-    pub fn get(&'all mut self, entity: Entity) -> Option<AdjoinedMinefield<'all, 'world, 'state, Tile>> {
+    pub fn get(
+        &'all mut self,
+        entity: Entity,
+    ) -> Option<AdjoinedMinefield<'all, 'world, 'state, Tile>> {
         self.minefield_query
             .contains(entity)
             .then_some(AdjoinedMinefield {
@@ -55,7 +58,7 @@ where
     // _phantom: std::marker::PhantomData<&'all ()>,
 }
 
-impl<'all, 'world, 'state, > Deref for BorrowedMinefield<'all, 'world, 'state> {
+impl<'all, 'world, 'state> Deref for BorrowedMinefield<'all, 'world, 'state> {
     type Target = Minefield;
 
     fn deref(&self) -> &Self::Target {
@@ -63,13 +66,16 @@ impl<'all, 'world, 'state, > Deref for BorrowedMinefield<'all, 'world, 'state> {
     }
 }
 
+type MutWorldAccess<'a, T> = <T as WorldQuery>::Item<'a>;
+type ReadOnlyWorldAccess<'a, T> = <<T as WorldQuery>::ReadOnly as WorldQuery>::Item<'a>;
+
 pub struct AdjoinedMinefield<'all, 'world, 'state, Tile>
 where
     Tile: WorldQuery,
     'world: 'all,
     'state: 'all,
 {
-    minefield: BorrowedMinefield<'all, 'world, 'state,>,
+    minefield: BorrowedMinefield<'all, 'world, 'state>,
     tile_query: &'all mut Query<'world, 'state, Tile>,
 }
 
@@ -84,7 +90,7 @@ where
         &'query mut self,
         exclude: &'all impl Contains<Position>,
         rng: &'all mut impl Rng,
-        mut op: impl for<'every> FnMut(Position, <Tile as WorldQuery>::Item<'every>),
+        mut op: impl for<'every> FnMut(Position, MutWorldAccess<'every, Tile>),
     ) {
         self.minefield
             .choose_multiple(exclude, rng)
@@ -96,7 +102,30 @@ where
             });
     }
 
-    pub fn get_tile(&'query mut self, position: &Position) -> <Tile as WorldQuery>::Item<'query> {
-        self.tile_query.get_mut(self.minefield[position]).unwrap()
+    pub fn iter_neighbors_enumerated(
+        &self,
+        position: Position,
+    ) -> impl Iterator<Item = (Position, ReadOnlyWorldAccess<Tile>)> {
+        self.minefield
+            .iter_neighbors_enumerated(position)
+            .map(|(loc, tile_id)| {
+                let world_access = self.tile_query.get(tile_id).unwrap();
+                (loc, world_access)
+            })
+    }
+
+    pub fn iter_neighbor_positions(&self, position: Position) -> impl Iterator<Item = Position> + '_ {
+        self.iter_neighbors_enumerated(position).map(|(pos, _)| pos)
+    }
+
+    pub fn iter_neighbors(
+        &self,
+        position: Position,
+    ) -> impl Iterator<Item = ReadOnlyWorldAccess<Tile>> {
+        self.iter_neighbors_enumerated(position).map(|(_, tile)| tile)
+    }
+
+    pub fn get_mut(&'query mut self, position: Position) -> <Tile as WorldQuery>::Item<'query> {
+        self.tile_query.get_mut(self.minefield[&position]).unwrap()
     }
 }

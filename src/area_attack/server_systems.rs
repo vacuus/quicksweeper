@@ -73,10 +73,8 @@ pub fn selection_transition(
         Entity,
         &mut AreaAttackState,
         &InitialSelections,
-        &Minefield,
         &mut Access,
     )>,
-    // mut tiles: Query<&mut ServerTile>,
     mut minefields: MinefieldQuery<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
@@ -86,7 +84,7 @@ pub fn selection_transition(
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
             continue;
         }
-        if let Ok((game_id, mut state, selections, field, mut access)) = games.get_mut(ev.game) {
+        if let Ok((game_id, mut state, selections, mut access)) = games.get_mut(ev.game) {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
                 *state = AreaAttackState::Stage1;
 
@@ -101,13 +99,9 @@ pub fn selection_transition(
                 let mut rng = rand::thread_rng();
                 let mut field = minefields.get(game_id).unwrap();
 
-                field.choose_multiple(
-                    &ignore,
-                    &mut rng,
-                    |_, mut tile| {
-                        *tile = ServerTile::Mine;
-                    },
-                );
+                field.choose_multiple(&ignore, &mut rng, |_, mut tile| {
+                    *tile = ServerTile::Mine;
+                });
 
                 for (owner, selection) in selections.iter() {
                     request_tile.send(RevealTile {
@@ -135,8 +129,7 @@ pub fn selection_transition(
 #[allow(clippy::too_many_arguments)]
 pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
-    games: Query<&Minefield>,
-    mut tiles: Query<&mut ServerTile>,
+    mut games: MinefieldQuery<&mut ServerTile>,
     mut send: EventWriter<SendTile>,
     time: Res<Time>,
     mut freeze: Query<&mut Frozen>,
@@ -153,18 +146,17 @@ pub fn reveal_tiles(
         game,
     } in request_buffer2.drain(..)
     {
-        if let Ok(field) = games.get(game) {
+        if let Some(mut field) = games.get(game) {
             let mut frozen = freeze.get_mut(player).unwrap();
             if frozen.is_some() {
                 continue;
             }
-            let mut tile = tiles.get_mut(field[&position]).unwrap();
+            let mut tile = field.get_mut(position);
             match *tile {
                 ServerTile::Empty => {
                     *tile = ServerTile::Owned { player };
                     let mine_count = field // TODO: Extract to function
                         .iter_neighbors(position)
-                        .filter_map(|ent| tiles.get(ent).ok())
                         .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
                         .count() as u8;
 
