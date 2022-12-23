@@ -22,20 +22,21 @@ where
     tile_query: Query<'w, 's, Tile>,
 }
 
-impl<'all, 'world, 'state, Tile> MinefieldQuery<'world, 'state, Tile>
+impl<'all, 'world, 'state, 'query, Tile> MinefieldQuery<'world, 'state, Tile>
 where
     Tile: WorldQuery + 'static,
-    'all: 'world + 'state,
+    'world: 'all,
+    'state: 'all,
+    'all: 'query,
 {
-    fn get(self, entity: Entity) -> Option<AdjoinedMinefield<'all, 'world, 'state, Tile>> {
+    pub fn get(&'all mut self, entity: Entity) -> Option<AdjoinedMinefield<'all, 'world, 'state, Tile>> {
         self.minefield_query
             .contains(entity)
             .then_some(AdjoinedMinefield {
-                tile_query: self.tile_query,
+                tile_query: &mut self.tile_query,
                 minefield: BorrowedMinefieldBuilder {
-                    minefield_query: self.minefield_query,
-                    minefield_builder: |query: &Query<&Minefield>| query.get(entity).unwrap(),
-                    _phantom: default(),
+                    minefield_query: &self.minefield_query,
+                    minefield_builder: |query: &&Query<&Minefield>| query.get(entity).unwrap(),
                 }
                 .build(),
             })
@@ -48,13 +49,13 @@ where
     'world: 'all,
     'state: 'all,
 {
-    minefield_query: Query<'world, 'state, &'static Minefield>,
+    minefield_query: &'all Query<'world, 'state, &'static Minefield>,
     #[borrows(minefield_query)]
     minefield: &'this Minefield,
-    _phantom: std::marker::PhantomData<&'all ()>,
+    // _phantom: std::marker::PhantomData<&'all ()>,
 }
 
-impl<'all, 'world, 'state> Deref for BorrowedMinefield<'all, 'world, 'state> {
+impl<'all, 'world, 'state, > Deref for BorrowedMinefield<'all, 'world, 'state> {
     type Target = Minefield;
 
     fn deref(&self) -> &Self::Target {
@@ -62,24 +63,25 @@ impl<'all, 'world, 'state> Deref for BorrowedMinefield<'all, 'world, 'state> {
     }
 }
 
-struct AdjoinedMinefield<'all, 'world, 'state, Tile>
+pub struct AdjoinedMinefield<'all, 'world, 'state, Tile>
 where
     Tile: WorldQuery,
     'world: 'all,
     'state: 'all,
 {
-    minefield: BorrowedMinefield<'all, 'world, 'state>,
-    tile_query: Query<'world, 'state, Tile>,
+    minefield: BorrowedMinefield<'all, 'world, 'state,>,
+    tile_query: &'all mut Query<'world, 'state, Tile>,
 }
 
-impl<'all, 'world, 'state, Tile> AdjoinedMinefield<'all, 'world, 'state, Tile>
+impl<'all, 'world, 'state, 'query, Tile> AdjoinedMinefield<'all, 'world, 'state, Tile>
 where
     Tile: WorldQuery,
     'world: 'all,
     'state: 'all,
+    'all: 'query,
 {
     pub fn choose_multiple(
-        &'all mut self,
+        &'query mut self,
         exclude: &'all impl Contains<Position>,
         rng: &'all mut impl Rng,
         mut op: impl for<'every> FnMut(Position, <Tile as WorldQuery>::Item<'every>),
@@ -94,7 +96,7 @@ where
             });
     }
 
-    pub fn get_tile(&'all mut self, position: &Position) -> <Tile as WorldQuery>::Item<'all> {
+    pub fn get_tile(&'query mut self, position: &Position) -> <Tile as WorldQuery>::Item<'query> {
         self.tile_query.get_mut(self.minefield[position]).unwrap()
     }
 }

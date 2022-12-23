@@ -76,7 +76,7 @@ pub fn selection_transition(
         &Minefield,
         &mut Access,
     )>,
-    mut tiles: Query<&mut ServerTile>,
+    // mut tiles: Query<&mut ServerTile>,
     mut minefields: MinefieldQuery<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
@@ -96,6 +96,18 @@ pub fn selection_transition(
                 for selection in selections.values() {
                     ignore.extend(selection.local_group());
                 }
+
+                // rng initialized before field in order to respect lifetime rules
+                let mut rng = rand::thread_rng();
+                let mut field = minefields.get(game_id).unwrap();
+
+                field.choose_multiple(
+                    &ignore,
+                    &mut rng,
+                    |_, mut tile| {
+                        *tile = ServerTile::Mine;
+                    },
+                );
 
                 for (owner, selection) in selections.iter() {
                     request_tile.send(RevealTile {
