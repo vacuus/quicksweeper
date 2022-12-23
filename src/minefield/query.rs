@@ -22,12 +22,11 @@ where
     tile_query: Query<'w, 's, Tile>,
 }
 
-impl<'all, 'world, 'state, 'query, Tile> MinefieldQuery<'world, 'state, Tile>
+impl<'all, 'world, 'state, Tile> MinefieldQuery<'world, 'state, Tile>
 where
     Tile: WorldQuery + 'static,
     'world: 'all,
     'state: 'all,
-    'all: 'query,
 {
     pub fn get(
         &'all mut self,
@@ -55,7 +54,6 @@ where
     minefield_query: &'all Query<'world, 'state, &'static Minefield>,
     #[borrows(minefield_query)]
     minefield: &'this Minefield,
-    // _phantom: std::marker::PhantomData<&'all ()>,
 }
 
 impl<'all, 'world, 'state> Deref for BorrowedMinefield<'all, 'world, 'state> {
@@ -114,7 +112,10 @@ where
             })
     }
 
-    pub fn iter_neighbor_positions(&self, position: Position) -> impl Iterator<Item = Position> + '_ {
+    pub fn iter_neighbor_positions(
+        &self,
+        position: Position,
+    ) -> impl Iterator<Item = Position> + '_ {
         self.iter_neighbors_enumerated(position).map(|(pos, _)| pos)
     }
 
@@ -122,10 +123,15 @@ where
         &self,
         position: Position,
     ) -> impl Iterator<Item = ReadOnlyWorldAccess<Tile>> {
-        self.iter_neighbors_enumerated(position).map(|(_, tile)| tile)
+        self.iter_neighbors_enumerated(position)
+            .map(|(_, tile)| tile)
     }
 
-    pub fn get_mut(&'query mut self, position: Position) -> <Tile as WorldQuery>::Item<'query> {
+    pub fn get(&self, position: Position) -> ReadOnlyWorldAccess<Tile> {
+        self.tile_query.get(self.minefield[&position]).unwrap()
+    }
+
+    pub fn get_mut(&'query mut self, position: Position) -> MutWorldAccess<'query, Tile> {
         self.tile_query.get_mut(self.minefield[&position]).unwrap()
     }
 }

@@ -206,8 +206,8 @@ pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
 
 pub fn send_tiles(
     mut new_tiles: EventReader<SendTile>,
-    tiles: Query<&ServerTile>,
-    games: Query<(&Minefield, &Children)>,
+    games: Query<(Entity, &Children)>,
+    mut minefields: MinefieldQuery<&ServerTile>,
     mut players: Query<(Entity, &mut Connection)>,
 ) {
     for SendTile {
@@ -216,8 +216,9 @@ pub fn send_tiles(
         game,
     } in new_tiles.iter()
     {
-        if let Ok((minefield, children)) = games.get(*game) {
+        if let Ok((field_id, children)) = games.get(*game) {
             let peers = players.iter_mut().filter(|(id, _)| children.contains(id));
+            let minefield = minefields.get(field_id).unwrap();
 
             match tile {
                 ServerTile::Empty | ServerTile::Mine => {
@@ -231,7 +232,6 @@ pub fn send_tiles(
                 ServerTile::Owned { player: owner } => {
                     let mine_count = minefield
                         .iter_neighbors(*position)
-                        .filter_map(|ent| tiles.get(ent).ok())
                         .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
                         .count() as u8;
 
