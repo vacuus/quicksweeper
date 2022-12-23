@@ -47,10 +47,7 @@ fn server_app(address_name: Option<String>) -> App {
         .add_plugin(load::ServerLoad)
         .add_plugin(minefield::MinefieldPlugin)
         // gamemodes
-        .add_plugin(area_attack::AreaAttackServer)
-        // framerate
-        .add_plugin(bevy_framepace::FramepacePlugin)
-        .add_startup_system(framerate_limit);
+        .add_plugin(area_attack::AreaAttackServer);
     app
 }
 
