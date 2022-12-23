@@ -48,7 +48,9 @@ fn server_app(address_name: Option<String>) -> App {
         .add_plugin(minefield::MinefieldPlugin)
         // gamemodes
         .add_plugin(area_attack::AreaAttackServer);
-
+        // framerate
+        .add_plugin(bevy_framepace::FramepacePlugin)
+        .add_startup_system(framerate_limit);
     app
 }
 
@@ -70,8 +72,15 @@ fn client_app() -> App {
         .add_plugin(minefield::MinefieldPlugin)
         // gamemodes
         .add_plugin(singleplayer::SingleplayerMode)
-        .add_plugin(area_attack::AreaAttackClient);
+        .add_plugin(area_attack::AreaAttackClient)
+        // framerate
+        .add_plugin(bevy_framepace::FramepacePlugin)
+        .add_startup_system(framerate_limit);
     app
+}
+
+fn framerate_limit(mut settings: ResMut<bevy_framepace::FramepaceSettings>) {
+    settings.limiter = bevy_framepace::Limiter::from_framerate(30.0);
 }
 
 fn main() {
