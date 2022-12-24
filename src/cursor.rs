@@ -28,6 +28,7 @@ impl CursorPosition {
 #[derive(Resource)]
 pub struct Bindings {
     // TODO: Allow other input methods than keyboard keys + allow user-set bindings
+    pub pause: KeyCode,
     pub flag: KeyCode,
     pub check: KeyCode,
     // camera panning
@@ -40,6 +41,7 @@ pub struct Bindings {
 impl Default for Bindings {
     fn default() -> Self {
         Self {
+            pause: KeyCode::Escape,
             flag: KeyCode::F,
             check: KeyCode::Space,
             camera_up: KeyCode::W,

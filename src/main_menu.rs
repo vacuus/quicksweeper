@@ -5,11 +5,12 @@ use bevy_egui::EguiContext;
 use egui::{Color32, InnerResponse, Key, RichText, TextEdit, Ui};
 use iyes_loopless::{
     prelude::{AppLooplessStateExt, IntoConditionalSystem},
-    state::NextState,
+    state::{CurrentState, NextState},
 };
 use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, WebSocket};
 
 use crate::{
+    cursor::Bindings,
     registry::GameRegistry,
     server::{ActiveGame, ClientMessage, Connection, GameMarker, Greeting, ServerMessage},
     Singleplayer,
@@ -21,7 +22,13 @@ pub enum Menu {
     MainMenu,
     ServerSelect,
     GameSelect,
-    InGame,
+
+    // active/pause states
+    IngameMulti,
+    IngameLocal,
+
+    PauseMulti,
+    PauseLocal,
 }
 
 type ClientResult =
@@ -60,7 +67,7 @@ fn run_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
             );
             if ui.button("Singleplayer mode").clicked() {
                 commands.insert_resource(NextState(Singleplayer::PreGame));
-                commands.insert_resource(NextState(Menu::InGame));
+                commands.insert_resource(NextState(Menu::IngameLocal));
             }
             if ui.button("Connect to server").clicked() {
                 commands.insert_resource(NextState(Menu::ServerSelect))
@@ -258,17 +265,36 @@ fn game_select_menu(
             args: Vec::new(),
         });
         start_game.send(ToGame(mode));
-        commands.insert_resource(NextState(Menu::InGame));
+        commands.insert_resource(NextState(Menu::IngameMulti));
     } else if let Some((game, marker)) = response.join_game {
         socket.send_logged(ClientMessage::Join { game });
         start_game.send(ToGame(marker));
-        commands.insert_resource(NextState(Menu::InGame));
+        commands.insert_resource(NextState(Menu::IngameMulti));
     }
 }
 
 fn poll_connection(connection: Option<ResMut<Connection>>) {
     if let Some(mut connection) = connection {
         connection.repetition();
+    }
+}
+
+fn pause(
+    mut commands: Commands,
+    state: Res<CurrentState<Menu>>,
+    keybinds: Res<Bindings>,
+    input: Res<Input<KeyCode>>,
+) {
+    if input.just_pressed(keybinds.pause) {
+        if let Some(next) = match state.0 {
+            Menu::IngameLocal => Some(Menu::PauseLocal),
+            Menu::IngameMulti => Some(Menu::PauseMulti),
+            Menu::PauseLocal => Some(Menu::IngameLocal),
+            Menu::PauseMulti => Some(Menu::IngameMulti),
+            _ => None,
+        } {
+            commands.insert_resource(NextState(dbg!(next)))
+        }
     }
 }
 
@@ -283,6 +309,7 @@ impl Plugin for MainMenuPlugin {
             .add_system(run_main_menu.run_in_state(Menu::MainMenu))
             .add_system(server_select_menu.run_in_state(Menu::ServerSelect))
             .add_system(game_select_menu.run_in_state(Menu::GameSelect))
+            .add_system(pause)
             .add_enter_system(Menu::MainMenu, |mut commands: Commands| {
                 commands.remove_resource::<Connection>()
             });
