@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::EguiContext;
 use egui::{Color32, RichText};
+use iyes_loopless::state::CurrentState;
 use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
 use crate::minefield::Minefield;
@@ -27,7 +28,7 @@ fn success_screen(mut commands: Commands, ctx: ResMut<EguiContext>) {
     );
 }
 
-pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, message: String) {
+fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, message: String) {
     use Singleplayer::*;
     standard_window(&mut ctx, |ui| {
         ui.vertical_centered(|ui| {
@@ -46,11 +47,26 @@ pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, mess
     });
 }
 
+fn pause_menu(mut ctx: ResMut<EguiContext>) {
+    standard_window(&mut ctx, |ui| {
+        ui.vertical_centered(|ui| {
+            ui.button("resume");
+            ui.button("retry");
+            ui.button("exit");
+        })
+    });
+}
+
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(fail_screen.run_in_state(Singleplayer::GameFailed))
-            .add_system(success_screen.run_in_state(Singleplayer::GameSuccess));
+            .add_system(success_screen.run_in_state(Singleplayer::GameSuccess))
+            .add_system(pause_menu.run_if(
+                |s1: Res<CurrentState<Singleplayer>>, s2: Res<CurrentState<Menu>>| {
+                    s1.0 != Singleplayer::Inactive && s2.0 == Menu::PauseLocal
+                },
+            ));
     }
 }
