@@ -79,7 +79,13 @@ fn server_select_menu(
     standard_window(&mut ctx, |ui| {
         let (focus_lost, focus_gained) = ui
             .vertical_centered(|ui| {
-                ui.colored_label(Color32::RED, fields.remote_select_err);
+                ui.horizontal(|ui| {
+                    if ui.button("back").clicked() {
+                        commands.insert_resource(NextState(MenuState::MainMenu))
+                    }
+                    ui.colored_label(Color32::RED, fields.remote_select_err);
+                });
+
                 let r1 = ui
                     .horizontal(|ui| {
                         ui.label("Server address:");
@@ -242,6 +248,7 @@ fn game_select_menu(
     .inner;
 
     if response.go_back.clicked() {
+        commands.remove_resource::<Connection>();
         commands.insert_resource(NextState(MenuState::MainMenu));
     } else if response.reload.clicked() {
         socket.send_logged(ClientMessage::Games);
