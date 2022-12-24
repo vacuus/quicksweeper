@@ -16,7 +16,7 @@ use super::{
     components::{ClientTile, ClientTileBundle},
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     puppet::{PuppetCursor, PuppetCursorBundle, PuppetTable},
-    states::AreaAttackState,
+    states::AreaAttack,
 };
 
 pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<Connection>>) {
@@ -36,7 +36,7 @@ pub fn request_reveal(
     keybinds: Res<Bindings>,
     kb: Res<Input<KeyCode>>,
     mut sock: ResMut<Connection>,
-    state: Res<CurrentState<AreaAttackState>>,
+    state: Res<CurrentState<AreaAttack>>,
     mut field: MinefieldQuery<&mut ClientTile>,
     puppet_table: Res<PuppetTable>,
 ) {
@@ -80,7 +80,7 @@ pub fn request_reveal(
             && !matches!(
                 state.0,
                 // truthfully the last of these three should be impossible, but check it anyway
-                AreaAttackState::Selecting | AreaAttackState::Finishing | AreaAttackState::Inactive
+                AreaAttack::Selecting | AreaAttack::Finishing | AreaAttack::Inactive
             )
         {
             if let Some(mut tile) = field.get_mut(position) {

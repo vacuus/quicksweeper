@@ -3,7 +3,7 @@ use bevy_asset_loader::prelude::*;
 use iyes_loopless::prelude::{AppLooplessStateExt, IntoConditionalSystem};
 use rand::{seq::SliceRandom, Rng};
 
-use crate::{cursor::ScaleFactor, main_menu::MenuState, minefield::FieldShape};
+use crate::{cursor::ScaleFactor, main_menu::Menu, minefield::FieldShape};
 
 #[derive(AssetCollection, Resource)]
 pub struct Textures {
@@ -73,12 +73,12 @@ pub struct ClientLoad;
 impl Plugin for ClientLoad {
     fn build(&self, app: &mut App) {
         app.add_loading_state(
-            LoadingState::new(MenuState::Loading)
-                .continue_to_state(MenuState::MainMenu)
+            LoadingState::new(Menu::Loading)
+                .continue_to_state(Menu::MainMenu)
                 .with_collection::<Textures>()
                 .with_collection::<Field>(),
         )
-        .add_system(set_texture_modes.run_not_in_state(MenuState::Loading));
+        .add_system(set_texture_modes.run_not_in_state(Menu::Loading));
     }
 }
 
@@ -86,10 +86,10 @@ pub struct ServerLoad;
 
 impl Plugin for ServerLoad {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(MenuState::Loading)
+        app.add_loopless_state(Menu::Loading)
             .add_loading_state(
-                LoadingState::new(MenuState::Loading)
-                    .continue_to_state(MenuState::MainMenu)
+                LoadingState::new(Menu::Loading)
+                    .continue_to_state(Menu::MainMenu)
                     .with_collection::<Field>(),
             );
     }

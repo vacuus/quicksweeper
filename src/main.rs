@@ -20,7 +20,7 @@ use clap::{Parser, Subcommand};
 use cursor::CursorPlugin;
 use main_menu::MainMenuPlugin;
 use registry::GameRegistry;
-pub use singleplayer::SingleplayerState;
+pub use singleplayer::Singleplayer;
 
 #[derive(Parser)]
 #[command(author, version)]

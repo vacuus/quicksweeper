@@ -17,7 +17,7 @@ use super::{
         RevealTile, SendTile, ServerTile,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
-    states::AreaAttackState,
+    states::AreaAttack,
     AreaAttackServer, AREA_ATTACK_MARKER,
 };
 
@@ -71,7 +71,7 @@ pub fn selection_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
     mut games: Query<(
         Entity,
-        &mut AreaAttackState,
+        &mut AreaAttack,
         &InitialSelections,
         &mut Access,
     )>,
@@ -85,8 +85,8 @@ pub fn selection_transition(
             continue;
         }
         if let Ok((game_id, mut state, selections, mut access)) = games.get_mut(ev.game) {
-            if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttackState::Selecting) {
-                *state = AreaAttackState::Stage1;
+            if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttack::Selecting) {
+                *state = AreaAttack::Stage1;
 
                 let mut ignore = Vec::with_capacity(selections.len() * 16);
 
@@ -113,7 +113,7 @@ pub fn selection_transition(
 
                 connections.for_each_mut(|mut conn| {
                     conn.repeat_send_unchecked(AreaAttackUpdate::Transition(
-                        AreaAttackState::Stage1,
+                        AreaAttack::Stage1,
                     ));
                 });
 
@@ -283,12 +283,12 @@ pub fn broadcast_positions(
 
 pub fn update_selecting_tile(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<(&AreaAttackState, &mut InitialSelections, &Children)>,
+    mut games: Query<(&AreaAttack, &mut InitialSelections, &Children)>,
     mut players: Query<(Entity, &mut Connection)>,
 ) {
     'event_loop: for LocalEvent { player, game, data } in requests.iter() {
         if let AreaAttackRequest::Reveal(requested) = data {
-            let Ok((AreaAttackState::Selecting, mut selections, children)) = games.get_mut(*game) else { continue; };
+            let Ok((AreaAttack::Selecting, mut selections, children)) = games.get_mut(*game) else { continue; };
 
             for selection in selections
                 .iter()
@@ -330,12 +330,12 @@ pub fn update_selecting_tile(
 
 pub fn update_stage1_tile(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<&AreaAttackState>,
+    mut games: Query<&AreaAttack>,
     mut reveal: EventWriter<RevealTile>,
 ) {
     for LocalEvent { player, game, data } in requests.iter() {
         let AreaAttackRequest::Reveal(pos) = data else {continue;};
-        let Ok(AreaAttackState::Stage1) = games.get_mut(*game) else { continue; };
+        let Ok(AreaAttack::Stage1) = games.get_mut(*game) else { continue; };
 
         reveal.send(RevealTile {
             position: *pos,

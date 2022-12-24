@@ -9,14 +9,14 @@ use crate::{
     minefield::{FieldShape, Minefield},
 };
 
-use super::{states::AreaAttackState, AreaAttackServer};
+use super::{states::AreaAttack, AreaAttackServer};
 
 #[derive(Bundle)]
 pub struct AreaAttackBundle {
     field: Minefield,
     template: FieldShape,
     selections: InitialSelections,
-    state: AreaAttackState,
+    state: AreaAttack,
     typed_marker: AreaAttackServer,
 }
 
@@ -41,7 +41,7 @@ impl AreaAttackBundle {
             ),
             template: template.clone(),
             selections: default(),
-            state: AreaAttackState::Selecting,
+            state: AreaAttack::Selecting,
             typed_marker: AreaAttackServer,
         }
     }

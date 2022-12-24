@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug, Component, Serialize, Deserialize)]
-pub enum AreaAttackState {
+pub enum AreaAttack {
     /// Only for client -- to indicate that there is no Area Attack game in progress
     Inactive,
     /// Players are selecting the cells that they will begin on

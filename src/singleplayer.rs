@@ -17,7 +17,7 @@ use iyes_loopless::{
 mod menu;
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SingleplayerState {
+pub enum Singleplayer {
     Inactive,
     PreGame,
     Game,
@@ -29,10 +29,10 @@ fn advance_to_end(mut commands: Commands, mut game_outcome: EventReader<GameOutc
     if let Some(outcome) = game_outcome.iter().next() {
         match outcome {
             GameOutcome::Failed => {
-                commands.insert_resource(NextState(SingleplayerState::GameFailed))
+                commands.insert_resource(NextState(Singleplayer::GameFailed))
             }
             GameOutcome::Succeeded => {
-                commands.insert_resource(NextState(SingleplayerState::GameSuccess))
+                commands.insert_resource(NextState(Singleplayer::GameSuccess))
             }
         }
     }
@@ -40,7 +40,7 @@ fn advance_to_end(mut commands: Commands, mut game_outcome: EventReader<GameOutc
 
 fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>) {
     if !init_move.is_empty() {
-        commands.insert_resource(NextState(SingleplayerState::Game))
+        commands.insert_resource(NextState(Singleplayer::Game))
     }
 }
 
@@ -89,7 +89,7 @@ pub struct SingleplayerMode;
 
 impl Plugin for SingleplayerMode {
     fn build(&self, app: &mut App) {
-        use SingleplayerState::*;
+        use Singleplayer::*;
         app
             // state
             .add_loopless_state(Inactive)

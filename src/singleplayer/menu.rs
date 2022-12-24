@@ -5,8 +5,8 @@ use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
 use crate::minefield::Minefield;
 use crate::{
-    main_menu::{standard_window, MenuState},
-    SingleplayerState,
+    main_menu::{standard_window, Menu},
+    Singleplayer,
 };
 
 fn fail_screen(mut commands: Commands, ctx: ResMut<EguiContext>, minefield: Query<&Minefield>) {
@@ -28,7 +28,7 @@ fn success_screen(mut commands: Commands, ctx: ResMut<EguiContext>) {
 }
 
 pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, message: String) {
-    use SingleplayerState::*;
+    use Singleplayer::*;
     standard_window(&mut ctx, |ui| {
         ui.vertical_centered(|ui| {
             let initial_height = ui.available_height();
@@ -38,7 +38,7 @@ pub fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, mess
             }
             if ui.button("Main Menu").clicked() {
                 commands.insert_resource(NextState(Inactive));
-                commands.insert_resource(NextState(MenuState::MainMenu));
+                commands.insert_resource(NextState(Menu::MainMenu));
             }
             let height = initial_height - ui.available_height();
             ui.set_max_height(height)
@@ -50,7 +50,7 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(fail_screen.run_in_state(SingleplayerState::GameFailed))
-            .add_system(success_screen.run_in_state(SingleplayerState::GameSuccess));
+        app.add_system(fail_screen.run_in_state(Singleplayer::GameFailed))
+            .add_system(success_screen.run_in_state(Singleplayer::GameSuccess));
     }
 }

@@ -6,7 +6,7 @@ use crate::{common::Position, minefield::FieldShape};
 
 use super::{
     components::{ClientTile, PlayerColor},
-    states::AreaAttackState,
+    states::AreaAttack,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -33,7 +33,7 @@ pub enum AreaAttackUpdate {
         position: Position,
         to: ClientTile,
     },
-    Transition(AreaAttackState),
+    Transition(AreaAttack),
     /// Issued to a client when it attempts to join a full game
     Full,
     NotHost,

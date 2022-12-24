@@ -12,11 +12,11 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 use crate::{
     registry::GameRegistry,
     server::{ActiveGame, ClientMessage, Connection, GameMarker, Greeting, ServerMessage},
-    SingleplayerState,
+    Singleplayer,
 };
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum MenuState {
+pub enum Menu {
     Loading,
     MainMenu,
     ServerSelect,
@@ -59,11 +59,11 @@ fn run_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
                     .color(Color32::GOLD),
             );
             if ui.button("Singleplayer mode").clicked() {
-                commands.insert_resource(NextState(SingleplayerState::PreGame));
-                commands.insert_resource(NextState(MenuState::InGame));
+                commands.insert_resource(NextState(Singleplayer::PreGame));
+                commands.insert_resource(NextState(Menu::InGame));
             }
             if ui.button("Connect to server").clicked() {
-                commands.insert_resource(NextState(MenuState::ServerSelect))
+                commands.insert_resource(NextState(Menu::ServerSelect))
             }
             let height = initial_height - ui.available_height();
             ui.set_max_height(height)
@@ -81,7 +81,7 @@ fn server_select_menu(
             .vertical_centered(|ui| {
                 ui.horizontal(|ui| {
                     if ui.button("back").clicked() {
-                        commands.insert_resource(NextState(MenuState::MainMenu))
+                        commands.insert_resource(NextState(Menu::MainMenu))
                     }
                     ui.colored_label(Color32::RED, fields.remote_select_err);
                 });
@@ -131,7 +131,7 @@ fn server_select_menu(
                     })?;
 
                     commands.insert_resource(socket);
-                    commands.insert_resource(NextState(MenuState::GameSelect));
+                    commands.insert_resource(NextState(Menu::GameSelect));
                 }
                 Err(HandshakeError::Interrupted(handshake)) => {
                     fields.trying_connection = Some(handshake.handshake())
@@ -249,7 +249,7 @@ fn game_select_menu(
 
     if response.go_back.clicked() {
         commands.remove_resource::<Connection>();
-        commands.insert_resource(NextState(MenuState::MainMenu));
+        commands.insert_resource(NextState(Menu::MainMenu));
     } else if response.reload.clicked() {
         socket.send_logged(ClientMessage::Games);
     } else if let Some(mode) = response.create {
@@ -258,11 +258,11 @@ fn game_select_menu(
             args: Vec::new(),
         });
         start_game.send(ToGame(mode));
-        commands.insert_resource(NextState(MenuState::InGame));
+        commands.insert_resource(NextState(Menu::InGame));
     } else if let Some((game, marker)) = response.join_game {
         socket.send_logged(ClientMessage::Join { game });
         start_game.send(ToGame(marker));
-        commands.insert_resource(NextState(MenuState::InGame));
+        commands.insert_resource(NextState(Menu::InGame));
     }
 }
 
@@ -276,14 +276,14 @@ pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(MenuState::Loading)
+        app.add_loopless_state(Menu::Loading)
             .add_event::<ToGame>()
             .init_resource::<MenuFields>()
             .add_system(poll_connection)
-            .add_system(run_main_menu.run_in_state(MenuState::MainMenu))
-            .add_system(server_select_menu.run_in_state(MenuState::ServerSelect))
-            .add_system(game_select_menu.run_in_state(MenuState::GameSelect))
-            .add_enter_system(MenuState::MainMenu, |mut commands: Commands| {
+            .add_system(run_main_menu.run_in_state(Menu::MainMenu))
+            .add_system(server_select_menu.run_in_state(Menu::ServerSelect))
+            .add_system(game_select_menu.run_in_state(Menu::GameSelect))
+            .add_enter_system(Menu::MainMenu, |mut commands: Commands| {
                 commands.remove_resource::<Connection>()
             });
     }

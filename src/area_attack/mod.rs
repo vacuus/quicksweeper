@@ -11,7 +11,7 @@ use iyes_loopless::prelude::*;
 use server_systems::*;
 
 use crate::{
-    main_menu::{MenuState, ToGame},
+    main_menu::{Menu, ToGame},
     registry::GameRegistry,
     server::{GameDescriptor, GameMarker, LocalEvent},
 };
@@ -20,7 +20,7 @@ use self::{
     components::{RevealTile, SendTile},
     protocol::AreaAttackRequest,
     puppet::PuppetTable,
-    states::AreaAttackState,
+    states::AreaAttack,
 };
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
@@ -51,7 +51,7 @@ impl Plugin for AreaAttackServer {
             .add_event::<RevealTile>()
             .add_system_set(
                 ConditionSet::new()
-                    .run_not_in_state(MenuState::Loading)
+                    .run_not_in_state(Menu::Loading)
                     .with_system(broadcast_positions)
                     .with_system(create_game)
                     .with_system(send_tiles)
@@ -72,20 +72,21 @@ pub struct AreaAttackClient;
 
 impl Plugin for AreaAttackClient {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(AreaAttackState::Inactive)
+        use AreaAttack::*;
+        app.add_loopless_state(Inactive)
             .init_resource::<PuppetTable>()
             .add_startup_system(registry_entry)
             .add_system(|mut commands: Commands, mut ev: EventReader<ToGame>| {
                 if ev.iter().any(|e| **e == AREA_ATTACK_MARKER) {
                     // transition from menu into game
-                    commands.insert_resource(NextState(AreaAttackState::Selecting))
+                    commands.insert_resource(NextState(Selecting))
                 }
             })
-            .add_system(client_systems::begin_game.run_in_state(AreaAttackState::Selecting))
+            .add_system(client_systems::begin_game.run_in_state(Selecting))
             .add_system(puppet::update_cursor_colors)
             .add_system_set(
                 ConditionSet::new()
-                    .run_not_in_state(AreaAttackState::Inactive)
+                    .run_not_in_state(Inactive)
                     .with_system(client_systems::listen_net)
                     .with_system(client_systems::send_position)
                     .with_system(client_systems::request_reveal)
