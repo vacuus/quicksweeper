@@ -27,8 +27,14 @@ impl CursorPosition {
 
 #[derive(Resource)]
 pub struct Bindings {
+    // TODO: Allow other input methods than keyboard keys + allow user-set bindings
     pub flag: KeyCode,
     pub check: KeyCode,
+    // camera panning
+    pub camera_up: KeyCode,
+    pub camera_down: KeyCode,
+    pub camera_left: KeyCode,
+    pub camera_right: KeyCode,
 }
 
 impl Default for Bindings {
@@ -36,6 +42,10 @@ impl Default for Bindings {
         Self {
             flag: KeyCode::F,
             check: KeyCode::Space,
+            camera_up: KeyCode::W,
+            camera_down: KeyCode::S,
+            camera_left: KeyCode::A,
+            camera_right: KeyCode::D,
         }
     }
 }
@@ -142,28 +152,39 @@ pub fn translate_cursor(
     }
 }
 
-/// Forces the camera to track a single cursor
-pub fn track_cursor(
-    cursor: Query<&Transform, (With<Cursor>, Without<Camera>)>,
+/// Moves the camera using the panning keys
+pub fn pan_camera(
+    keybinds: Res<Bindings>,
+    input: Res<Input<KeyCode>>,
     mut camera: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
 ) {
-    if let Ok(&Transform {
-        translation: cursor_translation,
-        ..
-    }) = cursor.get_single()
-    {
-        let camera_translation = &mut camera.single_mut().translation;
-        let camera_diff = (cursor_translation - *camera_translation).truncate();
+    let translation = &mut camera.single_mut().translation;
 
-        // tranlate camera
-        const MAX_CURSOR_TRAVEL: f32 = ((32 * 8) as u32).pow(2) as f32;
-        let transform_magnitude = camera_diff.length_squared() - MAX_CURSOR_TRAVEL;
-        if transform_magnitude > 0.0 {
-            let scale = 0.4;
-            *camera_translation += (camera_diff * time.delta_seconds() * scale).extend(0.0);
-        }
-    }
+    const CAMERA_VELOCITY: f32 = 500.0;
+    let velocity = CAMERA_VELOCITY * time.delta_seconds();
+
+    *translation += Vec3::new(
+        if input.pressed(keybinds.camera_left) {
+            -velocity
+        } else {
+            0.
+        } + if input.pressed(keybinds.camera_right) {
+            velocity
+        } else {
+            0.
+        },
+        if input.pressed(keybinds.camera_down) {
+            -velocity
+        } else {
+            0.
+        } + if input.pressed(keybinds.camera_up) {
+            velocity
+        } else {
+            0.
+        },
+        0.,
+    )
 }
 
 pub fn check_cell(
@@ -244,7 +265,8 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScaleFactor(1.0))
             .init_resource::<Bindings>()
-            .add_system(track_cursor)
+            // .add_system(track_cursor)
+            .add_system(pan_camera)
             .add_system(translate_cursor)
             .add_system(zoom_camera)
             .add_system(pointer_cursor);
