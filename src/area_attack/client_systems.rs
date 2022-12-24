@@ -151,7 +151,7 @@ pub fn listen_net(
         }
         Some(Ok(AreaAttackUpdate::PlayerProperties {
             id,
-            username, // TODO display username somehow
+            username,
             color,
             position,
         })) => {

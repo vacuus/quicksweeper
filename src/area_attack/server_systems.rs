@@ -155,7 +155,7 @@ pub fn reveal_tiles(
             match *tile {
                 ServerTile::Empty => {
                     *tile = ServerTile::Owned { player };
-                    let mine_count = field // TODO: Extract to function
+                    let mine_count = field
                         .iter_neighbors(position)
                         .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
                         .count() as u8;

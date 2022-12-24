@@ -63,7 +63,7 @@ pub fn game_messages(
                 commands.entity(**game).remove_children(&[player]);
             }
             Some(_) => {
-                socket.send_logged(ServerMessage::Malformed); // TODO report this later
+                socket.send_logged(ServerMessage::Malformed);
             }
             None => (),
         }
@@ -121,7 +121,7 @@ pub fn server_messages(
                 }
             }
             Some(_) => {
-                socket.send_logged(ServerMessage::Malformed); // TODO report this later
+                socket.send_logged(ServerMessage::Malformed);
             }
             _ => (),
         };

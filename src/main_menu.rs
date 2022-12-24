@@ -244,7 +244,7 @@ fn game_select_menu(
     if response.go_back.clicked() {
         commands.insert_resource(NextState(MenuState::MainMenu));
     } else if response.reload.clicked() {
-        socket.send_logged(ClientMessage::Games); // TODO: Report error to user
+        socket.send_logged(ClientMessage::Games);
     } else if let Some(mode) = response.create {
         socket.send_logged(ClientMessage::Create {
             game: mode,

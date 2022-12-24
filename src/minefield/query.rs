@@ -147,7 +147,6 @@ where
     }
 
     pub fn get_mut(&'query mut self, position: Position) -> Option<QueryItem<'query, Tile>> {
-        // self.tile_query.get_mut(self.minefield[&position]).unwrap()
         self.minefield
             .get(position)
             .map(|tile_id| self.tile_query.get_mut(tile_id.unwrap()).unwrap())

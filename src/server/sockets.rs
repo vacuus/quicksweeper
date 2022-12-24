@@ -53,7 +53,7 @@ impl OpenPort {
 #[derive(Resource, Component)]
 pub struct Connection {
     socket: WebSocket<TcpStream>,
-    repeat_buffer: VecDeque<Vec<u8>>, // TODO use buffer in continuous sending system
+    repeat_buffer: VecDeque<Vec<u8>>,
     trials: u8,
     disconnected: bool,
 }
