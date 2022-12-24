@@ -3,9 +3,13 @@
 use std::ops::Deref;
 
 use bevy::{
-    ecs::{query::WorldQuery, system::SystemParam},
+    ecs::{
+        query::{QueryItem, ROQueryItem, WorldQuery},
+        system::SystemParam,
+    },
     prelude::*,
 };
+use gridly::prelude::*;
 use ouroboros::self_referencing;
 use rand::Rng;
 
@@ -43,6 +47,20 @@ where
                 .build(),
             })
     }
+
+    pub fn get_single(&'all mut self) -> Option<AdjoinedMinefield<'all, 'world, 'state, Tile>> {
+        self.minefield_query
+            .get_single()
+            .is_ok()
+            .then(|| AdjoinedMinefield {
+                tile_query: &mut self.tile_query,
+                minefield: BorrowedMinefieldBuilder {
+                    minefield_query: &mut self.minefield_query,
+                    minefield_builder: |query: &&Query<&Minefield>| query.single(),
+                }
+                .build(),
+            })
+    }
 }
 
 #[self_referencing]
@@ -63,9 +81,6 @@ impl<'all, 'world, 'state> Deref for BorrowedMinefield<'all, 'world, 'state> {
         self.borrow_minefield()
     }
 }
-
-type MutWorldAccess<'a, T> = <T as WorldQuery>::Item<'a>;
-type ReadOnlyWorldAccess<'a, T> = <<T as WorldQuery>::ReadOnly as WorldQuery>::Item<'a>;
 
 pub struct AdjoinedMinefield<'all, 'world, 'state, Tile>
 where
@@ -88,7 +103,7 @@ where
         &'query mut self,
         exclude: &'all impl Contains<Position>,
         rng: &'all mut impl Rng,
-        mut op: impl for<'every> FnMut(Position, MutWorldAccess<'every, Tile>),
+        mut op: impl for<'every> FnMut(Position, QueryItem<'every, Tile>),
     ) {
         self.minefield
             .choose_multiple(exclude, rng)
@@ -103,7 +118,7 @@ where
     pub fn iter_neighbors_enumerated(
         &self,
         position: Position,
-    ) -> impl Iterator<Item = (Position, ReadOnlyWorldAccess<Tile>)> {
+    ) -> impl Iterator<Item = (Position, ROQueryItem<Tile>)> {
         self.minefield
             .iter_neighbors_enumerated(position)
             .map(|(loc, tile_id)| {
@@ -116,22 +131,26 @@ where
         &self,
         position: Position,
     ) -> impl Iterator<Item = Position> + '_ {
-        self.iter_neighbors_enumerated(position).map(|(pos, _)| pos)
+        self.minefield.iter_neighbor_positions(position)
     }
 
-    pub fn iter_neighbors(
-        &self,
-        position: Position,
-    ) -> impl Iterator<Item = ReadOnlyWorldAccess<Tile>> {
+    pub fn iter_neighbors(&self, position: Position) -> impl Iterator<Item = ROQueryItem<Tile>> {
         self.iter_neighbors_enumerated(position)
             .map(|(_, tile)| tile)
     }
 
-    pub fn get(&self, position: Position) -> ReadOnlyWorldAccess<Tile> {
-        self.tile_query.get(self.minefield[&position]).unwrap()
+    pub fn get(&self, position: Position) -> Option<ROQueryItem<Tile>> {
+        self.minefield
+            .get(position)
+            .map(|tile_id| self.tile_query.get(tile_id.unwrap()).unwrap())
+            .ok()
     }
 
-    pub fn get_mut(&'query mut self, position: Position) -> MutWorldAccess<'query, Tile> {
-        self.tile_query.get_mut(self.minefield[&position]).unwrap()
+    pub fn get_mut(&'query mut self, position: Position) -> Option<QueryItem<'query, Tile>> {
+        // self.tile_query.get_mut(self.minefield[&position]).unwrap()
+        self.minefield
+            .get(position)
+            .map(|tile_id| self.tile_query.get_mut(tile_id.unwrap()).unwrap())
+            .ok()
     }
 }

@@ -91,10 +91,6 @@ impl Minefield {
         self.iter_neighbors_enumerated(pos).map(|(pos, _)| pos)
     }
 
-    pub fn iter_neighbors(&self, pos: Position) -> impl Iterator<Item = Entity> + '_ {
-        self.iter_neighbors_enumerated(pos).map(|(_, ent)| ent)
-    }
-
     pub fn is_contained(&self, pos: &Position) -> bool {
         matches!(self.get(pos), Ok(Some(_)))
     }

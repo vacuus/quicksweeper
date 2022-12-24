@@ -8,7 +8,7 @@ use crate::{
     cursor::{Cursor, CursorBundle},
     load::Textures,
     main_menu::standard_window,
-    minefield::{specific::TILE_SIZE, Minefield},
+    minefield::{query::MinefieldQuery, specific::TILE_SIZE, Minefield},
     server::{ClientMessage, Connection},
 };
 
@@ -35,9 +35,8 @@ pub fn request_reveal(
     cursor: Query<(&Cursor, &Position)>,
     kb: Res<Input<KeyCode>>,
     mut sock: ResMut<Connection>,
-    field: Query<&Minefield>,
     state: Res<CurrentState<AreaAttackState>>,
-    mut tiles: Query<&mut ClientTile>,
+    mut field: MinefieldQuery<&mut ClientTile>,
     puppet_table: Res<PuppetTable>,
 ) {
     for (
@@ -49,8 +48,9 @@ pub fn request_reveal(
         &position,
     ) in cursor.iter()
     {
+        let mut field = field.get_single().unwrap();
         if kb.just_pressed(check_key) {
-            match tiles.get(field.single()[&position]).unwrap() {
+            match field.get(position).unwrap() {
                 ClientTile::Unknown => {
                     sock.send_logged(ClientMessage::Ingame {
                         data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
@@ -61,17 +61,15 @@ pub fn request_reveal(
                     num_neighbors,
                 } => {
                     if !puppet_table.contains_key(player) {
-                        let field = field.single();
                         // counts both flags and known mines
                         let marked_count = field
                             .iter_neighbors(position)
-                            .filter_map(|ent| tiles.get(ent).ok())
                             .filter(|tile| matches!(tile, ClientTile::Flag | ClientTile::HardMine))
                             .count() as u8;
 
                         if marked_count == *num_neighbors {
-                            for (position, tile_id) in field.iter_neighbors_enumerated(position) {
-                                if !matches!(tiles.get(tile_id).unwrap(), ClientTile::Flag) {
+                            for (position, tile) in field.iter_neighbors_enumerated(position) {
+                                if !matches!(tile, ClientTile::Flag) {
                                     sock.send_logged(ClientMessage::Ingame {
                                         data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(
                                             position,
@@ -92,7 +90,7 @@ pub fn request_reveal(
                 AreaAttackState::Selecting | AreaAttackState::Finishing | AreaAttackState::Inactive
             )
         {
-            if let Ok(mut tile) = tiles.get_mut(field.single()[&position]) {
+            if let Some(mut tile) = field.get_mut(position) {
                 match *tile {
                     ClientTile::Unknown => *tile = ClientTile::Flag,
                     ClientTile::Flag => *tile = ClientTile::Unknown,

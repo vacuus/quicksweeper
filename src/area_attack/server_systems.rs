@@ -151,7 +151,7 @@ pub fn reveal_tiles(
             if frozen.is_some() {
                 continue;
             }
-            let mut tile = field.get_mut(position);
+            let Some(mut tile) = field.get_mut(position) else {continue;};
             match *tile {
                 ServerTile::Empty => {
                     *tile = ServerTile::Owned { player };
