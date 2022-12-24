@@ -25,6 +25,7 @@ impl CursorPosition {
     }
 }
 
+#[derive(Resource)]
 pub struct Bindings {
     pub flag: KeyCode,
     pub check: KeyCode,
@@ -50,25 +51,13 @@ pub struct CursorBundle {
 pub struct Cursor {
     pub color: Color,
     pub owning_minefield: Entity,
-    pub check_key: KeyCode,
-    pub flag_key: KeyCode,
 }
 
 impl Cursor {
     pub fn new(color: Color, owning_minefield: Entity) -> Self {
-        Self::new_with_keybindings(color, owning_minefield, default())
-    }
-
-    pub fn new_with_keybindings(
-        color: Color,
-        owning_minefield: Entity,
-        bindings: Bindings,
-    ) -> Self {
         Cursor {
             color,
             owning_minefield,
-            check_key: bindings.check,
-            flag_key: bindings.flag,
         }
     }
 }
@@ -180,22 +169,20 @@ pub fn track_cursor(
 pub fn check_cell(
     cursor: Query<(&Cursor, &Position)>,
     kb: Res<Input<KeyCode>>,
+    keybinds: Res<Bindings>,
     mut check: EventWriter<CheckCell>,
     mut flag: EventWriter<FlagCell>,
 ) {
     for (
         &Cursor {
-            owning_minefield,
-            check_key,
-            flag_key,
-            ..
+            owning_minefield, ..
         },
         &position,
     ) in cursor.iter()
     {
-        if kb.just_pressed(check_key) {
+        if kb.just_pressed(keybinds.check) {
             check.send(CheckCell(CursorPosition(position, owning_minefield)));
-        } else if kb.just_pressed(flag_key) {
+        } else if kb.just_pressed(keybinds.flag) {
             flag.send(FlagCell(CursorPosition(position, owning_minefield)));
         }
     }
@@ -256,6 +243,7 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScaleFactor(1.0))
+            .init_resource::<Bindings>()
             .add_system(track_cursor)
             .add_system(translate_cursor)
             .add_system(zoom_camera)

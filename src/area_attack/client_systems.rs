@@ -5,7 +5,7 @@ use tap::Tap;
 
 use crate::{
     common::Position,
-    cursor::{Cursor, CursorBundle},
+    cursor::{Bindings, Cursor, CursorBundle},
     load::Textures,
     main_menu::standard_window,
     minefield::{query::MinefieldQuery, specific::TILE_SIZE, Minefield},
@@ -32,24 +32,17 @@ pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<Connection>>
 }
 
 pub fn request_reveal(
-    cursor: Query<(&Cursor, &Position)>,
+    cursor: Query<&Position, With<Cursor>>,
+    keybinds: Res<Bindings>,
     kb: Res<Input<KeyCode>>,
     mut sock: ResMut<Connection>,
     state: Res<CurrentState<AreaAttackState>>,
     mut field: MinefieldQuery<&mut ClientTile>,
     puppet_table: Res<PuppetTable>,
 ) {
-    for (
-        &Cursor {
-            check_key,
-            flag_key,
-            ..
-        },
-        &position,
-    ) in cursor.iter()
-    {
+    for &position in cursor.iter() {
         let mut field = field.get_single().unwrap();
-        if kb.just_pressed(check_key) {
+        if kb.just_pressed(keybinds.check) {
             match field.get(position).unwrap() {
                 ClientTile::Unknown => {
                     sock.send_logged(ClientMessage::Ingame {
@@ -83,7 +76,7 @@ pub fn request_reveal(
                 }
                 _ => (), // do nothing, since these tiles semantically contains mines
             }
-        } else if kb.just_pressed(flag_key)
+        } else if kb.just_pressed(keybinds.flag)
             && !matches!(
                 state.0,
                 // truthfully the last of these three should be impossible, but check it anyway
