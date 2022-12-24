@@ -158,11 +158,12 @@ pub fn pan_camera(
     input: Res<Input<KeyCode>>,
     mut camera: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
+    scale: Res<ScaleFactor>,
 ) {
     let translation = &mut camera.single_mut().translation;
 
     const CAMERA_VELOCITY: f32 = 500.0;
-    let velocity = CAMERA_VELOCITY * time.delta_seconds();
+    let velocity = CAMERA_VELOCITY * time.delta_seconds() * **scale;
 
     *translation += Vec3::new(
         if input.pressed(keybinds.camera_left) {
