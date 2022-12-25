@@ -1,16 +1,19 @@
-use crate::minefield::{
-    specific::{MineCell, TILE_SIZE},
-    systems::*,
-    FieldShape, GameOutcome, Minefield,
-};
 use crate::{
     common::InitCheckCell,
     cursor::*,
     load::{Field, Textures},
 };
+use crate::{
+    main_menu::Menu,
+    minefield::{
+        specific::{MineCell, TILE_SIZE},
+        systems::*,
+        FieldShape, GameOutcome, Minefield,
+    },
+};
 use bevy::prelude::*;
 use iyes_loopless::{
-    prelude::{AppLooplessStateExt, IntoConditionalSystem},
+    prelude::{AppLooplessStateExt, ConditionSet, IntoConditionalSystem},
     state::NextState,
 };
 
@@ -28,9 +31,7 @@ pub enum Singleplayer {
 fn advance_to_end(mut commands: Commands, mut game_outcome: EventReader<GameOutcome>) {
     if let Some(outcome) = game_outcome.iter().next() {
         match outcome {
-            GameOutcome::Failed => {
-                commands.insert_resource(NextState(Singleplayer::GameFailed))
-            }
+            GameOutcome::Failed => commands.insert_resource(NextState(Singleplayer::GameFailed)),
             GameOutcome::Succeeded => {
                 commands.insert_resource(NextState(Singleplayer::GameSuccess))
             }
@@ -107,9 +108,14 @@ impl Plugin for SingleplayerMode {
             .add_enter_system(Inactive, destroy_cursors)
             .add_enter_system(Inactive, destroy_minefields)
             // in-game logic
-            .add_system(flag_cell.run_in_state(Game))
-            .add_system(reveal_cell.run_in_state(Game))
-            .add_system(init_check_cell.run_in_state(PreGame))
-            .add_system(check_cell.run_in_state(Game));
+            .add_system_set(
+                ConditionSet::new()
+                    .run_not_in_state(Menu::Pause)
+                    .with_system(flag_cell.run_in_state(Game))
+                    .with_system(reveal_cell.run_in_state(Game))
+                    .with_system(init_check_cell.run_in_state(PreGame))
+                    .with_system(check_cell.run_in_state(Game))
+                    .into(),
+            );
     }
 }

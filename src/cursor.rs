@@ -1,9 +1,11 @@
 use crate::area_attack::puppet::PuppetCursor;
 use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
+use crate::main_menu::Menu;
 use crate::minefield::specific::TILE_SIZE;
 use crate::minefield::Minefield;
 use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, render::camera::Camera};
+use iyes_loopless::prelude::IntoConditionalSystem;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// The entity field describes the minefield which it is placed on
@@ -272,6 +274,6 @@ impl Plugin for CursorPlugin {
             .add_system(pan_camera)
             .add_system(translate_cursor)
             .add_system(zoom_camera)
-            .add_system(pointer_cursor);
+            .add_system(pointer_cursor.run_not_in_state(Menu::Pause));
     }
 }
