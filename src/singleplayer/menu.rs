@@ -65,7 +65,7 @@ impl Plugin for MenuPlugin {
             .add_system(success_screen.run_in_state(Singleplayer::GameSuccess))
             .add_system(pause_menu.run_if(
                 |s1: Res<CurrentState<Singleplayer>>, s2: Res<CurrentState<Menu>>| {
-                    s1.0 != Singleplayer::Inactive && s2.0 == Menu::PauseLocal
+                    s1.0 != Singleplayer::Inactive && s2.0 == Menu::Pause
                 },
             ));
     }

@@ -24,11 +24,8 @@ pub enum Menu {
     GameSelect,
 
     // active/pause states
-    IngameMulti,
-    IngameLocal,
-
-    PauseMulti,
-    PauseLocal,
+    Ingame,
+    Pause,
 }
 
 type ClientResult =
@@ -67,7 +64,7 @@ fn run_main_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
             );
             if ui.button("Singleplayer mode").clicked() {
                 commands.insert_resource(NextState(Singleplayer::PreGame));
-                commands.insert_resource(NextState(Menu::IngameLocal));
+                commands.insert_resource(NextState(Menu::Ingame));
             }
             if ui.button("Connect to server").clicked() {
                 commands.insert_resource(NextState(Menu::ServerSelect))
@@ -265,11 +262,11 @@ fn game_select_menu(
             args: Vec::new(),
         });
         start_game.send(ToGame(mode));
-        commands.insert_resource(NextState(Menu::IngameMulti));
+        commands.insert_resource(NextState(Menu::Ingame));
     } else if let Some((game, marker)) = response.join_game {
         socket.send_logged(ClientMessage::Join { game });
         start_game.send(ToGame(marker));
-        commands.insert_resource(NextState(Menu::IngameMulti));
+        commands.insert_resource(NextState(Menu::Ingame));
     }
 }
 
@@ -287,10 +284,8 @@ fn pause(
 ) {
     if input.just_pressed(keybinds.pause) {
         if let Some(next) = match state.0 {
-            Menu::IngameLocal => Some(Menu::PauseLocal),
-            Menu::IngameMulti => Some(Menu::PauseMulti),
-            Menu::PauseLocal => Some(Menu::IngameLocal),
-            Menu::PauseMulti => Some(Menu::IngameMulti),
+            Menu::Ingame => Some(Menu::Pause),
+            Menu::Pause => Some(Menu::Ingame),
             _ => None,
         } {
             commands.insert_resource(NextState(dbg!(next)))
