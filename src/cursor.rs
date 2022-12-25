@@ -156,6 +156,52 @@ pub fn translate_cursor(
     }
 }
 
+#[derive(Default)]
+struct PanControl {
+    velocity: f32,
+}
+
+impl PanControl {
+    fn update(&mut self, delta_secs: f32, pressed: bool) {
+        const ACCELERATION: f32 = 500.;
+        const DECLERATION: f32 = 800.;
+        const MAX_VELOCITY: f32 = 500.;
+
+        self.velocity = (self.velocity
+            + delta_secs * if pressed { ACCELERATION } else { -DECLERATION })
+        .clamp(0., MAX_VELOCITY);
+    }
+}
+
+#[derive(Default)]
+pub struct PanControls {
+    up: PanControl,
+    down: PanControl,
+    left: PanControl,
+    right: PanControl,
+}
+
+impl PanControls {
+    fn update(&mut self, input: &Res<Input<KeyCode>>, bindings: &Res<Bindings>, time: &Res<Time>) {
+        self.up
+            .update(time.delta_seconds(), input.pressed(bindings.camera_up));
+        self.down
+            .update(time.delta_seconds(), input.pressed(bindings.camera_down));
+        self.left
+            .update(time.delta_seconds(), input.pressed(bindings.camera_left));
+        self.right
+            .update(time.delta_seconds(), input.pressed(bindings.camera_right));
+    }
+
+    fn velocity(&self) -> Vec3 {
+        Vec3::new(
+            self.right.velocity - self.left.velocity,
+            self.up.velocity - self.down.velocity,
+            0.,
+        )
+    }
+}
+
 /// Moves the camera using the panning keys
 pub fn pan_camera(
     keybinds: Res<Bindings>,
@@ -163,33 +209,37 @@ pub fn pan_camera(
     mut camera: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
     scale: Res<ScaleFactor>,
+    mut pan_controls: Local<PanControls>,
 ) {
     let translation = &mut camera.single_mut().translation;
 
-    const CAMERA_VELOCITY: f32 = 500.0;
-    let velocity = CAMERA_VELOCITY * time.delta_seconds() * **scale;
+    // const CAMERA_VELOCITY: f32 = 500.0;
+    // let velocity = CAMERA_VELOCITY * time.delta_seconds() * **scale;
 
-    *translation += Vec3::new(
-        if input.pressed(keybinds.camera_left) {
-            -velocity
-        } else {
-            0.
-        } + if input.pressed(keybinds.camera_right) {
-            velocity
-        } else {
-            0.
-        },
-        if input.pressed(keybinds.camera_down) {
-            -velocity
-        } else {
-            0.
-        } + if input.pressed(keybinds.camera_up) {
-            velocity
-        } else {
-            0.
-        },
-        0.,
-    )
+    pan_controls.update(&input, &keybinds, &time);
+
+    *translation += time.delta_seconds() * pan_controls.velocity() * **scale;
+    // Vec3::new(
+    //     if input.pressed(keybinds.camera_left) {
+    //         -velocity
+    //     } else {
+    //         0.
+    //     } + if input.pressed(keybinds.camera_right) {
+    //         velocity
+    //     } else {
+    //         0.
+    //     },
+    //     if input.pressed(keybinds.camera_down) {
+    //         -velocity
+    //     } else {
+    //         0.
+    //     } + if input.pressed(keybinds.camera_up) {
+    //         velocity
+    //     } else {
+    //         0.
+    //     },
+    //     0.,
+    // )
 }
 
 pub fn check_cell(
