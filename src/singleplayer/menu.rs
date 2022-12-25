@@ -47,12 +47,20 @@ fn create_screen(commands: &mut Commands, mut ctx: ResMut<EguiContext>, message:
     });
 }
 
-fn pause_menu(mut ctx: ResMut<EguiContext>) {
+fn pause_menu(mut commands: Commands, mut ctx: ResMut<EguiContext>) {
     standard_window(&mut ctx, |ui| {
         ui.vertical_centered(|ui| {
-            ui.button("resume");
-            ui.button("retry");
-            ui.button("exit");
+            if ui.button("resume").clicked() {
+                commands.insert_resource(NextState(Menu::Ingame));
+            };
+            if ui.button("retry").clicked() {
+                commands.insert_resource(NextState(Singleplayer::PreGame));
+                commands.insert_resource(NextState(Menu::Ingame));
+            };
+            if ui.button("exit").clicked() {
+                commands.insert_resource(NextState(Menu::MainMenu));
+                commands.insert_resource(NextState(Singleplayer::Inactive));
+            };
         })
     });
 }

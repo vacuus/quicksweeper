@@ -24,6 +24,7 @@ pub enum Singleplayer {
     Inactive,
     PreGame,
     Game,
+    Reset, // reserved for menu activation
     GameFailed,
     GameSuccess,
 }
@@ -99,8 +100,14 @@ impl Plugin for SingleplayerMode {
             // state change startup and cleanup
             .add_exit_system(Inactive, create_entities)
             .add_system(generate_minefield.run_in_state(PreGame))
-            .add_exit_system(GameFailed, wipe_minefields)
-            .add_exit_system(GameSuccess, wipe_minefields)
+            .add_enter_system(PreGame, wipe_minefields)
+            // .add_exit_system(GameFailed, wipe_minefields)
+            // .add_exit_system(GameSuccess, wipe_minefields)
+            // .add_exit_system(Reset, wipe_minefields)
+            // .add_system( // advancce immediately to pregame if the reset state was hit
+            //     (|mut commands: Commands| commands.insert_resource(NextState(PreGame)))
+            //         .run_in_state(Reset),
+            // )
             .add_system(advance_to_game.run_in_state(PreGame))
             .add_system(advance_to_end.run_in_state(Game))
             .add_enter_system(GameFailed, display_mines)
