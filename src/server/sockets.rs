@@ -6,6 +6,7 @@ use std::{
 use bevy::prelude::*;
 use itertools::Itertools;
 use serde::{de::DeserializeOwned, Serialize};
+use tap::Tap;
 use tungstenite::{
     handshake::{server::NoCallback, MidHandshake},
     HandshakeError, Message, ServerHandshake, WebSocket,
@@ -124,15 +125,14 @@ impl Connection {
     }
 
     fn try_send_buf(&mut self, msg: Vec<u8>) -> Result<(), MessageError> {
-        if let Err(e) = self
-            .socket
+        self.socket
             .write_message(Message::Binary(msg))
             .map_err(MessageError::from)
-        {
-            self.disconnected = e.disconnected();
-            return Err(e);
-        }
-        Ok(())
+            .tap(|e| {
+                if let Err(e) = e {
+                    self.disconnected = e.disconnected();
+                }
+            })
     }
 }
 
