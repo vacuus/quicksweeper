@@ -32,6 +32,7 @@ impl Plugin for ServerPlugin {
             .add_system(upgrade_connections)
             .add_system(clean_dead_connections)
             .add_system(try_send_repeated)
+            .add_system(clean_empty_games)
             .add_system(game_messages)
             .add_system(server_messages);
     }

@@ -128,6 +128,14 @@ pub fn server_messages(
     }
 }
 
+pub fn clean_empty_games(mut commands: Commands, q: Query<(Entity, &Children), With<GameMarker>>) {
+    for (id, children) in q.iter() {
+        if children.is_empty() {
+            commands.entity(id).despawn_recursive()
+        }
+    }
+}
+
 fn access<'query>(
     event: &HierarchyEvent,
     parents: &'query Query<&Access>,
