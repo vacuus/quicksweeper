@@ -128,12 +128,8 @@ pub fn listen_net(
                             tile: ClientTile::Unknown,
                             position,
                             sprite: textures.empty_mine().tap_mut(|b| {
-                                b.transform = Transform {
-                                    translation: position
-                                        .absolute(TILE_SIZE, TILE_SIZE)
-                                        .extend(3.0),
-                                    ..default()
-                                };
+                                b.transform.translation =
+                                    position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0);
                             }),
                         })
                         .id()
