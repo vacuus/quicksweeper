@@ -13,7 +13,7 @@ use crate::{
 };
 
 use super::{
-    components::{ClientTile, ClientTileBundle},
+    components::{ClientTile, ClientTileBundle, FreezeTimer, FreezeTimerDisplay},
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     puppet::{PuppetCursor, PuppetCursorBundle, PuppetTable},
     states::AreaAttack,
@@ -106,6 +106,7 @@ pub fn listen_net(
     mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
     mut field_id: Local<Option<Entity>>,
     mut camera: Query<&mut Transform, With<Camera2d>>,
+    mut freeze_timer: ResMut<FreezeTimer>,
 ) {
     match sock.recv_message() {
         Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
@@ -214,7 +215,40 @@ pub fn listen_net(
             *tiles.get_mut(fields.single().1[&position]).unwrap().1 = to;
         }
         Some(Ok(AreaAttackUpdate::Transition(to))) => commands.insert_resource(NextState(to)),
+        Some(Ok(AreaAttackUpdate::Freeze)) => freeze_timer.reset(),
         _ => (),
+    }
+}
+
+pub fn create_freeze_timer(mut commands: Commands, textures: Res<Textures>) {
+    commands
+        .spawn(
+            TextBundle::from_section(
+                "0.00",
+                TextStyle {
+                    font: textures.roboto.clone(),
+                    font_size: 32.0,
+                    color: Color::RED,
+                },
+            )
+            .tap_mut(|t| t.visibility.is_visible = false),
+        )
+        .insert(FreezeTimerDisplay);
+}
+
+pub fn freeze_timer(
+    mut timer: ResMut<FreezeTimer>,
+    time: Res<Time>,
+    mut timer_text: Query<(&mut Text, &mut Visibility), With<FreezeTimerDisplay>>,
+) {
+    let seconds = timer.tick(time.delta()).remaining_secs();
+    let (mut text, mut visibility) = timer_text.single_mut();
+
+    if timer.finished() {
+        visibility.is_visible = false;
+    } else {
+        visibility.is_visible = true;
+        text.sections[0].value = seconds.to_string()
     }
 }
 

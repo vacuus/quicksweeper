@@ -34,6 +34,9 @@ pub enum AreaAttackUpdate {
         to: ClientTile,
     },
     Transition(AreaAttack),
+    /// Indicates to the player that they have been frozen at this time
+    // TODO: Sync time between server/client to make this more accurate
+    Freeze,
     /// Issued to a client when it attempts to join a full game
     Full,
     NotHost,

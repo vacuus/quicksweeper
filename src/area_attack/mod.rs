@@ -13,7 +13,7 @@ use server_systems::*;
 use crate::{
     main_menu::{Menu, ToGame},
     registry::GameRegistry,
-    server::{GameDescriptor, GameMarker, LocalEvent},
+    server::{GameDescriptor, GameMarker, LocalEvent}, area_attack::components::FreezeTimer,
 };
 
 use self::{
@@ -75,6 +75,7 @@ impl Plugin for AreaAttackClient {
         use AreaAttack::*;
         app.add_loopless_state(Inactive)
             .init_resource::<PuppetTable>()
+            .init_resource::<FreezeTimer>()
             .add_startup_system(registry_entry)
             .add_system(|mut commands: Commands, mut ev: EventReader<ToGame>| {
                 if ev.iter().any(|e| **e == AREA_ATTACK_MARKER) {
@@ -84,6 +85,7 @@ impl Plugin for AreaAttackClient {
             })
             .add_system(client_systems::begin_game.run_in_state(Selecting))
             .add_system(puppet::update_cursor_colors)
+            .add_enter_system(Menu::MainMenu, client_systems::create_freeze_timer)
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(Inactive)
@@ -91,6 +93,7 @@ impl Plugin for AreaAttackClient {
                     .with_system(client_systems::send_position)
                     .with_system(client_systems::request_reveal)
                     .with_system(client_systems::draw_tiles)
+                    .with_system(client_systems::freeze_timer)
                     .into(),
             );
     }

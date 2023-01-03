@@ -3,6 +3,7 @@ use std::time::Duration;
 use bevy::{prelude::*, utils::HashMap};
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
+use tap::Tap;
 
 use crate::{
     common::Position,
@@ -10,6 +11,8 @@ use crate::{
 };
 
 use super::{states::AreaAttack, AreaAttackServer};
+
+pub const FREEZE_TIME: Duration = Duration::from_secs(5);
 
 #[derive(Bundle)]
 pub struct AreaAttackBundle {
@@ -134,4 +137,19 @@ pub struct RevealTile {
     pub position: Position,
     pub player: Entity,
     pub game: Entity,
+}
+
+#[derive(Resource, Deref, DerefMut)]
+pub struct FreezeTimer(Timer);
+
+#[derive(Component)]
+pub struct FreezeTimerDisplay;
+
+impl Default for FreezeTimer {
+    fn default() -> Self {
+        Self(
+            Timer::new(FREEZE_TIME, TimerMode::Once)
+                .tap_mut(|timer| timer.set_elapsed(FREEZE_TIME)),
+        )
+    }
 }

@@ -14,7 +14,7 @@ use crate::{
 use super::{
     components::{
         AreaAttackBundle, ClientTile, Frozen, InitialSelections, PlayerBundle, PlayerColor,
-        RevealTile, SendTile, ServerTile,
+        RevealTile, SendTile, ServerTile, FREEZE_TIME,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttack,
@@ -132,7 +132,7 @@ pub fn reveal_tiles(
     mut games: MinefieldQuery<&mut ServerTile>,
     mut send: EventWriter<SendTile>,
     time: Res<Time>,
-    mut freeze: Query<&mut Frozen>,
+    mut freeze: Query<(&mut Frozen, &mut Connection)>,
     // swtich between request buffers for each iteration
     mut request_buffer: Local<Vec<RevealTile>>,
     mut request_buffer2: Local<Vec<RevealTile>>,
@@ -147,7 +147,7 @@ pub fn reveal_tiles(
     } in request_buffer2.drain(..)
     {
         if let Some(mut field) = games.get(game) {
-            let mut frozen = freeze.get_mut(player).unwrap();
+            let (mut frozen, mut connection) = freeze.get_mut(player).unwrap();
             if frozen.is_some() {
                 continue;
             }
@@ -179,6 +179,8 @@ pub fn reveal_tiles(
                 ServerTile::Mine => {
                     *tile = ServerTile::HardMine;
                     **frozen = Some(time.elapsed());
+                    
+                    connection.send_logged(AreaAttackUpdate::Freeze);
                     send.send(SendTile {
                         tile: ServerTile::HardMine,
                         position,
@@ -197,7 +199,7 @@ pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
     let instant = time.elapsed();
     for mut f in freeze.iter_mut() {
         if let Some(start) = **f {
-            if (instant - start).as_secs() > 5 {
+            if (instant - start) > FREEZE_TIME {
                 **f = None;
             }
         }
