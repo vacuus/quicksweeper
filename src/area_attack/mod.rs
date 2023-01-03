@@ -85,7 +85,7 @@ impl Plugin for AreaAttackClient {
             })
             .add_system(client_systems::begin_game.run_in_state(Selecting))
             .add_system(puppet::update_cursor_colors)
-            .add_enter_system(Menu::MainMenu, client_systems::create_freeze_timer)
+            .add_exit_system(Menu::Loading, client_systems::create_freeze_timer)
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(Inactive)
