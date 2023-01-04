@@ -251,7 +251,7 @@ pub fn send_tiles(
                     for (_, mut connection) in peers {
                         connection.send_logged(AreaAttackUpdate::TileChanged {
                             position: *position,
-                            to: ClientTile::HardMine,
+                            to: ClientTile::Mine,
                         });
                     }
                 }

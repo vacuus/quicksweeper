@@ -57,7 +57,7 @@ pub fn request_reveal(
                         // counts both flags and known mines
                         let marked_count = field
                             .iter_neighbors(position)
-                            .filter(|tile| matches!(tile, ClientTile::Flag | ClientTile::HardMine))
+                            .filter(|tile| matches!(tile, ClientTile::Flag | ClientTile::Mine))
                             .count() as u8;
 
                         if marked_count == *num_neighbors {
@@ -306,7 +306,7 @@ pub fn draw_tiles(
                     own_color.unwrap()
                 }
             }),
-            ClientTile::HardMine => {
+            ClientTile::Mine => {
                 TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default())
             }
             ClientTile::Flag => {

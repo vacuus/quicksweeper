@@ -80,7 +80,7 @@ pub struct ServerTileBundle {
 
 #[derive(Component, Serialize, Deserialize, Clone, Copy)]
 pub enum ClientTile {
-    /// No one has claimed this tile, and it isn't known whether it is blank or contains a mine
+    /// No one has claimed this tile, and it isn't known whether it is blank or contains a mine.
     Unknown,
     /// This tile has been claimed by the player specified by the given ID. In addition, if the
     /// client using this type is the one that owns this tile, it will know the number of cells
@@ -91,8 +91,9 @@ pub enum ClientTile {
         player: Entity,
         num_neighbors: u8,
     },
-    /// There is a mine on this tile, and it has been revealed
-    HardMine,
+    /// There is a mine on this tile which someone has revealed. Therefore it is no longer able to
+    /// be claimed.
+    Mine,
     Flag,
 }
 
