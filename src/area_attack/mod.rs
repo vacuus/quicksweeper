@@ -11,9 +11,10 @@ use iyes_loopless::prelude::*;
 use server_systems::*;
 
 use crate::{
+    area_attack::{components::FreezeTimer, protocol::AreaAttackUpdate},
     main_menu::{Menu, ToGame},
     registry::GameRegistry,
-    server::{GameDescriptor, GameMarker, LocalEvent}, area_attack::components::FreezeTimer,
+    server::{GameDescriptor, GameMarker, LocalEvent},
 };
 
 use self::{
@@ -76,6 +77,7 @@ impl Plugin for AreaAttackClient {
         app.add_loopless_state(Inactive)
             .init_resource::<PuppetTable>()
             .init_resource::<FreezeTimer>()
+            .add_event::<AreaAttackUpdate>()
             .add_startup_system(registry_entry)
             .add_system(|mut commands: Commands, mut ev: EventReader<ToGame>| {
                 if ev.iter().any(|e| **e == AREA_ATTACK_MARKER) {
@@ -89,11 +91,17 @@ impl Plugin for AreaAttackClient {
             .add_system_set(
                 ConditionSet::new()
                     .run_not_in_state(Inactive)
-                    .with_system(client_systems::listen_net)
                     .with_system(client_systems::send_position)
                     .with_system(client_systems::request_reveal)
                     .with_system(client_systems::draw_tiles)
                     .with_system(client_systems::freeze_timer)
+                    // Systems for receiving network events
+                    .with_system(client_systems::listen_net)
+                    .with_system(client_systems::reset_field)
+                    .with_system(client_systems::player_update)
+                    .with_system(client_systems::self_update)
+                    .with_system(client_systems::puppet_control)
+                    .with_system(client_systems::state_transitions)
                     .into(),
             );
     }

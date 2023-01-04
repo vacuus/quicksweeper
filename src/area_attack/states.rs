@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Eq, Clone, Hash, Debug, Component, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug, Component, Serialize, Deserialize)]
 pub enum AreaAttack {
     /// Only for client -- to indicate that there is no Area Attack game in progress
     Inactive,

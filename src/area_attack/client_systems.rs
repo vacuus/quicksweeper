@@ -94,29 +94,23 @@ pub fn request_reveal(
     }
 }
 
-#[allow(clippy::too_many_arguments)] // TODO Split this up
-pub fn listen_net(
+pub fn listen_net(mut events: EventWriter<AreaAttackUpdate>, mut sock: ResMut<Connection>) {
+    if let Some(Ok(m)) = sock.recv_message() {
+        events.send(m)
+    }
+}
+
+/// Despite its name, this system is also used to create a new field if it didn't exist before
+pub fn reset_field(
+    mut events: EventReader<AreaAttackUpdate>,
     mut commands: Commands,
-    mut sock: ResMut<Connection>,
-    mut tiles: Query<(Entity, &mut ClientTile)>,
-    fields: Query<(Entity, &Minefield)>,
-    cursors: Query<Entity, With<Cursor>>,
     textures: Res<Textures>,
-    mut puppet_map: ResMut<PuppetTable>,
-    mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
-    mut field_id: Local<Option<Entity>>,
-    mut camera: Query<&mut Transform, With<Camera2d>>,
-    mut freeze_timer: ResMut<FreezeTimer>,
+    old_entities: Query<Entity, Or<(With<ClientTile>, With<Minefield>, With<Cursor>)>>,
 ) {
-    match sock.recv_message() {
-        Some(Ok(AreaAttackUpdate::FieldShape(template))) => {
+    for ev in events.iter() {
+        if let AreaAttackUpdate::FieldShape(template) = ev {
             // despawn previously constructed entities
-            for e in tiles
-                .iter()
-                .map(|(e, _)| e)
-                .chain(fields.iter().map(|(e, _)| e))
-                .chain(cursors.iter())
-            {
+            for e in old_entities.iter() {
                 commands.entity(e).despawn();
             }
 
@@ -134,23 +128,35 @@ pub fn listen_net(
                         })
                         .id()
                 },
-                &template,
+                template,
             );
 
-            *field_id = Some(commands.spawn(field).id());
+            commands.spawn(field);
         }
-        Some(Ok(AreaAttackUpdate::PlayerProperties {
+    }
+}
+
+pub fn player_update(
+    mut events: EventReader<AreaAttackUpdate>,
+    mut commands: Commands,
+    mut puppet_map: ResMut<PuppetTable>,
+    mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
+    textures: Res<Textures>,
+) {
+    for ev in events.iter() {
+        if let AreaAttackUpdate::PlayerProperties {
             id,
             username,
             color,
             position,
-        })) => {
+        } = ev
+        {
             puppet_map
-                .entry(id)
+                .entry(*id)
                 .and_modify(|&mut puppet| {
                     let (mut puppet, mut pos) = puppets.get_mut(puppet).unwrap();
-                    puppet.0 = color.into();
-                    *pos = position;
+                    puppet.0 = (*color).into();
+                    *pos = *position;
                 })
                 .or_insert_with(|| {
                     let name = commands
@@ -160,25 +166,18 @@ pub fn listen_net(
                                 TextStyle {
                                     font: textures.roboto.clone(),
                                     font_size: 10.0,
-                                    color: color.into(),
+                                    color: (*color).into(),
                                 },
                             ),
-                            transform: Transform {
-                                translation: Vec3 {
-                                    x: 10.0,
-                                    y: 10.0,
-                                    z: 0.0,
-                                },
-                                ..default()
-                            },
+                            transform: Transform::from_xyz(10.0, 10.0, 0.0),
                             ..default()
                         })
                         .id();
 
                     commands
                         .spawn(PuppetCursorBundle {
-                            cursor: PuppetCursor(color.into()),
-                            position,
+                            cursor: PuppetCursor((*color).into()),
+                            position: *position,
                             sprite_bundle: SpriteBundle {
                                 texture: textures.cursor.clone(),
                                 ..default()
@@ -188,31 +187,63 @@ pub fn listen_net(
                         .id()
                 });
         }
-        Some(Ok(AreaAttackUpdate::Reposition { id, position })) => {
-            *(puppets.get_mut(puppet_map[&id]).unwrap().1) = position;
-        }
-        Some(Ok(AreaAttackUpdate::SelfChange { color, position })) => {
+    }
+}
+
+pub fn self_update(
+    mut events: EventReader<AreaAttackUpdate>,
+    mut commands: Commands,
+    mut camera: Query<&mut Transform, With<Camera2d>>,
+    textures: Res<Textures>,
+    field: Query<Entity, With<Minefield>>,
+) {
+    for ev in events.iter() {
+        if let AreaAttackUpdate::SelfChange { color, position } = ev {
             let translation = position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0);
             camera.single_mut().translation = translation;
             commands.spawn(CursorBundle {
-                cursor: Cursor::new(color.into(), field_id.unwrap()),
-                position,
+                cursor: Cursor::new((*color).into(), field.single()),
+                position: *position,
                 texture: SpriteBundle {
                     texture: textures.cursor.clone(),
-                    transform: Transform {
-                        translation,
-                        ..default()
-                    },
+                    transform: Transform::from_translation(translation),
                     ..default()
                 },
             });
         }
-        Some(Ok(AreaAttackUpdate::TileChanged { position, to })) => {
-            *tiles.get_mut(fields.single().1[&position]).unwrap().1 = to;
+    }
+}
+
+pub fn puppet_control(
+    mut events: EventReader<AreaAttackUpdate>,
+    mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
+    mut field: MinefieldQuery<&mut ClientTile>,
+    puppet_map: ResMut<PuppetTable>,
+) {
+    for ev in events.iter() {
+        match ev {
+            AreaAttackUpdate::Reposition { id, position } => {
+                *(puppets.get_mut(puppet_map[id]).unwrap().1) = *position;
+            }
+            AreaAttackUpdate::TileChanged { position, to } => {
+                *field.get_single().unwrap().get_mut(*position).unwrap() = *to
+            }
+            _ => (),
         }
-        Some(Ok(AreaAttackUpdate::Transition(to))) => commands.insert_resource(NextState(to)),
-        Some(Ok(AreaAttackUpdate::Freeze)) => freeze_timer.reset(),
-        _ => (),
+    }
+}
+
+pub fn state_transitions(
+    mut events: EventReader<AreaAttackUpdate>,
+    mut freeze_timer: ResMut<FreezeTimer>,
+    mut commands: Commands,
+) {
+    for ev in events.iter() {
+        match ev {
+            AreaAttackUpdate::Transition(to) => commands.insert_resource(NextState(*to)),
+            AreaAttackUpdate::Freeze => freeze_timer.reset(),
+            _ => (),
+        }
     }
 }
 

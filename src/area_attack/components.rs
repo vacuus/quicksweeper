@@ -78,7 +78,7 @@ pub struct ServerTileBundle {
     pub position: Position,
 }
 
-#[derive(Component, Serialize, Deserialize, Clone)]
+#[derive(Component, Serialize, Deserialize, Clone, Copy)]
 pub enum ClientTile {
     /// No one has claimed this tile, and it isn't known whether it is blank or contains a mine
     Unknown,
