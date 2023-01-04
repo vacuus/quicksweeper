@@ -306,12 +306,11 @@ pub fn draw_tiles(
                     own_color.unwrap()
                 }
             }),
-            ClientTile::Mine => {
-                TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default())
-            }
+            ClientTile::Mine => TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default()),
             ClientTile::Flag => {
                 TextureAtlasSprite::new(10).tap_mut(|s| s.color = own_color.unwrap())
             }
+            ClientTile::Destroyed => TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::BLACK),
         }
     })
 }

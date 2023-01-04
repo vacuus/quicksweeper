@@ -70,6 +70,9 @@ pub enum ServerTile {
     Mine,
     /// There is a mine on this tile, and it has been revealed
     HardMine,
+    /// The tile has been destroyed by being revealed as a mine in attack mode. It can no longer be
+    /// recovered
+    Destroyed,
 }
 
 #[derive(Bundle)]
@@ -95,6 +98,9 @@ pub enum ClientTile {
     /// be claimed.
     Mine,
     Flag,
+    /// The tile has been destroyed by being revealed as a mine in attack mode. It can no longer be
+    /// recovered
+    Destroyed,
 }
 
 #[derive(Bundle)]

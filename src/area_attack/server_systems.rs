@@ -69,12 +69,7 @@ pub fn net_events(
 
 pub fn selection_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<(
-        Entity,
-        &mut AreaAttack,
-        &InitialSelections,
-        &mut Access,
-    )>,
+    mut games: Query<(Entity, &mut AreaAttack, &InitialSelections, &mut Access)>,
     mut minefields: MinefieldQuery<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
@@ -112,9 +107,7 @@ pub fn selection_transition(
                 }
 
                 connections.for_each_mut(|mut conn| {
-                    conn.repeat_send_unchecked(AreaAttackUpdate::Transition(
-                        AreaAttack::Stage1,
-                    ));
+                    conn.repeat_send_unchecked(AreaAttackUpdate::Transition(AreaAttack::Stage1));
                 });
 
                 // close joins
@@ -179,7 +172,7 @@ pub fn reveal_tiles(
                 ServerTile::Mine => {
                     *tile = ServerTile::HardMine;
                     **frozen = Some(time.elapsed());
-                    
+
                     connection.send_logged(AreaAttackUpdate::Freeze);
                     send.send(SendTile {
                         tile: ServerTile::HardMine,
@@ -187,7 +180,7 @@ pub fn reveal_tiles(
                         game,
                     });
                 }
-                ServerTile::HardMine | ServerTile::Owned { .. } => {
+                ServerTile::HardMine | ServerTile::Owned { .. } | ServerTile::Destroyed => {
                     // do nothing
                 }
             }
@@ -253,6 +246,14 @@ pub fn send_tiles(
                             position: *position,
                             to: ClientTile::Mine,
                         });
+                    }
+                }
+                ServerTile::Destroyed => {
+                    for (_, mut connection) in peers {
+                        connection.send_logged(AreaAttackUpdate::TileChanged {
+                            position: *position,
+                            to: ClientTile::Destroyed,
+                        })
                     }
                 }
             }
