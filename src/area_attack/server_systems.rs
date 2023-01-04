@@ -5,7 +5,10 @@ use strum::IntoEnumIterator;
 use crate::{
     common::{Contains, Position},
     load::Field,
-    minefield::{query::MinefieldQuery, FieldShape, Minefield},
+    minefield::{
+        query::{AdjoinedMinefield, MinefieldQuery},
+        FieldShape, Minefield,
+    },
     server::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent, LocalEvent,
     },
@@ -119,13 +122,17 @@ pub fn selection_transition(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+// #[allow(clippy::too_many_arguments)]
 pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
     mut games: MinefieldQuery<&mut ServerTile>,
-    mut send: EventWriter<SendTile>,
+    // mut send: EventWriter<SendTile>,
     time: Res<Time>,
-    mut freeze: Query<(&mut Frozen, &mut Connection)>,
+    mut players: ParamSet<(
+        Query<(&mut Frozen, &mut Connection)>,
+        Query<(Entity, &mut Connection)>,
+    )>,
+    children: Query<&Children>,
     // swtich between request buffers for each iteration
     mut request_buffer: Local<Vec<RevealTile>>,
     mut request_buffer2: Local<Vec<RevealTile>>,
@@ -140,10 +147,17 @@ pub fn reveal_tiles(
     } in request_buffer2.drain(..)
     {
         if let Some(mut field) = games.get(game) {
-            let (mut frozen, mut connection) = freeze.get_mut(player).unwrap();
-            if frozen.is_some() {
+            let children = children.get(game).unwrap();
+
+            if players.p0().get(player).unwrap().0.is_some() {
                 continue;
             }
+
+            // awkward declarations to respect lifetime rules (p1 can be dropped after peers is
+            // iterated)
+            let mut p1 = players.p1();
+            let peers = p1.iter_mut().filter(|(ent, _)| children.contains(ent));
+
             let Some(mut tile) = field.get_mut(position) else {continue;};
             match *tile {
                 ServerTile::Empty => {
@@ -163,22 +177,33 @@ pub fn reveal_tiles(
                         ))
                     }
 
-                    send.send(SendTile {
-                        tile: ServerTile::Owned { player },
-                        position,
-                        game,
-                    })
+                    send_tiles(
+                        SendTile {
+                            tile: ServerTile::Owned { player },
+                            position,
+                            game,
+                        },
+                        &field,
+                        peers,
+                    );
                 }
                 ServerTile::Mine => {
                     *tile = ServerTile::HardMine;
-                    **frozen = Some(time.elapsed());
 
+                    send_tiles(
+                        SendTile {
+                            tile: ServerTile::Owned { player },
+                            position,
+                            game,
+                        },
+                        &field,
+                        peers,
+                    );
+
+                    let mut p0 = players.p0(); // respect nll
+                    let (mut frozen, mut connection) = p0.get_mut(player).unwrap();
+                    **frozen = Some(time.elapsed());
                     connection.send_logged(AreaAttackUpdate::Freeze);
-                    send.send(SendTile {
-                        tile: ServerTile::HardMine,
-                        position,
-                        game,
-                    });
                 }
                 ServerTile::HardMine | ServerTile::Owned { .. } | ServerTile::Destroyed => {
                     // do nothing
@@ -199,65 +224,40 @@ pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
     }
 }
 
-pub fn send_tiles(
-    mut new_tiles: EventReader<SendTile>,
-    games: Query<(Entity, &Children)>,
-    mut minefields: MinefieldQuery<&ServerTile>,
-    mut players: Query<(Entity, &mut Connection)>,
+fn send_tiles<'a>(
+    tile_req: SendTile,
+    minefield: &AdjoinedMinefield<&mut ServerTile>,
+    peers: impl Iterator<Item = (Entity, Mut<'a, Connection>)>,
 ) {
-    for SendTile {
+    let SendTile {
         tile,
         position,
-        game,
-    } in new_tiles.iter()
-    {
-        if let Ok((field_id, children)) = games.get(*game) {
-            let peers = players.iter_mut().filter(|(id, _)| children.contains(id));
-            let minefield = minefields.get(field_id).unwrap();
+        // game,
+        ..
+    } = tile_req;
 
-            match tile {
-                ServerTile::Empty | ServerTile::Mine => {
-                    for (_, mut connection) in peers {
-                        connection.send_logged(AreaAttackUpdate::TileChanged {
-                            position: *position,
-                            to: ClientTile::Unknown,
-                        });
-                    }
-                }
-                ServerTile::Owned { player: owner } => {
-                    let mine_count = minefield
-                        .iter_neighbors(*position)
+    for (player_id, mut connection) in peers {
+        let out_tile = match tile {
+            ServerTile::Empty | ServerTile::Mine => ClientTile::Unknown,
+            ServerTile::Owned { player: owner } => ClientTile::Owned {
+                player: owner,
+                num_neighbors: if player_id == owner {
+                    minefield
+                        .iter_neighbors(position)
                         .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
-                        .count() as u8;
+                        .count() as u8
+                } else {
+                    0
+                },
+            },
+            ServerTile::HardMine => ClientTile::Mine,
+            ServerTile::Destroyed => ClientTile::Destroyed,
+        };
 
-                    for (player_id, mut connection) in peers {
-                        connection.send_logged(AreaAttackUpdate::TileChanged {
-                            position: *position,
-                            to: ClientTile::Owned {
-                                player: *owner,
-                                num_neighbors: if player_id == *owner { mine_count } else { 0 },
-                            },
-                        });
-                    }
-                }
-                ServerTile::HardMine => {
-                    for (_, mut connection) in peers {
-                        connection.send_logged(AreaAttackUpdate::TileChanged {
-                            position: *position,
-                            to: ClientTile::Mine,
-                        });
-                    }
-                }
-                ServerTile::Destroyed => {
-                    for (_, mut connection) in peers {
-                        connection.send_logged(AreaAttackUpdate::TileChanged {
-                            position: *position,
-                            to: ClientTile::Destroyed,
-                        })
-                    }
-                }
-            }
-        }
+        connection.send_logged(AreaAttackUpdate::TileChanged {
+            position,
+            to: out_tile,
+        });
     }
 }
 
