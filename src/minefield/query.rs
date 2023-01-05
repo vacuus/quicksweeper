@@ -115,7 +115,7 @@ where
             });
     }
 
-    pub fn iter_neighbors_enumerated(
+    pub fn neighbors(
         &self,
         position: Position,
     ) -> impl Iterator<Item = (Position, ROQueryItem<Tile>)> {
@@ -127,15 +127,15 @@ where
             })
     }
 
-    pub fn iter_neighbor_positions(
+    pub fn neighbor_positions(
         &self,
         position: Position,
     ) -> impl Iterator<Item = Position> + '_ {
         self.minefield.iter_neighbor_positions(position)
     }
 
-    pub fn iter_neighbors(&self, position: Position) -> impl Iterator<Item = ROQueryItem<Tile>> {
-        self.iter_neighbors_enumerated(position)
+    pub fn neighbor_cells(&self, position: Position) -> impl Iterator<Item = ROQueryItem<Tile>> {
+        self.neighbors(position)
             .map(|(_, tile)| tile)
     }
 

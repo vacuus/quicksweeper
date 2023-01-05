@@ -56,12 +56,12 @@ pub fn request_reveal(
                     if !puppet_table.contains_key(player) {
                         // counts both flags and known mines
                         let marked_count = field
-                            .iter_neighbors(position)
+                            .neighbor_cells(position)
                             .filter(|tile| matches!(tile, ClientTile::Flag | ClientTile::Mine))
                             .count() as u8;
 
                         if marked_count == *num_neighbors {
-                            for (position, tile) in field.iter_neighbors_enumerated(position) {
+                            for (position, tile) in field.neighbors(position) {
                                 if !matches!(tile, ClientTile::Flag) {
                                     sock.send_logged(ClientMessage::Ingame {
                                         data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(

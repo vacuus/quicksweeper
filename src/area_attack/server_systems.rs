@@ -165,12 +165,12 @@ pub fn reveal_tiles(
             ServerTile::Empty => {
                 *tile = ServerTile::Owned { player };
                 let mine_count = field
-                    .iter_neighbors(position)
+                    .neighbor_cells(position)
                     .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
                     .count() as u8;
 
                 if mine_count == 0 {
-                    request_buffer.extend(field.iter_neighbor_positions(position).map(|position| {
+                    request_buffer.extend(field.neighbor_positions(position).map(|position| {
                         RevealTile {
                             position,
                             player,
@@ -221,7 +221,7 @@ fn send_tiles<'a>(
                 player: owner,
                 num_neighbors: if player_id == owner {
                     minefield
-                        .iter_neighbors(position)
+                        .neighbor_cells(position)
                         .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
                         .count() as u8
                 } else {
