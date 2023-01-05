@@ -18,10 +18,7 @@ use crate::{
 };
 
 use self::{
-    components::{RevealTile, SendTile},
-    protocol::AreaAttackRequest,
-    puppet::PuppetTable,
-    states::AreaAttack,
+    components::RevealTile, protocol::AreaAttackRequest, puppet::PuppetTable, states::AreaAttack,
 };
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
@@ -48,7 +45,6 @@ impl Plugin for AreaAttackServer {
     fn build(&self, app: &mut App) {
         app.add_startup_system(registry_entry)
             .add_event::<LocalEvent<AreaAttackRequest>>()
-            .add_event::<SendTile>()
             .add_event::<RevealTile>()
             .add_system_set(
                 ConditionSet::new()

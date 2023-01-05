@@ -132,13 +132,6 @@ impl From<PlayerColor> for Color {
 #[derive(Component, Debug, Deref, DerefMut, Default)]
 pub struct InitialSelections(pub HashMap<Entity, Position>);
 
-#[derive(Debug)]
-pub struct SendTile {
-    pub tile: ServerTile,
-    pub position: Position,
-    pub game: Entity,
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct RevealTile {
     pub position: Position,

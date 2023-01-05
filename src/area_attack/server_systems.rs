@@ -17,7 +17,7 @@ use crate::{
 use super::{
     components::{
         AreaAttackBundle, ClientTile, Frozen, InitialSelections, PlayerBundle, PlayerColor,
-        RevealTile, SendTile, ServerTile, FREEZE_TIME,
+        RevealTile, ServerTile, FREEZE_TIME,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttack,
@@ -126,7 +126,6 @@ pub fn selection_transition(
 pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
     mut games: MinefieldQuery<&mut ServerTile>,
-    // mut send: EventWriter<SendTile>,
     time: Res<Time>,
     mut players: ParamSet<(
         Query<(&mut Frozen, &mut Connection)>,
@@ -177,28 +176,11 @@ pub fn reveal_tiles(
                         ))
                     }
 
-                    send_tiles(
-                        SendTile {
-                            tile: ServerTile::Owned { player },
-                            position,
-                            game,
-                        },
-                        &field,
-                        peers,
-                    );
+                    send_tiles(ServerTile::Owned { player }, position, &field, peers);
                 }
                 ServerTile::Mine => {
                     *tile = ServerTile::HardMine;
-
-                    send_tiles(
-                        SendTile {
-                            tile: ServerTile::Owned { player },
-                            position,
-                            game,
-                        },
-                        &field,
-                        peers,
-                    );
+                    send_tiles(ServerTile::HardMine, position, &field, peers);
 
                     let mut p0 = players.p0(); // respect nll
                     let (mut frozen, mut connection) = p0.get_mut(player).unwrap();
@@ -225,16 +207,12 @@ pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
 }
 
 fn send_tiles<'a>(
-    tile_req: SendTile,
+    tile: ServerTile,
+    position: Position,
     minefield: &AdjoinedMinefield<&mut ServerTile>,
     peers: impl Iterator<Item = (Entity, Mut<'a, Connection>)>,
 ) {
-    let SendTile {
-        tile,
-        position,
-        // game,
-        ..
-    } = tile_req;
+    // let SendTile { tile, position } = tile_req;
 
     for (player_id, mut connection) in peers {
         let out_tile = match tile {
