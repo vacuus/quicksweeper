@@ -143,7 +143,7 @@ pub fn reveal_tiles(
         position,
         player,
         game,
-    } in request_buffer2.drain(..)
+    } in request_buffer2.drain(..).rev()
     {
         if let Some(mut field) = games.get(game) {
             let children = children.get(game).unwrap();
