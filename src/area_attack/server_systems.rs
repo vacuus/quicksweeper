@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
 use strum::IntoEnumIterator;
@@ -122,7 +124,6 @@ pub fn selection_transition(
     }
 }
 
-// #[allow(clippy::too_many_arguments)]
 pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
     mut games: MinefieldQuery<&mut ServerTile>,
@@ -133,17 +134,17 @@ pub fn reveal_tiles(
     )>,
     children: Query<&Children>,
     // swtich between request buffers for each iteration
-    mut request_buffer: Local<Vec<RevealTile>>,
-    mut request_buffer2: Local<Vec<RevealTile>>,
+    mut request_buffer: Local<VecDeque<RevealTile>>,
 ) {
-    std::mem::swap(&mut *request_buffer, &mut *request_buffer2);
-    request_buffer.extend(requested.iter());
+    for &ev in requested.iter() {
+        request_buffer.push_front(ev)
+    }
 
-    for RevealTile {
+    while let Some(RevealTile {
         position,
         player,
         game,
-    } in request_buffer2.drain(..).rev()
+    }) = request_buffer.pop_front()
     {
         if let Some(mut field) = games.get(game) {
             let children = children.get(game).unwrap();
@@ -212,8 +213,6 @@ fn send_tiles<'a>(
     minefield: &AdjoinedMinefield<&mut ServerTile>,
     peers: impl Iterator<Item = (Entity, Mut<'a, Connection>)>,
 ) {
-    // let SendTile { tile, position } = tile_req;
-
     for (player_id, mut connection) in peers {
         let out_tile = match tile {
             ServerTile::Empty | ServerTile::Mine => ClientTile::Unknown,

@@ -1,4 +1,4 @@
-use bevy::{ecs::system::SystemChangeTick, prelude::*};
+use bevy::prelude::*;
 use bevy_egui::EguiContext;
 use iyes_loopless::state::{CurrentState, NextState};
 use tap::Tap;
@@ -230,24 +230,17 @@ pub fn puppet_control(
     mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
     mut field: MinefieldQuery<&mut ClientTile>,
     puppet_map: ResMut<PuppetTable>,
-    current_tick: SystemChangeTick,
 ) {
-    let mut puppeted = 0;
     for ev in events.iter() {
         match ev {
             AreaAttackUpdate::Reposition { id, position } => {
                 *(puppets.get_mut(puppet_map[id]).unwrap().1) = *position;
             }
             AreaAttackUpdate::TileChanged { position, to } => {
-                puppeted += 1;
                 *field.get_single().unwrap().get_mut(*position).unwrap() = *to
             }
             _ => (),
         }
-    }
-
-    if puppeted > 0 {
-        println!("Received puppet command on {}", current_tick.change_tick())
     }
 }
 
