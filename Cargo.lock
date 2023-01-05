@@ -3080,7 +3080,7 @@ checksum = "74605f360ce573babfe43964cbe520294dcb081afbf8c108fc6e23036b4da2df"
 
 [[package]]
 name = "quicksweeper"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "arrayvec",
