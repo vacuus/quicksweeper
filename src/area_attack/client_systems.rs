@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::system::SystemChangeTick, prelude::*};
 use bevy_egui::EguiContext;
 use iyes_loopless::state::{CurrentState, NextState};
 use tap::Tap;
@@ -95,7 +95,7 @@ pub fn request_reveal(
 }
 
 pub fn listen_net(mut events: EventWriter<AreaAttackUpdate>, mut sock: ResMut<Connection>) {
-    if let Some(Ok(m)) = sock.recv_message() {
+    while let Some(Ok(m)) = sock.recv_message() {
         events.send(m)
     }
 }
@@ -196,20 +196,31 @@ pub fn self_update(
     mut camera: Query<&mut Transform, With<Camera2d>>,
     textures: Res<Textures>,
     field: Query<Entity, With<Minefield>>,
+    mut save_event: Local<Option<AreaAttackUpdate>>,
 ) {
-    for ev in events.iter() {
-        if let AreaAttackUpdate::SelfChange { color, position } = ev {
+    if let Some(AreaAttackUpdate::SelfChange { color, position }) =
+        std::mem::replace(&mut *save_event, None).or_else(|| {
+            events
+                .iter()
+                .filter(|x| matches!(x, AreaAttackUpdate::SelfChange { .. }))
+                .last()
+                .cloned()
+        })
+    {
+        if let Ok(field) = field.get_single() {
             let translation = position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0);
             camera.single_mut().translation = translation;
             commands.spawn(CursorBundle {
-                cursor: Cursor::new((*color).into(), field.single()),
-                position: *position,
+                cursor: Cursor::new((color).into(), field),
+                position,
                 texture: SpriteBundle {
                     texture: textures.cursor.clone(),
                     transform: Transform::from_translation(translation),
                     ..default()
                 },
             });
+        } else {
+            *save_event = Some(AreaAttackUpdate::SelfChange { color, position })
         }
     }
 }
@@ -219,17 +230,24 @@ pub fn puppet_control(
     mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
     mut field: MinefieldQuery<&mut ClientTile>,
     puppet_map: ResMut<PuppetTable>,
+    current_tick: SystemChangeTick,
 ) {
+    let mut puppeted = 0;
     for ev in events.iter() {
         match ev {
             AreaAttackUpdate::Reposition { id, position } => {
                 *(puppets.get_mut(puppet_map[id]).unwrap().1) = *position;
             }
             AreaAttackUpdate::TileChanged { position, to } => {
+                puppeted += 1;
                 *field.get_single().unwrap().get_mut(*position).unwrap() = *to
             }
             _ => (),
         }
+    }
+
+    if puppeted > 0 {
+        println!("Received puppet command on {}", current_tick.change_tick())
     }
 }
 

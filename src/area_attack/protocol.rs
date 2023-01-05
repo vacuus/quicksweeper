@@ -9,7 +9,7 @@ use super::{
     states::AreaAttack,
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum AreaAttackUpdate {
     FieldShape(FieldShape),
     /// Can both be sent on the creation of a new player as well as when a player updates its
