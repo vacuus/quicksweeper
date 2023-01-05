@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
+use iyes_loopless::state::CurrentState;
 use strum::IntoEnumIterator;
 
 use crate::{
@@ -133,7 +134,7 @@ pub fn reveal_tiles(
         Query<(Entity, &mut Connection)>,
     )>,
     children: Query<&Children>,
-    // swtich between request buffers for each iteration
+    state: Res<CurrentState<AreaAttack>>,
     mut request_buffer: Local<VecDeque<RevealTile>>,
 ) {
     for &ev in requested.iter() {
@@ -146,51 +147,51 @@ pub fn reveal_tiles(
         game,
     }) = request_buffer.pop_front()
     {
-        if let Some(mut field) = games.get(game) {
-            let children = children.get(game).unwrap();
+        let Some(mut field) = games.get(game) else { continue; };
+        let children = children.get(game).unwrap();
 
-            if players.p0().get(player).unwrap().0.is_some() {
-                continue;
+        // freeze check
+        if players.p0().get(player).unwrap().0.is_some() {
+            continue;
+        }
+
+        // awkward declarations to respect lifetime rules (p1 can be dropped after peers is
+        // iterated)
+        let mut p1 = players.p1();
+        let peers = p1.iter_mut().filter(|(ent, _)| children.contains(ent));
+
+        let Some(mut tile) = field.get_mut(position) else {continue;};
+        match *tile {
+            ServerTile::Empty => {
+                *tile = ServerTile::Owned { player };
+                let mine_count = field
+                    .iter_neighbors(position)
+                    .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
+                    .count() as u8;
+
+                if mine_count == 0 {
+                    request_buffer.extend(field.iter_neighbor_positions(position).map(|position| {
+                        RevealTile {
+                            position,
+                            player,
+                            game,
+                        }
+                    }))
+                }
+
+                send_tiles(ServerTile::Owned { player }, position, &field, peers);
             }
+            ServerTile::Mine => {
+                *tile = ServerTile::HardMine;
+                send_tiles(ServerTile::HardMine, position, &field, peers);
 
-            // awkward declarations to respect lifetime rules (p1 can be dropped after peers is
-            // iterated)
-            let mut p1 = players.p1();
-            let peers = p1.iter_mut().filter(|(ent, _)| children.contains(ent));
-
-            let Some(mut tile) = field.get_mut(position) else {continue;};
-            match *tile {
-                ServerTile::Empty => {
-                    *tile = ServerTile::Owned { player };
-                    let mine_count = field
-                        .iter_neighbors(position)
-                        .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
-                        .count() as u8;
-
-                    if mine_count == 0 {
-                        request_buffer.extend(field.iter_neighbor_positions(position).map(
-                            |position| RevealTile {
-                                position,
-                                player,
-                                game,
-                            },
-                        ))
-                    }
-
-                    send_tiles(ServerTile::Owned { player }, position, &field, peers);
-                }
-                ServerTile::Mine => {
-                    *tile = ServerTile::HardMine;
-                    send_tiles(ServerTile::HardMine, position, &field, peers);
-
-                    let mut p0 = players.p0(); // respect nll
-                    let (mut frozen, mut connection) = p0.get_mut(player).unwrap();
-                    **frozen = Some(time.elapsed());
-                    connection.send_logged(AreaAttackUpdate::Freeze);
-                }
-                ServerTile::HardMine | ServerTile::Owned { .. } | ServerTile::Destroyed => {
-                    // do nothing
-                }
+                let mut p0 = players.p0(); // respect nll
+                let (mut frozen, mut connection) = p0.get_mut(player).unwrap();
+                **frozen = Some(time.elapsed());
+                connection.send_logged(AreaAttackUpdate::Freeze);
+            }
+            ServerTile::HardMine | ServerTile::Owned { .. } | ServerTile::Destroyed => {
+                // do nothing
             }
         }
     }
