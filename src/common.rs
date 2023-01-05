@@ -1,6 +1,7 @@
 use arrayvec::ArrayVec;
 use bevy::prelude::*;
 use gridly::prelude::*;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -107,6 +108,59 @@ impl Position {
             .collect()
     }
 
+    /// Returns a list of all positions which at most a radius r away from this position. Only
+    /// accepts radii greater than 0.
+    ///
+    /// Implementation adapted from
+    /// ["https://stackoverflow.com/questions/60549803/60551485#60551485"]
+    pub fn radius(&self, radius: usize) -> impl Iterator<Item = Position> {
+        let radius = radius as isize;
+        let contained_square_radius = (radius as f32 / 2f32.sqrt()).round() as isize;
+
+        // grade the section between the contained square and the circle
+        // the radius of the circle and the edge of the contained square are not included
+        let segments = (contained_square_radius + 1..radius)
+            // start iterating from the circle, heading toward the square
+            .rev()
+            // find the furthest extension possible for each grade
+            .scan(1, move |extension, grade| {
+                *extension = (*extension..)
+                    // extensions should not go past the perimeter of the circle
+                    .take_while(|extension| extension * extension + grade * grade < radius * radius)
+                    .last()
+                    .unwrap_or(*extension);
+                Some((grade, *extension))
+            })
+            // fill in the extensions from each grade
+            .flat_map(|(grade, extension)| (1..=extension).map(move |extension| (grade, extension)))
+            // octuple the half-segment so that all segments are covered
+            .flat_map(|(x, y)| {
+                [
+                    (x, y),
+                    (x, -y),
+                    (-x, y),
+                    (-x, -y),
+                    (y, x),
+                    (y, -x),
+                    (-y, x),
+                    (-y, -x),
+                ]
+            });
+
+        let radii = (1..=radius).flat_map(|r| [(0, r), (r, 0), (0, -r), (-r, 0)]);
+
+        let contained_squares = (1..=contained_square_radius)
+            .cartesian_product(1..=contained_square_radius)
+            .flat_map(|(x, y)| [(x, y), (-x, y), (x, -y), (-x, -y)]);
+
+        let s = *self;
+        segments
+            .chain(radii)
+            .chain(contained_squares)
+            .chain(std::iter::once((0, 0)))
+            .map(move |(x, y)| s + Position::new(x, y))
+    }
+
     pub fn local_group(&self) -> ArrayVec<Position, 9> {
         Direction::iter()
             .filter_map(|direction| self.neighbor_direction(direction))
@@ -178,5 +232,43 @@ impl Plugin for QuicksweeperTypes {
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>()
             .add_startup_system(init_cameras);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use bevy::utils::HashSet;
+    use itertools::Itertools;
+
+    use super::Position;
+
+    #[test]
+    fn position_radii() {
+        println!(
+            "{:?}",
+            Position::ZERO
+                .radius(8)
+                .map(|Position { x, y }| (x, y))
+                .collect_vec()
+        );
+        println!(
+            "{:?}",
+            Position::ZERO
+                .radius(4)
+                .map(|Position { x, y }| (x, y))
+                .collect_vec()
+        );
+        println!(
+            "{:?}",
+            Position::ZERO
+                .radius(10)
+                .map(|Position { x, y }| (x, y))
+                .collect_vec()
+        );
+
+        assert_eq!(
+            Position::ZERO.radius(10).collect_vec().len(),
+            Position::ZERO.radius(10).collect::<HashSet<_>>().len()
+        )
     }
 }
