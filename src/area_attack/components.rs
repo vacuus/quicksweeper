@@ -26,6 +26,7 @@ pub struct AreaAttackBundle {
 impl AreaAttackBundle {
     pub fn new(
         commands: &mut Commands,
+        owner: Entity,
         template: Handle<FieldShape>,
         template_set: &Res<Assets<FieldShape>>,
     ) -> Self {
@@ -37,6 +38,7 @@ impl AreaAttackBundle {
                         .spawn(ServerTileBundle {
                             tile: ServerTile::Empty,
                             position,
+                            owner: Owner(owner),
                         })
                         .id()
                 },
@@ -75,10 +77,14 @@ pub enum ServerTile {
     Destroyed,
 }
 
+#[derive(Component, Deref, Clone, Copy)]
+pub struct Owner(Entity);
+
 #[derive(Bundle)]
 pub struct ServerTileBundle {
     pub tile: ServerTile,
     pub position: Position,
+    pub owner: Owner,
 }
 
 #[derive(Component, Serialize, Deserialize, Clone, Copy)]

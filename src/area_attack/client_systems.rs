@@ -231,6 +231,9 @@ pub fn puppet_control(
     mut field: MinefieldQuery<&mut ClientTile>,
     puppet_map: ResMut<PuppetTable>,
 ) {
+    if field.get_single().is_none() {
+        return;
+    }
     for ev in events.iter() {
         match ev {
             AreaAttackUpdate::Reposition { id, position } => {

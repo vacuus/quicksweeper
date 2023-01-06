@@ -19,7 +19,7 @@ use crate::{
 
 use super::{
     components::{
-        AreaAttackBundle, ClientTile, Frozen, InitialSelections, PlayerBundle, PlayerColor,
+        AreaAttackBundle, ClientTile, Frozen, InitialSelections, Owner, PlayerBundle, PlayerColor,
         RevealTile, ServerTile, FREEZE_TIME,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
@@ -43,7 +43,7 @@ pub fn create_game(
 
         // initialize game variables
         let template = template_handles.take_one(&mut rand::thread_rng()).clone();
-        let bundle = AreaAttackBundle::new(&mut commands, template, &field_templates);
+        let bundle = AreaAttackBundle::new(&mut commands, game, template, &field_templates);
         commands.entity(game).insert(bundle);
 
         // there should only be one player right now, mark it as host
@@ -133,8 +133,8 @@ pub fn reveal_tiles(
         Query<(&mut Frozen, &mut Connection)>,
         Query<(Entity, &mut Connection)>,
     )>,
-    children: Query<&Children>,
-    state: Res<CurrentState<AreaAttack>>,
+    // children: Query<&Children>,
+    // state: Res<CurrentState<AreaAttack>>,
     mut request_buffer: Local<VecDeque<RevealTile>>,
 ) {
     for &ev in requested.iter() {
@@ -148,7 +148,7 @@ pub fn reveal_tiles(
     }) = request_buffer.pop_front()
     {
         let Some(mut field) = games.get(game) else { continue; };
-        let children = children.get(game).unwrap();
+        // let children = children.get(game).unwrap();
 
         // freeze check
         if players.p0().get(player).unwrap().0.is_some() {
@@ -157,8 +157,8 @@ pub fn reveal_tiles(
 
         // awkward declarations to respect lifetime rules (p1 can be dropped after peers is
         // iterated)
-        let mut p1 = players.p1();
-        let peers = p1.iter_mut().filter(|(ent, _)| children.contains(ent));
+        // let mut p1 = players.p1();
+        // let peers = p1.iter_mut().filter(|(ent, _)| children.contains(ent));
 
         let Some(mut tile) = field.get_mut(position) else {continue;};
         match *tile {
@@ -179,11 +179,11 @@ pub fn reveal_tiles(
                     }))
                 }
 
-                send_tiles(ServerTile::Owned { player }, position, &field, peers);
+                // send_tiles(ServerTile::Owned { player }, position, &field, peers);
             }
             ServerTile::Mine => {
                 *tile = ServerTile::HardMine;
-                send_tiles(ServerTile::HardMine, position, &field, peers);
+                // send_tiles(ServerTile::HardMine, position, &field, peers);
 
                 let mut p0 = players.p0(); // respect nll
                 let (mut frozen, mut connection) = p0.get_mut(player).unwrap();
@@ -208,36 +208,71 @@ pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
     }
 }
 
-fn send_tiles<'a>(
-    tile: ServerTile,
-    position: Position,
-    minefield: &AdjoinedMinefield<&mut ServerTile>,
-    peers: impl Iterator<Item = (Entity, Mut<'a, Connection>)>,
+pub fn send_tiles_sys(
+    tiles: Query<(&ServerTile, &Position, &Owner), Changed<ServerTile>>,
+    mut minefields: MinefieldQuery<&ServerTile>,
+    peers: Query<&Children>,
+    mut connections: Query<&mut Connection>,
 ) {
-    for (player_id, mut connection) in peers {
-        let out_tile = match tile {
-            ServerTile::Empty | ServerTile::Mine => ClientTile::Unknown,
-            ServerTile::Owned { player: owner } => ClientTile::Owned {
-                player: owner,
-                num_neighbors: if player_id == owner {
-                    minefield
-                        .neighbor_cells(position)
-                        .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
-                        .count() as u8
-                } else {
-                    0
+    for (&tile, &position, &owner) in tiles.iter() {
+        let minefield = minefields.get(*owner).unwrap();
+        for &player_id in (peers.get(*owner).unwrap()).iter() {
+            let mut connection = connections.get_mut(player_id).unwrap();
+            let out_tile = match tile {
+                ServerTile::Empty | ServerTile::Mine => ClientTile::Unknown,
+                ServerTile::Owned { player: owner } => ClientTile::Owned {
+                    player: owner,
+                    num_neighbors: if player_id == owner {
+                        minefield
+                            .neighbor_cells(position)
+                            .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
+                            .count() as u8
+                    } else {
+                        0
+                    },
                 },
-            },
-            ServerTile::HardMine => ClientTile::Mine,
-            ServerTile::Destroyed => ClientTile::Destroyed,
-        };
+                ServerTile::HardMine => ClientTile::Mine,
+                ServerTile::Destroyed => ClientTile::Destroyed,
+            };
 
-        connection.send_logged(AreaAttackUpdate::TileChanged {
-            position,
-            to: out_tile,
-        });
+            connection.send_logged(AreaAttackUpdate::TileChanged {
+                position,
+                to: out_tile,
+            });
+        }
     }
 }
+
+// fn send_tiles<'a>(
+//     tile: ServerTile,
+//     position: Position,
+//     minefield: &AdjoinedMinefield<&mut ServerTile>,
+//     peers: impl Iterator<Item = (Entity, Mut<'a, Connection>)>,
+// ) {
+//     for (player_id, mut connection) in peers {
+//         let out_tile = match tile {
+//             ServerTile::Empty | ServerTile::Mine => ClientTile::Unknown,
+//             ServerTile::Owned { player: owner } => ClientTile::Owned {
+//                 player: owner,
+//                 num_neighbors: if player_id == owner {
+//                     minefield
+//                         .neighbor_cells(position)
+//                         .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
+//                         .count() as u8
+//                 } else {
+//                     0
+//                 },
+//             },
+//             ServerTile::HardMine => ClientTile::Mine,
+//             ServerTile::Destroyed => ClientTile::Destroyed,
+//         };
+
+//         connection.send_logged(AreaAttackUpdate::TileChanged {
+//             position,
+//             to: out_tile,
+//         });
+//     }
+// }
 
 pub fn broadcast_positions(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
