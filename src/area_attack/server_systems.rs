@@ -2,16 +2,12 @@ use std::collections::VecDeque;
 
 use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
-use iyes_loopless::state::CurrentState;
 use strum::IntoEnumIterator;
 
 use crate::{
     common::{Contains, Position},
     load::Field,
-    minefield::{
-        query::{AdjoinedMinefield, MinefieldQuery},
-        FieldShape, Minefield,
-    },
+    minefield::{query::MinefieldQuery, FieldShape, Minefield},
     server::{
         Access, Connection, ConnectionInfo, ConnectionSwitch, GameMarker, IngameEvent, LocalEvent,
     },
@@ -129,12 +125,7 @@ pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
     mut games: MinefieldQuery<&mut ServerTile>,
     time: Res<Time>,
-    mut players: ParamSet<(
-        Query<(&mut Frozen, &mut Connection)>,
-        Query<(Entity, &mut Connection)>,
-    )>,
-    // children: Query<&Children>,
-    // state: Res<CurrentState<AreaAttack>>,
+    mut players: Query<(&mut Frozen, &mut Connection)>,
     mut request_buffer: Local<VecDeque<RevealTile>>,
 ) {
     for &ev in requested.iter() {
@@ -148,17 +139,11 @@ pub fn reveal_tiles(
     }) = request_buffer.pop_front()
     {
         let Some(mut field) = games.get(game) else { continue; };
-        // let children = children.get(game).unwrap();
 
         // freeze check
-        if players.p0().get(player).unwrap().0.is_some() {
+        if players.get(player).unwrap().0.is_some() {
             continue;
         }
-
-        // awkward declarations to respect lifetime rules (p1 can be dropped after peers is
-        // iterated)
-        // let mut p1 = players.p1();
-        // let peers = p1.iter_mut().filter(|(ent, _)| children.contains(ent));
 
         let Some(mut tile) = field.get_mut(position) else {continue;};
         match *tile {
@@ -178,15 +163,10 @@ pub fn reveal_tiles(
                         }
                     }))
                 }
-
-                // send_tiles(ServerTile::Owned { player }, position, &field, peers);
             }
             ServerTile::Mine => {
                 *tile = ServerTile::HardMine;
-                // send_tiles(ServerTile::HardMine, position, &field, peers);
-
-                let mut p0 = players.p0(); // respect nll
-                let (mut frozen, mut connection) = p0.get_mut(player).unwrap();
+                let (mut frozen, mut connection) = players.get_mut(player).unwrap();
                 **frozen = Some(time.elapsed());
                 connection.send_logged(AreaAttackUpdate::Freeze);
             }
