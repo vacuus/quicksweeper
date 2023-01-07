@@ -114,17 +114,17 @@ impl Position {
     /// radius' perpendicular from C to the edge of the circle.
     fn march_circle_edge(radius: isize) -> impl Iterator<Item = (isize, isize)> {
         let contained_square_radius = (radius as f32 / 2f32.sqrt()).round() as isize;
-        (1..radius)
+        (0..=radius)
             .rev()
             // find the furthest extension possible for each grade
-            .scan(1, move |extension, grade| {
+            .scan(0, move |extension, grade| {
                 *extension = (*extension..)
                     // extensions should not go past the perimeter of the circle
                     .take_while(|extension| extension * extension + grade * grade < radius * radius)
                     .last()
                     .unwrap_or(*extension);
 
-            // // disallow the contained square to portrude from the circle
+                // // disallow the contained square to portrude from the circle
                 if *extension == contained_square_radius && grade == contained_square_radius {
                     *extension -= 1;
                 }
@@ -145,6 +145,7 @@ impl Position {
         // grade the section between the contained square and the circle
         let segments = Self::march_circle_edge(radius)
             // the radius of the circle is not contained, but the edge of the contained square is
+            .skip(1)
             .take_while(move |(r, _)| *r >= contained_square_radius)
             // fill in the extensions from each grade
             .flat_map(|(grade, max_extension)| {
@@ -174,6 +175,26 @@ impl Position {
         segments
             .chain(radii)
             .chain(contained_squares)
+            .map(move |(x, y)| s + Position::new(x, y))
+    }
+
+    /// Iterates over all of the neighbors of the disk -- that is, all the tiles which are at most
+    /// one away from the disk without being on the disk
+    pub fn disk_neighbors(&self, radius: usize) -> impl Iterator<Item = Position> {
+        let s = *self;
+        let radius = radius as isize;
+        Self::march_circle_edge(radius)
+            .tuple_windows::<(_, _)>()
+            .flat_map(|((grade, start_ex), (_, end_ex))| {
+                (start_ex + 1..=end_ex + 1).map(move |x| (grade, x))
+            })
+            .flat_map(|(x, y)| [(x, y), (-x, y), (x, -y), (-x, -y)])
+            // add the caps on the top of the circle
+            .chain(
+                [(radius + 1, 1), (radius + 1, 0), (radius + 1, -1)]
+                    .into_iter()
+                    .flat_map(|(x, y)| [(x, y), (-x, -y), (y, x), (-y, -x)]),
+            )
             .map(move |(x, y)| s + Position::new(x, y))
     }
 
@@ -261,21 +282,28 @@ mod test {
     #[test]
     fn position_radii() {
         println!(
-            "{:?}",
+            "disk 8: {:?}",
             Position::ZERO
                 .radius(8)
                 .map(|Position { x, y }| (x, y))
                 .collect_vec()
         );
         println!(
-            "{:?}",
+            "perimeter 8: {:?}",
+            Position::ZERO
+                .disk_neighbors(8)
+                .map(|Position { x, y }| (x, y))
+                .collect_vec()
+        );
+        println!(
+            "disk 4: {:?}",
             Position::ZERO
                 .radius(4)
                 .map(|Position { x, y }| (x, y))
                 .collect_vec()
         );
         println!(
-            "{:?}",
+            "disk 10: {:?}",
             Position::ZERO
                 .radius(10)
                 .map(|Position { x, y }| (x, y))
