@@ -187,6 +187,9 @@ pub fn reveal_tiles(
                             }
                         }
                     }
+                    // TODO set tiles past the perimeter of the disk to be empty and push them to
+                    // TODO the reveal buffer with the previous owner
+                    
                     *field.get_mut(position).unwrap() = ServerTile::Destroyed;
                 }
                 AreaAttack::Lock => todo!(),
