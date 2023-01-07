@@ -108,11 +108,11 @@ impl Position {
             .collect()
     }
 
-    /// Returns a list of all positions which at most a radius r away from this position. Only
-    /// accepts radii greater than 0.
+    /// Returns an iterator over all positions at most a radius r away from this position. Only
+    /// accepts radii greater than 0. Excludes the center of the circle. Positions are guaranteed to
+    /// appear exactly once.
     ///
-    /// Implementation adapted from
-    /// <https://stackoverflow.com/questions/60549803/60551485#60551485>
+    /// Implementation adapted from <https://stackoverflow.com/questions/60549803/60551485#60551485>
     pub fn radius(&self, radius: usize) -> impl Iterator<Item = Position> {
         let radius = radius as isize;
         let contained_square_radius = (radius as f32 / 2f32.sqrt()).round() as isize;
@@ -157,7 +157,6 @@ impl Position {
         segments
             .chain(radii)
             .chain(contained_squares)
-            .chain(std::iter::once((0, 0)))
             .map(move |(x, y)| s + Position::new(x, y))
     }
 

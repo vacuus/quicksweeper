@@ -59,7 +59,7 @@ impl Plugin for AreaAttackServer {
                     .with_system(net_events)
                     .with_system(selection_transition)
                     .with_system(update_selecting_tile)
-                    .with_system(update_stage1_tile)
+                    .with_system(update_tile_playing)
                     .into(),
             );
     }

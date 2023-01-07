@@ -127,16 +127,12 @@ where
             })
     }
 
-    pub fn neighbor_positions(
-        &self,
-        position: Position,
-    ) -> impl Iterator<Item = Position> + '_ {
+    pub fn neighbor_positions(&self, position: Position) -> impl Iterator<Item = Position> + '_ {
         self.minefield.iter_neighbor_positions(position)
     }
 
     pub fn neighbor_cells(&self, position: Position) -> impl Iterator<Item = ROQueryItem<Tile>> {
-        self.neighbors(position)
-            .map(|(_, tile)| tile)
+        self.neighbors(position).map(|(_, tile)| tile)
     }
 
     pub fn get(&self, position: Position) -> Option<ROQueryItem<Tile>> {

@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
+use rand::prelude::*;
 use strum::IntoEnumIterator;
 
 use crate::{
@@ -83,7 +84,7 @@ pub fn selection_transition(
         }
         if let Ok((game_id, mut state, selections, mut access)) = games.get_mut(ev.game) {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttack::Selecting) {
-                *state = AreaAttack::Stage1;
+                *state = AreaAttack::Attack;
 
                 let mut ignore = Vec::with_capacity(selections.len() * 16);
 
@@ -123,7 +124,8 @@ pub fn selection_transition(
 
 pub fn reveal_tiles(
     mut requested: EventReader<RevealTile>,
-    mut games: MinefieldQuery<&mut ServerTile>,
+    mut fields: MinefieldQuery<&mut ServerTile>,
+    state: Query<&AreaAttack>,
     time: Res<Time>,
     mut players: Query<(&mut Frozen, &mut Connection)>,
     mut request_buffer: Local<VecDeque<RevealTile>>,
@@ -138,7 +140,8 @@ pub fn reveal_tiles(
         game,
     }) = request_buffer.pop_front()
     {
-        let Some(mut field) = games.get(game) else { continue; };
+        let Some(mut field) = fields.get(game) else { continue; };
+        let state = state.get(game).unwrap();
 
         // freeze check
         if players.get(player).unwrap().0.is_some() {
@@ -164,12 +167,31 @@ pub fn reveal_tiles(
                     }))
                 }
             }
-            ServerTile::Mine => {
-                *tile = ServerTile::HardMine;
-                let (mut frozen, mut connection) = players.get_mut(player).unwrap();
-                **frozen = Some(time.elapsed());
-                connection.send_logged(AreaAttackUpdate::Freeze);
-            }
+            ServerTile::Mine => match state {
+                AreaAttack::Stage1 => {
+                    *tile = ServerTile::HardMine;
+                    let (mut frozen, mut connection) = players.get_mut(player).unwrap();
+                    **frozen = Some(time.elapsed());
+                    connection.send_logged(AreaAttackUpdate::Freeze);
+                }
+                AreaAttack::Attack => {
+                    let mut rng = rand::thread_rng();
+                    for p in position.radius(5) {
+                        if let Some(mut tile) = field.get_mut(p) {
+                            if !matches!(*tile, ServerTile::Destroyed) {
+                                *tile = if rng.gen_bool(0.2) {
+                                    ServerTile::Mine
+                                } else {
+                                    ServerTile::Empty
+                                };
+                            }
+                        }
+                    }
+                    *field.get_mut(position).unwrap() = ServerTile::Destroyed;
+                }
+                AreaAttack::Lock => todo!(),
+                _ => (),
+            },
             ServerTile::HardMine | ServerTile::Owned { .. } | ServerTile::Destroyed => {
                 // do nothing
             }
@@ -222,37 +244,6 @@ pub fn send_tiles_sys(
         }
     }
 }
-
-// fn send_tiles<'a>(
-//     tile: ServerTile,
-//     position: Position,
-//     minefield: &AdjoinedMinefield<&mut ServerTile>,
-//     peers: impl Iterator<Item = (Entity, Mut<'a, Connection>)>,
-// ) {
-//     for (player_id, mut connection) in peers {
-//         let out_tile = match tile {
-//             ServerTile::Empty | ServerTile::Mine => ClientTile::Unknown,
-//             ServerTile::Owned { player: owner } => ClientTile::Owned {
-//                 player: owner,
-//                 num_neighbors: if player_id == owner {
-//                     minefield
-//                         .neighbor_cells(position)
-//                         .filter(|tile| matches!(tile, ServerTile::Mine | ServerTile::HardMine))
-//                         .count() as u8
-//                 } else {
-//                     0
-//                 },
-//             },
-//             ServerTile::HardMine => ClientTile::Mine,
-//             ServerTile::Destroyed => ClientTile::Destroyed,
-//         };
-
-//         connection.send_logged(AreaAttackUpdate::TileChanged {
-//             position,
-//             to: out_tile,
-//         });
-//     }
-// }
 
 pub fn broadcast_positions(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
@@ -324,14 +315,20 @@ pub fn update_selecting_tile(
     }
 }
 
-pub fn update_stage1_tile(
+/// Tile update system for when the host has begun the game
+pub fn update_tile_playing(
     mut requests: EventReader<LocalEvent<AreaAttackRequest>>,
     mut games: Query<&AreaAttack>,
     mut reveal: EventWriter<RevealTile>,
 ) {
     for LocalEvent { player, game, data } in requests.iter() {
         let AreaAttackRequest::Reveal(pos) = data else {continue;};
-        let Ok(AreaAttack::Stage1) = games.get_mut(*game) else { continue; };
+        if !matches!(
+            games.get_mut(*game),
+            Ok(AreaAttack::Stage1 | AreaAttack::Attack)
+        ) {
+            continue;
+        };
 
         reveal.send(RevealTile {
             position: *pos,
