@@ -143,8 +143,8 @@ pub fn reveal_tiles(
         let Some(mut field) = fields.get(game) else { continue; };
         let state = state.get(game).unwrap();
 
-        // freeze check
-        if players.get(player).unwrap().0.is_some() {
+        let (mut frozen, mut connection) = players.get_mut(player).unwrap();
+        if frozen.is_some() {
             continue;
         }
 
@@ -170,7 +170,6 @@ pub fn reveal_tiles(
             ServerTile::Mine => match state {
                 AreaAttack::Stage1 => {
                     *tile = ServerTile::HardMine;
-                    let (mut frozen, mut connection) = players.get_mut(player).unwrap();
                     **frozen = Some(time.elapsed());
                     connection.send_logged(AreaAttackUpdate::Freeze);
                 }
