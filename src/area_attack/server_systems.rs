@@ -187,9 +187,18 @@ pub fn reveal_tiles(
                             }
                         }
                     }
-                    // TODO set tiles past the perimeter of the disk to be empty and push them to
-                    // TODO the reveal buffer with the previous owner
-                    
+                    for p in position.disk_neighbors(5) {
+                        if let Some(mut tile) = field.get_mut(p) {
+                            if let ServerTile::Owned { player } = *tile {
+                                *tile = ServerTile::Empty;
+                                request_buffer.push_back(RevealTile {
+                                    position: p,
+                                    player,
+                                    game,
+                                })
+                            }
+                        }
+                    }
                     *field.get_mut(position).unwrap() = ServerTile::Destroyed;
                 }
                 AreaAttack::Lock => todo!(),
