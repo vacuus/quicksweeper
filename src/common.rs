@@ -108,6 +108,31 @@ impl Position {
             .collect()
     }
 
+    /// Marches the edge of the circle with the given radius centered at the origin. For a radius AB
+    /// with the circle center at A, the iterator starts at B. From there, for each integral point C
+    /// on the radius, the iterator yields C paired with the length of the line segment along the
+    /// radius' perpendicular from C to the edge of the circle.
+    fn march_circle_edge(radius: isize) -> impl Iterator<Item = (isize, isize)> {
+        let contained_square_radius = (radius as f32 / 2f32.sqrt()).round() as isize;
+        (1..radius)
+            .rev()
+            // find the furthest extension possible for each grade
+            .scan(1, move |extension, grade| {
+                *extension = (*extension..)
+                    // extensions should not go past the perimeter of the circle
+                    .take_while(|extension| extension * extension + grade * grade < radius * radius)
+                    .last()
+                    .unwrap_or(*extension);
+
+            // // disallow the contained square to portrude from the circle
+                if *extension == contained_square_radius && grade == contained_square_radius {
+                    *extension -= 1;
+                }
+
+                Some((grade, *extension))
+            })
+    }
+
     /// Returns an iterator over all positions at most a radius r away from this position. Only
     /// accepts radii greater than 0. Excludes the center of the circle. Positions are guaranteed to
     /// appear exactly once.
@@ -118,21 +143,13 @@ impl Position {
         let contained_square_radius = (radius as f32 / 2f32.sqrt()).round() as isize;
 
         // grade the section between the contained square and the circle
-        // the radius of the circle and the edge of the contained square are not included
-        let segments = (contained_square_radius + 1..radius)
-            // start iterating from the circle, heading toward the square
-            .rev()
-            // find the furthest extension possible for each grade
-            .scan(1, move |extension, grade| {
-                *extension = (*extension..)
-                    // extensions should not go past the perimeter of the circle
-                    .take_while(|extension| extension * extension + grade * grade < radius * radius)
-                    .last()
-                    .unwrap_or(*extension);
-                Some((grade, *extension))
-            })
+        let segments = Self::march_circle_edge(radius)
+            // the radius of the circle is not contained, but the edge of the contained square is
+            .take_while(move |(r, _)| *r >= contained_square_radius)
             // fill in the extensions from each grade
-            .flat_map(|(grade, extension)| (1..=extension).map(move |extension| (grade, extension)))
+            .flat_map(|(grade, max_extension)| {
+                (1..=max_extension).map(move |extension| (grade, extension))
+            })
             // octuple the half-segment so that all segments are covered
             .flat_map(|(x, y)| {
                 [
@@ -149,8 +166,8 @@ impl Position {
 
         let radii = (1..=radius).flat_map(|r| [(0, r), (r, 0), (0, -r), (-r, 0)]);
 
-        let contained_squares = (1..=contained_square_radius)
-            .cartesian_product(1..=contained_square_radius)
+        let contained_squares = (1..contained_square_radius)
+            .cartesian_product(1..contained_square_radius)
             .flat_map(|(x, y)| [(x, y), (-x, y), (x, -y), (-x, -y)]);
 
         let s = *self;
@@ -265,9 +282,19 @@ mod test {
                 .collect_vec()
         );
 
+        let mut unique = HashSet::new();
+        let mut duplicates = Vec::new(); // unfortunately this vec itself isn't necessarily deduplicated
+        for p @ Position { x, y } in Position::ZERO.radius(10) {
+            if !unique.insert(p) {
+                duplicates.push((x, y));
+            }
+        }
+
         assert_eq!(
-            Position::ZERO.radius(10).collect_vec().len(),
-            Position::ZERO.radius(10).collect::<HashSet<_>>().len()
+            duplicates.len(),
+            0,
+            "duplicated (may contain duplicates itself): {:?}",
+            duplicates
         )
     }
 }
