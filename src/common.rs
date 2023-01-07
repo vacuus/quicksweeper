@@ -112,7 +112,7 @@ impl Position {
     /// accepts radii greater than 0.
     ///
     /// Implementation adapted from
-    /// ["https://stackoverflow.com/questions/60549803/60551485#60551485"]
+    /// <https://stackoverflow.com/questions/60549803/60551485#60551485>
     pub fn radius(&self, radius: usize) -> impl Iterator<Item = Position> {
         let radius = radius as isize;
         let contained_square_radius = (radius as f32 / 2f32.sqrt()).round() as isize;

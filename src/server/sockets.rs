@@ -149,9 +149,9 @@ pub fn clean_dead_connections(mut commands: Commands, connections: Query<(Entity
     }
 }
 
-/// Acts on the messages given to connections by [Connection::repeat_send]. It will try a certain
-/// number of times to send the message through the connection, and upon failing afterward will log
-/// the latest error.
+/// Acts on the messages given to connections by [Connection::repeat_send_unchecked]. It will try a
+/// certain number of times to send the message through the connection, and upon failing afterward
+/// will log the latest error.
 pub fn try_send_repeated(mut connections: Query<&mut Connection>) {
     for mut connection in connections.iter_mut() {
         connection.repetition();
