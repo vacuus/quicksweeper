@@ -230,7 +230,7 @@ pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
     }
 }
 
-pub fn send_tiles_sys(
+pub fn send_tiles(
     tiles: Query<(&ServerTile, &Position, &Owner), Changed<ServerTile>>,
     mut minefields: MinefieldQuery<&ServerTile>,
     peers: Query<&Children>,
