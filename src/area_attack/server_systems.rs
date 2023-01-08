@@ -188,13 +188,22 @@ pub fn reveal_tiles(
                     }
                     for p in position.disk_neighbors(5) {
                         if let Some(mut tile) = field.get_mut(p) {
-                            if let ServerTile::Owned { player } = *tile {
-                                *tile = ServerTile::Empty;
-                                request_buffer.push_back(RevealTile {
-                                    position: p,
-                                    player,
-                                    game,
-                                })
+                            // IMPORTANT: A complete replacement of the border is performed so that
+                            // the tiles neighboring the reset disk are unflagged. The server can
+                            // only signal to the client to unflag the tile by forcing it to empty
+                            // the tile.
+                            match std::mem::replace(&mut *tile, ServerTile::Empty) {
+                                // TODO find out whether or not the deref is optimized away
+                                ServerTile::Empty => (), // do nothing
+                                ServerTile::Owned { player } => {
+                                    request_buffer.push_back(RevealTile {
+                                        position: p,
+                                        player,
+                                        game,
+                                    })
+                                }
+                                // TODO this *should* be unobservable, but this needs confirmation
+                                u => *tile = u,
                             }
                         }
                     }
