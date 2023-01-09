@@ -1,0 +1,7 @@
+({
+    "fields": Files(
+        paths: [
+            "fields/circle_100_100.field"
+        ]
+    )
+})

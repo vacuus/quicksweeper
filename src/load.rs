@@ -19,7 +19,7 @@ pub struct Textures {
 // TODO waiting for bevy_asset_loader to support subpaths in wasm
 #[derive(AssetCollection, Resource)]
 pub struct Field {
-    #[asset(path = "fields", collection(typed))]
+    #[asset(key = "fields", collection(typed))]
     pub handles: Vec<Handle<FieldShape>>,
 }
 
@@ -76,6 +76,9 @@ impl Plugin for ClientLoad {
         app.add_loading_state(
             LoadingState::new(Menu::Loading)
                 .continue_to_state(Menu::MainMenu)
+                .with_dynamic_collections::<StandardDynamicAssetCollection>(vec![
+                    "dynamic_asset.assets"
+                ])
                 .with_collection::<Textures>()
                 .with_collection::<Field>(),
         )
