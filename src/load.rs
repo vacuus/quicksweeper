@@ -16,6 +16,7 @@ pub struct Textures {
     pub roboto: Handle<Font>,
 }
 
+// TODO waiting for bevy_asset_loader to support subpaths in wasm
 #[derive(AssetCollection, Resource)]
 pub struct Field {
     #[asset(path = "fields", collection(typed))]

@@ -1,3 +1,5 @@
+#![cfg_attr(not(target="server"), allow(dead_code, unused_imports))]
+
 use std::{net::IpAddr, str::FromStr};
 
 use bevy::prelude::*;
@@ -16,6 +18,7 @@ pub struct ServerPlugin {
     pub address_name: Option<String>,
 }
 
+#[cfg(feature = "server")]
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         let address = self
@@ -36,4 +39,32 @@ impl Plugin for ServerPlugin {
             .add_system(game_messages)
             .add_system(server_messages);
     }
+}
+
+#[cfg(feature = "server")]
+pub fn server_app(address_name: Option<String>) -> App {
+    use std::time::Duration;
+
+    use bevy::app::{ScheduleRunnerSettings, RunMode};
+
+    use crate::{registry::GameRegistry, common, server, load, minefield, area_attack};
+
+    let mut app = App::new();
+    app.init_resource::<GameRegistry>()
+        // run the server at 60 hz
+        .insert_resource(ScheduleRunnerSettings {
+            run_mode: RunMode::Loop {
+                wait: Some(Duration::from_secs(1).div_f32(60.)),
+            },
+        })
+        .add_plugins(MinimalPlugins)
+        .add_plugin(AssetPlugin::default())
+        .add_plugin(HierarchyPlugin)
+        .add_plugin(common::QuicksweeperTypes)
+        .add_plugin(server::ServerPlugin { address_name })
+        .add_plugin(load::ServerLoad)
+        .add_plugin(minefield::MinefieldPlugin)
+        // gamemodes
+        .add_plugin(area_attack::AreaAttackServer);
+    app
 }

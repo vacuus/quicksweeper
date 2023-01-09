@@ -39,35 +39,5 @@
 			],
 			"problemMatcher": []
 		},
-		{
-			"type": "cargo",
-			"command": "build",
-			"args": [
-				"--no-default-features",
-				"--target",
-				"x86_64-pc-windows-gnu",
-				"--release"
-			],
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "build",
-			"label": "cargo release for windows"
-		},
-		{
-			"type": "cargo",
-			"command": "build",
-			"args": [
-				"--no-efault-features",
-				"--target",
-				"x86_64-unknown-linux-gnu",
-				"--release"
-			],
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "build",
-			"label": "cargo release for linux"
-		}
 	]
 }

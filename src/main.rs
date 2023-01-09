@@ -13,12 +13,7 @@ mod server;
 mod singleplayer;
 mod state;
 
-use std::time::Duration;
-
-use bevy::{
-    app::{RunMode, ScheduleRunnerSettings},
-    prelude::*,
-};
+use bevy::prelude::*;
 
 use bevy_egui::EguiPlugin;
 use clap::{Parser, Subcommand};
@@ -39,27 +34,6 @@ struct Args {
 enum Mode {
     Client,
     Server { address: Option<String> },
-}
-
-fn server_app(address_name: Option<String>) -> App {
-    let mut app = App::new();
-    app.init_resource::<GameRegistry>()
-        // run the server at 60 hz
-        .insert_resource(ScheduleRunnerSettings {
-            run_mode: RunMode::Loop {
-                wait: Some(Duration::from_secs(1).div_f32(60.)),
-            },
-        })
-        .add_plugins(MinimalPlugins)
-        .add_plugin(AssetPlugin::default())
-        .add_plugin(HierarchyPlugin)
-        .add_plugin(common::QuicksweeperTypes)
-        .add_plugin(server::ServerPlugin { address_name })
-        .add_plugin(load::ServerLoad)
-        .add_plugin(minefield::MinefieldPlugin)
-        // gamemodes
-        .add_plugin(area_attack::AreaAttackServer);
-    app
 }
 
 fn client_app() -> App {
@@ -94,7 +68,17 @@ fn framerate_limit(mut settings: ResMut<bevy_framepace::FramepaceSettings>) {
 fn main() {
     match Args::parse().mode {
         None | Some(Mode::Client) => client_app(),
-        Some(Mode::Server { address }) => server_app(address),
+        #[allow(unused)]
+        Some(Mode::Server { address }) => {
+            #[cfg(feature = "server")]
+            {
+                server::server_app(address)
+            }
+            #[cfg(not(feature = "server"))]
+            {
+                panic!("Server feature was not enabled for this build, so server initialization is impossible.")
+            }
+        }
     }
     .run();
 }
