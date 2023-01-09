@@ -17,8 +17,7 @@ use std::time::Duration;
 
 use bevy::{
     app::{RunMode, ScheduleRunnerSettings},
-    diagnostic::{DiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*, winit::WinitSettings,
+    prelude::*,
 };
 
 use bevy_egui::EguiPlugin;
@@ -47,7 +46,9 @@ fn server_app(address_name: Option<String>) -> App {
     app.init_resource::<GameRegistry>()
         // run the server at 60 hz
         .insert_resource(ScheduleRunnerSettings {
-            run_mode: RunMode::Loop { wait: Some(Duration::from_secs(1).div_f32(60.))},
+            run_mode: RunMode::Loop {
+                wait: Some(Duration::from_secs(1).div_f32(60.)),
+            },
         })
         .add_plugins(MinimalPlugins)
         .add_plugin(AssetPlugin::default())
