@@ -31,6 +31,19 @@
 			"label": "cargo run server"
 		},
 		{
+			"type": "cargo",
+			"command": "run",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				"--target",
+				"wasm32-unknown-unknown",
+				"--no-default-features",
+			],
+			"label": "cargo run web"
+		},
+		{
 			"type": "shell",
 			"label": "runall",
 			"dependsOn": [
