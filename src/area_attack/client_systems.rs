@@ -15,7 +15,7 @@ use crate::{
 use super::{
     components::{ClientTile, ClientTileBundle, FreezeTimer, FreezeTimerDisplay},
     protocol::{AreaAttackRequest, AreaAttackUpdate},
-    puppet::{PuppetCursor, PuppetCursorBundle, PuppetTable},
+    puppet::{PuppetCursor, PuppetCursorBundle, Remote},
     states::AreaAttack,
 };
 
@@ -38,7 +38,7 @@ pub fn request_reveal(
     mut sock: ResMut<Connection>,
     state: Res<CurrentState<AreaAttack>>,
     mut field: MinefieldQuery<&mut ClientTile>,
-    puppet_table: Res<PuppetTable>,
+    puppets: Query<&Remote, With<PuppetCursor>>,
 ) {
     for &position in cursor.iter() {
         let mut field = field.get_single().unwrap();
@@ -53,7 +53,7 @@ pub fn request_reveal(
                     player,
                     num_neighbors,
                 } => {
-                    if !puppet_table.contains_key(player) {
+                    if !puppets.iter().any(|puppet| *puppet == *player) {
                         // counts both flags and known mines
                         let marked_count = field
                             .neighbor_cells(position)
@@ -139,8 +139,7 @@ pub fn reset_field(
 pub fn player_update(
     mut events: EventReader<AreaAttackUpdate>,
     mut commands: Commands,
-    mut puppet_map: ResMut<PuppetTable>,
-    mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
+    mut puppets: Query<(&mut PuppetCursor, &mut Position, &Remote)>,
     textures: Res<Textures>,
 ) {
     for ev in events.iter() {
@@ -151,41 +150,40 @@ pub fn player_update(
             position,
         } = ev
         {
-            puppet_map
-                .entry(*id)
-                .and_modify(|&mut puppet| {
-                    let (mut puppet, mut pos) = puppets.get_mut(puppet).unwrap();
-                    puppet.0 = (*color).into();
-                    *pos = *position;
-                })
-                .or_insert_with(|| {
-                    let name = commands
-                        .spawn(Text2dBundle {
-                            text: Text::from_section(
-                                username,
-                                TextStyle {
-                                    font: textures.roboto.clone(),
-                                    font_size: 10.0,
-                                    color: (*color).into(),
-                                },
-                            ),
-                            transform: Transform::from_xyz(10.0, 10.0, 0.0),
-                            ..default()
-                        })
-                        .id();
-
-                    commands
-                        .spawn(PuppetCursorBundle {
-                            cursor: PuppetCursor((*color).into()),
-                            position: *position,
-                            sprite_bundle: SpriteBundle {
-                                texture: textures.cursor.clone(),
-                                ..default()
+            if let Some((mut puppet, mut pos, _)) = puppets
+                .iter_mut()
+                .find(|(_, _, &Remote(remote))| remote == *id)
+            {
+                puppet.0 = (*color).into();
+                *pos = *position;
+            } else {
+                let name = commands
+                    .spawn(Text2dBundle {
+                        text: Text::from_section(
+                            username,
+                            TextStyle {
+                                font: textures.roboto.clone(),
+                                font_size: 10.0,
+                                color: (*color).into(),
                             },
-                        })
-                        .add_child(name)
-                        .id()
-                });
+                        ),
+                        transform: Transform::from_xyz(10.0, 10.0, 0.0),
+                        ..default()
+                    })
+                    .id();
+
+                commands
+                    .spawn(PuppetCursorBundle {
+                        cursor: PuppetCursor((*color).into()),
+                        position: *position,
+                        sprite_bundle: SpriteBundle {
+                            texture: textures.cursor.clone(),
+                            ..default()
+                        },
+                        remote: Remote(*id),
+                    })
+                    .add_child(name);
+            }
         }
     }
 }
@@ -227,9 +225,8 @@ pub fn self_update(
 
 pub fn puppet_control(
     mut events: EventReader<AreaAttackUpdate>,
-    mut puppets: Query<(&mut PuppetCursor, &mut Position)>,
+    mut puppets: Query<(&mut Position, &Remote), With<PuppetCursor>>,
     mut field: MinefieldQuery<&mut ClientTile>,
-    puppet_map: ResMut<PuppetTable>,
 ) {
     if field.get_single().is_none() {
         return;
@@ -237,7 +234,10 @@ pub fn puppet_control(
     for ev in events.iter() {
         match ev {
             AreaAttackUpdate::Reposition { id, position } => {
-                *(puppets.get_mut(puppet_map[id]).unwrap().1) = *position;
+                *(puppets
+                    .iter_mut()
+                    .find_map(|(pos_mut, &Remote(rem))| (rem == *id).then_some(pos_mut))
+                    .unwrap()) = *position;
             }
             AreaAttackUpdate::TileChanged { position, to } => {
                 *field.get_single().unwrap().get_mut(*position).unwrap() = *to
@@ -299,8 +299,7 @@ pub fn draw_tiles(
         Or<(Added<ClientTile>, Changed<ClientTile>)>,
     >,
     own_cursor: Query<&Cursor>,
-    puppet_map: ResMut<PuppetTable>,
-    puppets: Query<&PuppetCursor>,
+    puppets: Query<(&PuppetCursor, &Remote)>,
 ) {
     let own_color = own_cursor.get_single().map(|c| c.color).map_err(|_| ());
     updated_tiles.for_each_mut(|(mut sprite, state)| {
@@ -312,13 +311,12 @@ pub fn draw_tiles(
                 player,
                 num_neighbors,
             } => TextureAtlasSprite::new(*num_neighbors as usize).tap_mut(|s| {
-                s.color = if let Some(&PuppetCursor(color)) =
-                    puppet_map.get(player).and_then(|e| puppets.get(*e).ok())
-                {
-                    color
-                } else {
-                    own_color.unwrap()
-                }
+                s.color = puppets
+                    .iter()
+                    .find_map(|(&PuppetCursor(color), &Remote(rem))| {
+                        (rem == *player).then_some(color)
+                    })
+                    .unwrap_or_else(|| own_color.unwrap())
             }),
             ClientTile::Mine => TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default()),
             ClientTile::Flag => {

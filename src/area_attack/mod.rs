@@ -17,9 +17,7 @@ use crate::{
     server::{GameDescriptor, GameMarker, LocalEvent},
 };
 
-use self::{
-    components::RevealTile, protocol::AreaAttackRequest, puppet::PuppetTable, states::AreaAttack,
-};
+use self::{components::RevealTile, protocol::AreaAttackRequest, states::AreaAttack};
 
 pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     match Uuid::try_parse("040784a0-e905-44a9-b698-14a71a29b3fd") {
@@ -71,7 +69,6 @@ impl Plugin for AreaAttackClient {
     fn build(&self, app: &mut App) {
         use AreaAttack::*;
         app.add_loopless_state(Inactive)
-            .init_resource::<PuppetTable>()
             .init_resource::<FreezeTimer>()
             .add_event::<AreaAttackUpdate>()
             .add_startup_system(registry_entry)
