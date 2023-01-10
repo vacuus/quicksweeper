@@ -17,3 +17,12 @@ pub enum AreaAttack {
     /// are prompted to rematch or exit
     Finishing,
 }
+
+impl AreaAttack {
+    pub fn can_reveal(&self) -> bool {
+        matches!(
+            self,
+            AreaAttack::Stage1 | AreaAttack::Attack | AreaAttack::Lock
+        )
+    }
+}

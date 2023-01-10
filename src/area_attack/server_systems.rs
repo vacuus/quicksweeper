@@ -144,7 +144,7 @@ pub fn reveal_tiles(
         let state = state.get(game).unwrap();
 
         let (mut frozen, mut killed, mut connection) = players.get_mut(player).unwrap();
-        if frozen.is_some() || **killed {
+        if frozen.is_some() || **killed || !state.can_reveal() {
             continue;
         }
 
