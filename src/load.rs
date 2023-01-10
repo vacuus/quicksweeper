@@ -16,10 +16,13 @@ pub struct Textures {
     pub roboto: Handle<Font>,
 }
 
-// TODO waiting for bevy_asset_loader to support subpaths in wasm
 #[derive(AssetCollection, Resource)]
 pub struct Field {
+    #[cfg(target_arch = "wasm32-unknown-unknown")]
     #[asset(key = "fields", collection(typed))]
+    pub handles: Vec<Handle<FieldShape>>,
+    #[cfg(not(target_arch = "wasm32-unknown-unknown"))]
+    #[asset(path = "fields", collection(typed))]
     pub handles: Vec<Handle<FieldShape>>,
 }
 
@@ -77,7 +80,7 @@ impl Plugin for ClientLoad {
             LoadingState::new(Menu::Loading)
                 .continue_to_state(Menu::MainMenu)
                 .with_dynamic_collections::<StandardDynamicAssetCollection>(vec![
-                    "dynamic_asset.assets"
+                    "dynamic_asset.assets",
                 ])
                 .with_collection::<Textures>()
                 .with_collection::<Field>(),
@@ -90,11 +93,10 @@ pub struct ServerLoad;
 
 impl Plugin for ServerLoad {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(Menu::Loading)
-            .add_loading_state(
-                LoadingState::new(Menu::Loading)
-                    .continue_to_state(Menu::MainMenu)
-                    .with_collection::<Field>(),
-            );
+        app.add_loopless_state(Menu::Loading).add_loading_state(
+            LoadingState::new(Menu::Loading)
+                .continue_to_state(Menu::MainMenu)
+                .with_collection::<Field>(),
+        );
     }
 }
