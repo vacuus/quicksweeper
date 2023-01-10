@@ -18,10 +18,10 @@ pub struct Textures {
 
 #[derive(AssetCollection, Resource)]
 pub struct Field {
-    #[cfg(target_arch = "wasm32-unknown-unknown")]
+    #[cfg(target_arch = "wasm32")]
     #[asset(key = "fields", collection(typed))]
     pub handles: Vec<Handle<FieldShape>>,
-    #[cfg(not(target_arch = "wasm32-unknown-unknown"))]
+    #[cfg(not(target_arch = "wasm32"))]
     #[asset(path = "fields", collection(typed))]
     pub handles: Vec<Handle<FieldShape>>,
 }
