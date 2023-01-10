@@ -57,10 +57,14 @@ pub struct PlayerBundle {
     pub color: PlayerColor,
     pub position: Position,
     pub frozen: Frozen,
+    pub killed: Killed,
 }
 
 #[derive(Component, Debug, Default, Deref, DerefMut)]
 pub struct Frozen(Option<Duration>);
+
+#[derive(Component, Debug, Default, Deref, DerefMut)]
+pub struct Killed(bool);
 
 #[derive(Component, Debug, Clone, Copy)]
 pub enum ServerTile {

@@ -16,8 +16,8 @@ use crate::{
 
 use super::{
     components::{
-        AreaAttackBundle, ClientTile, Frozen, InitialSelections, Owner, PlayerBundle, PlayerColor,
-        RevealTile, ServerTile, FREEZE_TIME,
+        AreaAttackBundle, ClientTile, Frozen, InitialSelections, Killed, Owner, PlayerBundle,
+        PlayerColor, RevealTile, ServerTile, FREEZE_TIME,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttack,
@@ -127,7 +127,7 @@ pub fn reveal_tiles(
     mut fields: MinefieldQuery<&mut ServerTile>,
     state: Query<&AreaAttack>,
     time: Res<Time>,
-    mut players: Query<(&mut Frozen, &mut Connection)>,
+    mut players: Query<(&mut Frozen, &mut Killed, &mut Connection)>,
     mut request_buffer: Local<VecDeque<RevealTile>>,
 ) {
     for &ev in requested.iter() {
@@ -143,8 +143,8 @@ pub fn reveal_tiles(
         let Some(mut field) = fields.get(game) else { continue; };
         let state = state.get(game).unwrap();
 
-        let (mut frozen, mut connection) = players.get_mut(player).unwrap();
-        if frozen.is_some() {
+        let (mut frozen, mut killed, mut connection) = players.get_mut(player).unwrap();
+        if frozen.is_some() || **killed {
             continue;
         }
 
@@ -209,7 +209,11 @@ pub fn reveal_tiles(
                     }
                     *field.get_mut(position).unwrap() = ServerTile::Destroyed;
                 }
-                AreaAttack::Lock => todo!(),
+                AreaAttack::Lock => {
+                    *tile = ServerTile::HardMine;
+                    **killed = true;
+                    connection.send_logged(AreaAttackUpdate::Killed);
+                }
                 _ => (),
             },
             ServerTile::HardMine | ServerTile::Owned { .. } | ServerTile::Destroyed => {
@@ -430,6 +434,7 @@ pub fn prepare_player(
             color: assigned_color,
             position: assigned_position,
             frozen: Frozen::default(),
+            killed: Killed::default(),
         });
         this_connection.repeat_send_unchecked(AreaAttackUpdate::SelfChange {
             color: assigned_color,
