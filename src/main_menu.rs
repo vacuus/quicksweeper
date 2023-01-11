@@ -151,18 +151,10 @@ fn server_select_menu(
         }
         // execute requests to connect to server
         else if focus_lost && ui.input().key_pressed(Key::Enter) {
-            let stream = TcpStream::connect(&fields.remote_addr).map_err(|_| {
-                fields.remote_select_err = "Could not find that address";
-            })?;
-
-            stream.set_nonblocking(true).map_err(|_| {
-                fields.remote_select_err = "Unable to set nonblocking connection mode";
-            })?;
-
             let addr = format!("ws://{}/", fields.remote_addr);
-            #[cfg(target_arch = "wasm")]
+            #[cfg(target_arch = "wasm32")]
             {
-                let mut socket = Connection::new_web(socket);
+                let mut socket = Connection::new_web(&addr);
                 socket
                     .try_send(Greeting {
                         username: fields.username.clone(),
@@ -178,8 +170,16 @@ fn server_select_menu(
                 commands.insert_resource(socket);
                 commands.insert_resource(NextState(Menu::GameSelect));
             }
-            #[cfg(not(target_arch = "wasm"))]
+            #[cfg(not(target_arch = "wasm32"))]
             {
+                let stream = TcpStream::connect(&fields.remote_addr).map_err(|_| {
+                    fields.remote_select_err = "Could not find that address";
+                })?;
+
+                stream.set_nonblocking(true).map_err(|_| {
+                    fields.remote_select_err = "Unable to set nonblocking connection mode";
+                })?;
+
                 fields.trying_connection = Some(tungstenite::client(addr, stream));
             }
         } else if focus_gained {

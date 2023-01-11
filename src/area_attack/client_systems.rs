@@ -9,7 +9,7 @@ use crate::{
     load::Textures,
     main_menu::standard_window,
     minefield::{query::MinefieldQuery, specific::TILE_SIZE, Minefield},
-    server::{ClientMessage, Connection},
+    server::{ClientMessage, CommonConnection as Connection},
 };
 
 use super::{

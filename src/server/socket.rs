@@ -30,14 +30,14 @@ impl CommonConnection {
     {
         match self {
             CommonConnection::Pc(sock) => sock.recv_message(),
-            CommonConnection::Web(sock) => todo!(),
+            CommonConnection::Web(sock) => sock.recv_message(),
         }
     }
 
     pub fn send_logged(&mut self, msg: impl Serialize) {
         match self {
             CommonConnection::Pc(sock) => sock.send_logged(msg),
-            CommonConnection::Web(sock) => todo!(),
+            CommonConnection::Web(sock) => sock.send(msg),
         }
     }
 
@@ -50,8 +50,13 @@ impl CommonConnection {
     pub fn try_send(&mut self, msg: impl Serialize) -> Result<(), MessageError> {
         match self {
             CommonConnection::Pc(sock) => sock.try_send(msg),
-            CommonConnection::Web(sock) => todo!(),
+            CommonConnection::Web(sock) => Ok(sock.send(msg)),
         }
     }
-
+    pub fn repeat_send_unchecked(&mut self, msg: impl Serialize) {
+        match self {
+            CommonConnection::Pc(sock) => sock.repeat_send_unchecked(msg),
+            CommonConnection::Web(sock) => sock.send(msg),
+        }
+    }
 }

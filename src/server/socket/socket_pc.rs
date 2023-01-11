@@ -21,7 +21,7 @@ pub enum MessageError {
     #[error("From serialization (rmp_serde): {0}")]
     Serialization(#[from] rmp_serde::encode::Error),
     #[error("From deserialization: {0}")]
-    Deserialization(rmp_serde::decode::Error),
+    Deserialization(#[from] rmp_serde::decode::Error),
     #[error("Data received from websocket is not encoded in binary format")]
     Encoding,
 }
