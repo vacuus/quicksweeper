@@ -3103,6 +3103,7 @@ dependencies = [
  "bevy_egui",
  "bevy_framepace",
  "clap",
+ "crossbeam-channel",
  "egui",
  "gridly",
  "gridly_grids",

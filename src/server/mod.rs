@@ -11,6 +11,7 @@ mod socket;
 pub use game::*;
 pub use protocol::*;
 pub use socket::socket_pc::*;
+pub use socket::CommonConnection;
 
 pub struct ServerPlugin {
     pub address_name: Option<String>,

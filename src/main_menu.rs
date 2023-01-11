@@ -12,7 +12,10 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 use crate::{
     cursor::Bindings,
     registry::GameRegistry,
-    server::{ActiveGame, ClientMessage, Connection, GameMarker, Greeting, ServerMessage},
+    server::{
+        ActiveGame, ClientMessage, CommonConnection as Connection, GameMarker, Greeting,
+        ServerMessage,
+    },
     Singleplayer,
 };
 
@@ -118,10 +121,10 @@ fn server_select_menu(
             .inner;
 
         if fields.trying_connection.is_some() {
-            let maybe_handshake = std::mem::replace(&mut fields.trying_connection, None).unwrap();
+            let maybe_handshake = std::mem::take(&mut fields.trying_connection).unwrap();
             match maybe_handshake {
                 Ok((socket, _)) => {
-                    let mut socket = Connection::new(socket);
+                    let mut socket = Connection::new_pc(socket);
                     socket
                         .try_send(Greeting {
                             username: fields.username.clone(),
@@ -157,7 +160,28 @@ fn server_select_menu(
             })?;
 
             let addr = format!("ws://{}/", fields.remote_addr);
-            fields.trying_connection = Some(tungstenite::client(addr, stream));
+            #[cfg(target_arch = "wasm")]
+            {
+                let mut socket = Connection::new_web(socket);
+                socket
+                    .try_send(Greeting {
+                        username: fields.username.clone(),
+                    })
+                    .map_err(|_| {
+                        fields.remote_select_err = "Failure in initializing connection";
+                    })?;
+
+                socket.try_send(ClientMessage::Games).map_err(|_| {
+                    fields.remote_select_err = "Could not retrieve games on the server"
+                })?;
+
+                commands.insert_resource(socket);
+                commands.insert_resource(NextState(Menu::GameSelect));
+            }
+            #[cfg(not(target_arch = "wasm"))]
+            {
+                fields.trying_connection = Some(tungstenite::client(addr, stream));
+            }
         } else if focus_gained {
             fields.remote_select_err = "";
         }
@@ -252,7 +276,6 @@ fn game_select_menu(
     .inner;
 
     if response.go_back.clicked() {
-        commands.remove_resource::<Connection>();
         commands.insert_resource(NextState(Menu::MainMenu));
     } else if response.reload.clicked() {
         socket.send_logged(ClientMessage::Games);
