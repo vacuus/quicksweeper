@@ -14,7 +14,7 @@ use crate::registry::GameRegistry;
 
 use super::{
     protocol::{ActiveGame, ClientMessage, ServerMessage},
-    sockets::{Connection, ConnectionInfo},
+    socket::socket_pc::{Connection, ConnectionInfo},
     IngameEvent,
 };
 

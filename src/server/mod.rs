@@ -1,18 +1,16 @@
-#![cfg_attr(not(target="server"), allow(dead_code, unused_imports))]
+#![cfg_attr(not(target = "server"), allow(dead_code, unused_imports))]
 
 use std::{net::IpAddr, str::FromStr};
 
 use bevy::prelude::*;
 
-use self::sockets::*;
-
 mod game;
 mod protocol;
-mod sockets;
+mod socket;
 
 pub use game::*;
 pub use protocol::*;
-pub use sockets::{Connection, ConnectionInfo};
+pub use socket::socket_pc::*;
 
 pub struct ServerPlugin {
     pub address_name: Option<String>,
@@ -45,9 +43,9 @@ impl Plugin for ServerPlugin {
 pub fn server_app(address_name: Option<String>) -> App {
     use std::time::Duration;
 
-    use bevy::app::{ScheduleRunnerSettings, RunMode};
+    use bevy::app::{RunMode, ScheduleRunnerSettings};
 
-    use crate::{registry::GameRegistry, common, server, load, minefield, area_attack};
+    use crate::{area_attack, common, load, minefield, registry::GameRegistry, server};
 
     let mut app = App::new();
     app.init_resource::<GameRegistry>()

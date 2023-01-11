@@ -3108,6 +3108,7 @@ dependencies = [
  "gridly_grids",
  "itertools",
  "iyes_loopless",
+ "js-sys",
  "local-ip-address",
  "log",
  "ouroboros",
@@ -3120,6 +3121,8 @@ dependencies = [
  "thiserror",
  "tungstenite",
  "vec-drain-where",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

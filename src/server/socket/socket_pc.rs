@@ -12,7 +12,7 @@ use tungstenite::{
     HandshakeError, Message, ServerHandshake, WebSocket,
 };
 
-use super::Greeting;
+use crate::server::Greeting;
 
 #[derive(thiserror::Error, Debug)]
 pub enum MessageError {
