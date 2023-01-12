@@ -1,9 +1,9 @@
 use bevy::prelude::Resource;
+use crossbeam_channel::Receiver;
 use js_sys::Uint8Array;
 use serde::{de::DeserializeOwned, Serialize};
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{console, MessageEvent, WebSocket};
-use crossbeam_channel::Receiver;
+use web_sys::{console, BinaryType, MessageEvent, WebSocket};
 
 use crate::server::MessageError;
 
@@ -19,21 +19,21 @@ unsafe impl Sync for Connection {}
 impl Connection {
     pub fn new(address: &str) -> Self {
         let socket = WebSocket::new(address).unwrap();
+        socket.set_binary_type(BinaryType::Arraybuffer);
 
         let (tx, rx) = crossbeam_channel::unbounded();
 
         let onmessage = Closure::<dyn FnMut(_)>::new(move |msg: MessageEvent| {
+            log::info!("Receive closure called received data: {:?}", msg.data());
             if let Err(e) = tx.send(msg) {
-                console::log_1(
-                    &format!(
-                        "Failed to pass websocket message to the wasm backend due to error: \n{}",
-                        e.to_string()
-                    )
-                    .into(),
-                )
+                log::error!(
+                    "Failed to pass websocket message to the wasm backend due to error: \n{}",
+                    e.to_string()
+                );
             }
         });
         socket.set_onmessage(Some(onmessage.as_ref().unchecked_ref()));
+        onmessage.forget();
 
         Self {
             message_receiver: rx,
@@ -57,6 +57,8 @@ impl Connection {
 
     pub fn send(&mut self, msg: impl Serialize) {
         // TODO get diagnostics for this
-        let _ = self.socket.send_with_u8_array(&rmp_serde::to_vec(&msg).unwrap());
+        let _ = self
+            .socket
+            .send_with_u8_array(&rmp_serde::to_vec(&msg).unwrap());
     }
 }
