@@ -59,4 +59,11 @@ impl CommonConnection {
             CommonConnection::Web(sock) => sock.send(msg),
         }
     }
+
+    pub fn is_ready(&self) -> bool {
+        match self {
+            CommonConnection::Pc(_) => true,
+            CommonConnection::Web(sock) => sock.is_ready(),
+        }
+    }
 }

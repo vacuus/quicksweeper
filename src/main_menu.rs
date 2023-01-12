@@ -39,6 +39,9 @@ struct MenuFields {
     remote_addr: String,
     username: String,
     remote_select_err: &'static str,
+    #[cfg(target_arch = "wasm32")]
+    trying_connection: Option<Connection>,
+    #[cfg(not(target_arch = "wasm32"))]
     trying_connection: Option<ClientResult>,
 }
 
@@ -121,40 +124,32 @@ fn server_select_menu(
             .inner;
 
         if fields.trying_connection.is_some() {
-            let maybe_handshake = std::mem::take(&mut fields.trying_connection).unwrap();
-            match maybe_handshake {
-                Ok((socket, _)) => {
-                    let mut socket = Connection::new_pc(socket);
-                    socket
-                        .try_send(Greeting {
-                            username: fields.username.clone(),
-                        })
-                        .map_err(|_| {
-                            fields.remote_select_err = "Failure in initializing connection";
-                        })?;
-
-                    socket.try_send(ClientMessage::Games).map_err(|_| {
-                        fields.remote_select_err = "Could not retrieve games on the server"
-                    })?;
-
-                    commands.insert_resource(socket);
-                    commands.insert_resource(NextState(Menu::GameSelect));
+            if let Some(mut socket) = {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    if fields.trying_connection.as_ref().unwrap().is_ready() {
+                        std::mem::take(&mut fields.trying_connection)
+                    } else {
+                        None
+                    }
                 }
-                Err(HandshakeError::Interrupted(handshake)) => {
-                    fields.trying_connection = Some(handshake.handshake())
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    let maybe_handshake = std::mem::take(&mut fields.trying_connection).unwrap();
+                    match maybe_handshake {
+                        Ok((socket, _)) => Some(Connection::new_pc(socket)),
+                        Err(HandshakeError::Interrupted(handshake)) => {
+                            fields.trying_connection = Some(handshake.handshake());
+                            None
+                        }
+                        Err(e) => {
+                            eprintln!("{e}");
+                            fields.remote_select_err = "Failed to perform handshake with server";
+                            None
+                        }
+                    }
                 }
-                Err(e) => {
-                    eprintln!("{e}");
-                    fields.remote_select_err = "Failed to perform handshake with server";
-                }
-            }
-        }
-        // execute requests to connect to server
-        else if focus_lost && ui.input().key_pressed(Key::Enter) {
-            let addr = format!("ws://{}/", fields.remote_addr);
-            #[cfg(target_arch = "wasm32")]
-            {
-                let mut socket = Connection::new_web(&addr);
+            } {
                 socket
                     .try_send(Greeting {
                         username: fields.username.clone(),
@@ -169,6 +164,14 @@ fn server_select_menu(
 
                 commands.insert_resource(socket);
                 commands.insert_resource(NextState(Menu::GameSelect));
+            }
+        }
+        // execute requests to connect to server
+        else if focus_lost && ui.input().key_pressed(Key::Enter) {
+            let addr = format!("ws://{}/", fields.remote_addr);
+            #[cfg(target_arch = "wasm32")]
+            {
+                fields.trying_connection = Some(Connection::new_web(&addr))
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
