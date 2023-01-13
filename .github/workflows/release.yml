@@ -37,7 +37,7 @@ jobs:
 
       - name: Prepare package
         run: |
-          wasm-bindgen --no-typescript --out-name bevy_game --out-dir wasm --target web target/wasm32-unknown-unknown/release/${{ env.binary }}.wasm
+          wasm-bindgen --no-typescript --out-name ${{ env.binary }} --out-dir wasm --target web target/wasm32-unknown-unknown/release/${{ env.binary }}.wasm
           cp -r assets wasm/
 
       - name: Package as a zip
@@ -59,7 +59,30 @@ jobs:
           file: ${{ env.binary }}.zip
           asset_name: ${{ env.binary }}-wasm-${{ steps.get_version.outputs.tag }}.zip
           tag: ${{ github.ref }}
-          overwrite: true
+          overwrite: true 
+
+      - name: Upload package as pages artifact
+        uses: actions/upload-pages-artifact@v1.0.4
+        with:
+          path: "./wasm"
+          retention-days: "30"
+
+  # push compiled wasm to github pages
+  deploy:
+    needs: release-wasm
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${steps.deployment.outputs.page_url}
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v1
+          
 
   # Build for Linux
   release-linux:
