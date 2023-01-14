@@ -3,7 +3,7 @@
     <head>
         <title>Quicksweeper</title>
         <script type="module">
-            import init from '/quicksweeper.js';
+            let {default: init}= await import(new URL('quicksweeper.js', import.meta.url))
             await init();
         </script>
     </head>
