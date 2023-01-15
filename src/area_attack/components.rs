@@ -14,14 +14,43 @@ use super::{states::AreaAttack, AreaAttackServer};
 
 pub const FREEZE_DURATION: Duration = Duration::from_secs(5);
 
-#[derive(Component, Deref, DerefMut)]
-pub struct StageTimer(Timer);
+#[derive(Component)]
+pub struct StageTimer{
+    previous_time: Duration,
+    timer: Timer,
+}
+
+impl StageTimer {
+    pub fn tick(&mut self, delta: Duration) -> &Self{
+        self.previous_time = self.timer.elapsed();
+        self.timer.tick(delta);
+        self
+    }
+
+    pub fn has_just_elapsed(&self, duration: Duration) -> bool {
+        self.previous_time < duration && duration < self.timer.elapsed()
+    }
+
+    pub fn finished(&self) -> bool {
+        self.timer.finished()
+    }
+
+    #[allow(dead_code)]
+    pub fn pause(&mut self) {
+        self.timer.pause()
+    }
+
+    pub fn unpause(&mut self) {
+        self.timer.unpause()
+    }
+}
 
 impl Default for StageTimer {
     fn default() -> Self {
-        Self(
-            Timer::new(Duration::from_secs(7 * 60), TimerMode::Once).tap_mut(|timer| timer.pause()),
-        )
+        Self{
+            previous_time: Duration::from_nanos(0),
+            timer: Timer::new(Duration::from_secs(7 * 60), TimerMode::Once).tap_mut(|timer| timer.pause()),
+        }
     }
 }
 

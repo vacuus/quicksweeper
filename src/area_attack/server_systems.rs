@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, time::Duration};
 
 use bevy::{hierarchy::HierarchyEvent, prelude::*};
 use itertools::Itertools;
@@ -143,12 +143,11 @@ pub fn stage_transitions(
     for (mut stage_timer, mut stage, peers) in game.iter_mut() {
         stage_timer.tick(time.delta());
 
-        let elapsed = stage_timer.elapsed();
         if let Some(new_stage) = if stage_timer.finished() {
             Some(AreaAttack::Finishing)
-        } else if elapsed.as_secs() > 6 * 60 {
+        } else if stage_timer.has_just_elapsed(Duration::from_secs(6 * 60)) {
             Some(AreaAttack::Lock)
-        } else if elapsed.as_secs() > 3 * 60 {
+        } else if stage_timer.has_just_elapsed(Duration::from_secs(3 * 60)) {
             Some(AreaAttack::Attack)
         } else {
             None
