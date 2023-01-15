@@ -31,8 +31,8 @@ impl StageTimer {
         self.previous_time < duration && duration < self.timer.elapsed()
     }
 
-    pub fn finished(&self) -> bool {
-        self.timer.finished()
+    pub fn just_finished(&mut self) -> bool {
+        self.timer.just_finished()
     }
 
     #[allow(dead_code)]

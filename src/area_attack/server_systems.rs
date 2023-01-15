@@ -143,11 +143,13 @@ pub fn stage_transitions(
     for (mut stage_timer, mut stage, peers) in game.iter_mut() {
         stage_timer.tick(time.delta());
 
-        if let Some(new_stage) = if stage_timer.finished() {
+        if let Some(new_stage) = if stage_timer.just_finished() {
             Some(AreaAttack::Finishing)
         } else if stage_timer.has_just_elapsed(Duration::from_secs(6 * 60)) {
+            println!("Transition to lock stage");
             Some(AreaAttack::Lock)
         } else if stage_timer.has_just_elapsed(Duration::from_secs(3 * 60)) {
+            println!("Transition to attack stage");
             Some(AreaAttack::Attack)
         } else {
             None
