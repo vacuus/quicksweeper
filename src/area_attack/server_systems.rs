@@ -17,7 +17,7 @@ use crate::{
 use super::{
     components::{
         AreaAttackBundle, ClientTile, Frozen, InitialSelections, Killed, Owner, PlayerBundle,
-        PlayerColor, RevealTile, ServerTile, FREEZE_TIME,
+        PlayerColor, RevealTile, ServerTile, StageTimer, FREEZE_DURATION,
     },
     protocol::{AreaAttackRequest, AreaAttackUpdate},
     states::AreaAttack,
@@ -70,9 +70,15 @@ pub fn net_events(
     }
 }
 
-pub fn selection_transition(
+pub fn initial_transition(
     mut ev: EventReader<LocalEvent<AreaAttackRequest>>,
-    mut games: Query<(Entity, &mut AreaAttack, &InitialSelections, &mut Access)>,
+    mut games: Query<(
+        Entity,
+        &mut AreaAttack,
+        &InitialSelections,
+        &mut Access,
+        &mut StageTimer,
+    )>,
     mut minefields: MinefieldQuery<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
     mut connections: Query<&mut Connection>,
@@ -82,9 +88,11 @@ pub fn selection_transition(
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
             continue;
         }
-        if let Ok((game_id, mut state, selections, mut access)) = games.get_mut(ev.game) {
+        if let Ok((game_id, mut state, selections, mut access, mut stage_timer)) =
+            games.get_mut(ev.game)
+        {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttack::Selecting) {
-                *state = AreaAttack::Attack;
+                *state = AreaAttack::Stage1;
 
                 let mut ignore = Vec::with_capacity(selections.len() * 16);
 
@@ -109,15 +117,44 @@ pub fn selection_transition(
                     })
                 }
 
+                stage_timer.unpause();
+
                 connections.for_each_mut(|mut conn| {
                     conn.repeat_send_unchecked(AreaAttackUpdate::Transition(AreaAttack::Stage1));
                 });
 
                 // close joins
                 *access = Access::Ingame;
-
-                println!("Transitioned game to stage 1")
             }
+        }
+    }
+}
+
+pub fn stage_transitions(
+    mut game: Query<(&mut StageTimer, &mut AreaAttack, &Children)>,
+    mut connections: Query<(Entity, &mut Connection)>,
+    time: Res<Time>,
+) {
+    for (mut stage_timer, mut stage, peers) in game.iter_mut() {
+        stage_timer.tick(time.delta());
+
+        let elapsed = stage_timer.elapsed();
+        if let Some(new_stage) = if stage_timer.finished() {
+            Some(AreaAttack::Finishing)
+        } else if elapsed.as_secs() > 6 * 60 {
+            Some(AreaAttack::Lock)
+        } else if elapsed.as_secs() > 3 * 60 {
+            Some(AreaAttack::Attack)
+        } else {
+            None
+        } {
+            *stage = new_stage;
+            connections
+                .iter_mut()
+                .filter_map(|(conn_id, conn)| peers.contains(&conn_id).then_some(conn))
+                .for_each(|mut conn| {
+                    conn.repeat_send_unchecked(AreaAttackUpdate::Transition(new_stage))
+                });
         }
     }
 }
@@ -227,7 +264,7 @@ pub fn unfreeze_players(time: Res<Time>, mut freeze: Query<&mut Frozen>) {
     let instant = time.elapsed();
     for mut f in freeze.iter_mut() {
         if let Some(start) = **f {
-            if (instant - start) > FREEZE_TIME {
+            if (instant - start) > FREEZE_DURATION {
                 **f = None;
             }
         }

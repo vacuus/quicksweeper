@@ -55,7 +55,8 @@ impl Plugin for AreaAttackServer {
                     .with_system(unfreeze_players)
                     .with_system(send_tiles)
                     .with_system(net_events)
-                    .with_system(selection_transition)
+                    .with_system(initial_transition)
+                    .with_system(stage_transitions)
                     .with_system(update_selecting_tile)
                     .with_system(update_tile_playing)
                     .into(),

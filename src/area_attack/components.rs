@@ -12,7 +12,18 @@ use crate::{
 
 use super::{states::AreaAttack, AreaAttackServer};
 
-pub const FREEZE_TIME: Duration = Duration::from_secs(5);
+pub const FREEZE_DURATION: Duration = Duration::from_secs(5);
+
+#[derive(Component, Deref, DerefMut)]
+pub struct StageTimer(Timer);
+
+impl Default for StageTimer {
+    fn default() -> Self {
+        Self(
+            Timer::new(Duration::from_secs(7 * 60), TimerMode::Once).tap_mut(|timer| timer.pause()),
+        )
+    }
+}
 
 #[derive(Bundle)]
 pub struct AreaAttackBundle {
@@ -21,6 +32,7 @@ pub struct AreaAttackBundle {
     selections: InitialSelections,
     state: AreaAttack,
     typed_marker: AreaAttackServer,
+    stage_timer: StageTimer,
 }
 
 impl AreaAttackBundle {
@@ -48,6 +60,7 @@ impl AreaAttackBundle {
             selections: default(),
             state: AreaAttack::Selecting,
             typed_marker: AreaAttackServer,
+            stage_timer: default(),
         }
     }
 }
@@ -158,8 +171,8 @@ pub struct FreezeTimerDisplay;
 impl Default for FreezeTimer {
     fn default() -> Self {
         Self(
-            Timer::new(FREEZE_TIME, TimerMode::Once)
-                .tap_mut(|timer| timer.set_elapsed(FREEZE_TIME)),
+            Timer::new(FREEZE_DURATION, TimerMode::Once)
+                .tap_mut(|timer| timer.set_elapsed(FREEZE_DURATION)),
         )
     }
 }
