@@ -78,17 +78,18 @@ pub fn initial_transition(
         &InitialSelections,
         &mut Access,
         &mut StageTimer,
+        &Children,
     )>,
     mut minefields: MinefieldQuery<&mut ServerTile>,
     maybe_host: Query<(), With<Host>>,
-    mut connections: Query<&mut Connection>,
+    mut connections: Query<(Entity, &mut Connection)>,
     mut request_tile: EventWriter<RevealTile>,
 ) {
     for ev in ev.iter() {
         if !matches!(ev.data, AreaAttackRequest::StartGame) {
             continue;
         }
-        if let Ok((game_id, mut state, selections, mut access, mut stage_timer)) =
+        if let Ok((game_id, mut state, selections, mut access, mut stage_timer, peers)) =
             games.get_mut(ev.game)
         {
             if maybe_host.get(ev.player).is_ok() && matches!(*state, AreaAttack::Selecting) {
@@ -119,8 +120,12 @@ pub fn initial_transition(
 
                 stage_timer.unpause();
 
-                connections.for_each_mut(|mut conn| {
-                    conn.repeat_send_unchecked(AreaAttackUpdate::Transition(AreaAttack::Stage1));
+                connections.for_each_mut(|(ref conn_id, mut conn)| {
+                    if peers.contains(conn_id) {
+                        conn.repeat_send_unchecked(AreaAttackUpdate::Transition(
+                            AreaAttack::Stage1,
+                        ));
+                    }
                 });
 
                 // close joins
