@@ -1,6 +1,6 @@
 use std::net::TcpStream;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, gltf::Gltf};
 use bevy_egui::EguiContext;
 use egui::{Color32, InnerResponse, Key, RichText, TextEdit, Ui};
 use iyes_loopless::{
@@ -16,7 +16,7 @@ use crate::{
         ActiveGame, ClientMessage, CommonConnection as Connection, GameMarker, Greeting,
         ServerMessage,
     },
-    Singleplayer,
+    Singleplayer, load::Textures,
 };
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -319,6 +319,12 @@ fn pause(
     }
 }
 
+pub fn gltf_properties(tex: Res<Textures>, gltf: Res<Assets<Gltf>>) {
+    let mines = gltf.get(&tex.mines_3d).unwrap();
+
+    println!("{:?}", mines.named_meshes)
+}
+
 pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
@@ -326,6 +332,7 @@ impl Plugin for MainMenuPlugin {
         app.add_loopless_state(Menu::Loading)
             .add_event::<ToGame>()
             .init_resource::<MenuFields>()
+            .add_enter_system(Menu::MainMenu, gltf_properties)
             .add_system(poll_connection)
             .add_system(run_main_menu.run_in_state(Menu::MainMenu))
             .add_system(server_select_menu.run_in_state(Menu::ServerSelect))

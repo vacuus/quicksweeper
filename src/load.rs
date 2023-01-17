@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::texture::ImageSampler};
+use bevy::{prelude::*, render::texture::ImageSampler, gltf::Gltf};
 use bevy_asset_loader::prelude::*;
 use iyes_loopless::prelude::{AppLooplessStateExt, IntoConditionalSystem};
 use rand::{seq::SliceRandom, Rng};
@@ -10,6 +10,8 @@ pub struct Textures {
     #[asset(texture_atlas(tile_size_x = 32.0, tile_size_y = 32.0, columns = 4, rows = 3))]
     #[asset(path = "textures.png")]
     pub mines: Handle<TextureAtlas>,
+    #[asset(path = "tiles.glb")]
+    pub mines_3d: Handle<Gltf>,
     #[asset(path = "cursor.png")]
     pub cursor: Handle<Image>,
     #[asset(path = "Roboto.ttf")]
