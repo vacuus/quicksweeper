@@ -239,7 +239,8 @@ West,                      East,
 }
 
 fn init_cameras(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    // commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera3dBundle::default());
 }
 
 pub trait Contains<T> {

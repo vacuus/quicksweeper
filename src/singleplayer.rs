@@ -51,7 +51,7 @@ fn create_entities(
     field_templates: Res<Assets<FieldShape>>,
     template_handles: Res<Field>,
     textures: Res<Textures>,
-    mut camera: Query<&mut Transform, With<Camera2d>>,
+    mut camera: Query<&mut Transform, With<Camera>>,
 ) {
     // create minefield
     let field_template = field_templates

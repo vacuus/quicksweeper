@@ -299,7 +299,7 @@ pub fn init_check_cell(
 pub struct ScaleFactor(pub f32);
 
 fn zoom_camera(
-    mut camera: Query<&mut OrthographicProjection, With<Camera2d>>,
+    mut camera: Query<&mut OrthographicProjection, With<Camera>>,
     mut scroll: EventReader<MouseWheel>,
     mut scale_tracker: Local<f32>,
     mut scale_factor: ResMut<ScaleFactor>,
