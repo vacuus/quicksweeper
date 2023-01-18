@@ -1,5 +1,5 @@
 use crate::area_attack::puppet::PuppetCursor;
-use crate::common::{CheckCell, FlagCell, InitCheckCell, Position};
+use crate::common::{CheckCell, FlagCell, InitCheckCell, Position, Vec2Ext};
 use crate::main_menu::Menu;
 use crate::minefield::specific::TILE_SIZE;
 use crate::minefield::Minefield;
@@ -58,7 +58,7 @@ impl Default for Bindings {
 pub struct CursorBundle {
     pub cursor: Cursor,
     pub position: Position,
-    pub texture: SpriteBundle,
+    pub texture: SceneBundle,
 }
 
 #[derive(Component, Debug)]
@@ -149,9 +149,11 @@ pub fn translate_cursor(
         // translate cursor
         if cursor_diff.length_squared() > 0.0001 {
             let scale = 10.0;
-            *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend(0.0);
+            // *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend(0.0);
+            *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend_xz(0.0);
         } else {
-            *cursor_translation = target_translation.extend(3.0);
+            // *cursor_translation = target_translation.extend(3.0);
+            *cursor_translation = target_translation.extend_xz(1.0);
         }
     }
 }

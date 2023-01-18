@@ -4,7 +4,7 @@ use iyes_loopless::state::{CurrentState, NextState};
 use tap::Tap;
 
 use crate::{
-    common::Position,
+    common::{Position, Vec2Ext},
     cursor::{Bindings, Cursor, CursorBundle},
     load::Textures,
     main_menu::standard_window,
@@ -123,7 +123,7 @@ pub fn reset_field(
                             position,
                             sprite: textures.empty_mine().tap_mut(|b| {
                                 b.transform.translation =
-                                    position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0);
+                                    position.absolute(TILE_SIZE, TILE_SIZE).extend_xz(0.0);
                             }),
                         })
                         .id()
@@ -176,8 +176,8 @@ pub fn player_update(
                     .spawn(PuppetCursorBundle {
                         cursor: PuppetCursor((*color).into()),
                         position: *position,
-                        sprite_bundle: SpriteBundle {
-                            texture: textures.cursor.clone(),
+                        sprite_bundle: SceneBundle {
+                            scene: textures.cursor.clone(),
                             ..default()
                         },
                         remote: Remote(*id),
@@ -206,13 +206,16 @@ pub fn self_update(
         })
     {
         if let Ok(field) = field.get_single() {
-            let translation = position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0);
-            camera.single_mut().translation = translation;
+            let translation = position.absolute(TILE_SIZE, TILE_SIZE).extend_xz(0.0);
+            camera.single_mut().tap_mut(|t| {
+                t.translation.x = translation.x;
+                t.translation.z = translation.z;
+            });
             commands.spawn(CursorBundle {
                 cursor: Cursor::new((color).into(), field),
                 position,
-                texture: SpriteBundle {
-                    texture: textures.cursor.clone(),
+                texture: SceneBundle {
+                    scene: textures.cursor.clone(),
                     transform: Transform::from_translation(translation),
                     ..default()
                 },

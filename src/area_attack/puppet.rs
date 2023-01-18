@@ -21,7 +21,7 @@ impl PartialEq<Entity> for Remote {
 pub struct PuppetCursorBundle {
     pub cursor: PuppetCursor,
     pub position: Position,
-    pub sprite_bundle: SpriteBundle,
+    pub sprite_bundle: SceneBundle,
     pub remote: Remote,
 }
 

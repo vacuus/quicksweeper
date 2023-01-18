@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{common::Position, cursor::Cursor, load::Textures};
+use crate::{
+    common::{Position, Vec2Ext},
+    cursor::Cursor,
+    load::Textures,
+};
 use tap::Tap;
 
 /// Size of a single cell containing or not containing a mine. For now the display size of the mine
@@ -16,15 +20,13 @@ pub struct MineCell {
 }
 
 impl MineCell {
-    pub fn new_empty(position @ Position { x, y }: Position, textures: &Res<Textures>) -> Self {
+    pub fn new_empty(position: Position, textures: &Res<Textures>) -> Self {
         MineCell {
             sprite: SceneBundle {
                 scene: textures.tile_empty.clone(),
-                transform: Transform::from_translation(Vec3::new(
-                    (x as f32) * TILE_SIZE,
-                    0.0,
-                    (y as f32) * TILE_SIZE,
-                )),
+                transform: Transform::from_translation(
+                    position.absolute(TILE_SIZE, TILE_SIZE).extend_xz(0.0),
+                ),
                 ..default()
             },
             state: MineCellState::Empty,

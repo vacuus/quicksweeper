@@ -269,6 +269,19 @@ where
     }
 }
 
+pub trait Vec2Ext {
+    /// Extends this vector in the y direction, treating the original vector as if it were flat on
+    /// the xz plane. This is useful for manipulating vectors which act on grids flat on the xz
+    /// plane.
+    fn extend_xz(&self, y: f32) -> Vec3;
+}
+
+impl Vec2Ext for Vec2 {
+    fn extend_xz(&self, y: f32) -> Vec3 {
+        Vec3::new(self.x, y, self.y)
+    }
+}
+
 pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {

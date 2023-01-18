@@ -1,5 +1,5 @@
 use crate::{
-    common::InitCheckCell,
+    common::{InitCheckCell, Vec2Ext},
     cursor::*,
     load::{Field, Textures},
 };
@@ -78,14 +78,14 @@ fn create_entities(
     commands.spawn(CursorBundle {
         cursor: Cursor::new(Color::YELLOW_GREEN, minefield_entity),
         position: init_position,
-        texture: SpriteBundle {
-            texture: textures.cursor.clone(),
+        texture: SceneBundle {
+            scene: textures.cursor.clone(),
             transform: Transform {
-                translation: init_position.absolute(TILE_SIZE, TILE_SIZE).extend(3.0),
+                translation: init_position.absolute(TILE_SIZE, TILE_SIZE).extend_xz(1.0),
                 ..default()
             },
             ..default()
-        },
+        }// ,
     });
 }
 

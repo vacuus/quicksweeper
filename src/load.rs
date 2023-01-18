@@ -1,21 +1,21 @@
-use bevy::{prelude::*, render::texture::ImageSampler, gltf::Gltf};
+use bevy::{gltf::Gltf, prelude::*};
 use bevy_asset_loader::prelude::*;
-use iyes_loopless::prelude::{AppLooplessStateExt, IntoConditionalSystem};
+use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::{seq::SliceRandom, Rng};
 
-use crate::{cursor::ScaleFactor, main_menu::Menu, minefield::FieldShape};
+use crate::{main_menu::Menu, minefield::FieldShape};
 
 #[derive(AssetCollection, Resource)]
 pub struct Textures {
     #[asset(texture_atlas(tile_size_x = 32.0, tile_size_y = 32.0, columns = 4, rows = 3))]
     #[asset(path = "textures.png")]
     pub mines: Handle<TextureAtlas>,
-    #[asset(path = "cursor.png")]
-    pub cursor: Handle<Image>,
     #[asset(path = "Roboto.ttf")]
     pub roboto: Handle<Font>,
 
     // 3d assets
+    #[asset(path = "tiles.glb#Scene0")]
+    pub cursor: Handle<Scene>,
     #[asset(path = "tiles.glb#Scene1")]
     pub tile_empty: Handle<Scene>,
     #[asset(path = "tiles.glb#Scene2")]
@@ -33,36 +33,6 @@ pub struct Field {
     #[cfg(not(target_arch = "wasm32"))]
     #[asset(path = "fields", collection(typed))]
     pub handles: Vec<Handle<FieldShape>>,
-}
-
-fn set_texture_mode(
-    image_assets: &mut ResMut<Assets<Image>>,
-    handle: &Handle<Image>,
-    mode: ImageSampler,
-) {
-    image_assets.get_mut(handle).unwrap().sampler_descriptor = mode;
-}
-
-fn set_texture_modes(
-    texture_atlas: Res<Assets<TextureAtlas>>,
-    mut image: ResMut<Assets<Image>>,
-    textures: Res<Textures>,
-    scale_factor: Res<ScaleFactor>,
-) {
-    let mode = if **scale_factor > 1. {
-        ImageSampler::linear()
-    } else {
-        ImageSampler::nearest()
-    };
-
-    if scale_factor.is_added() || scale_factor.is_changed() {
-        set_texture_mode(
-            &mut image,
-            &texture_atlas.get(&textures.mines).unwrap().texture,
-            mode.clone(),
-        );
-        set_texture_mode(&mut image, &textures.cursor, mode);
-    }
 }
 
 impl Field {
@@ -93,8 +63,7 @@ impl Plugin for ClientLoad {
                 ])
                 .with_collection::<Textures>()
                 .with_collection::<Field>(),
-        )
-        .add_system(set_texture_modes.run_not_in_state(Menu::Loading));
+        );
     }
 }
 
