@@ -4,6 +4,7 @@ use crate::main_menu::Menu;
 use crate::minefield::specific::TILE_SIZE;
 use crate::minefield::Minefield;
 use bevy::input::mouse::MouseWheel;
+use bevy::math::Vec3Swizzles;
 use bevy::{prelude::*, render::camera::Camera};
 use iyes_loopless::prelude::IntoConditionalSystem;
 
@@ -144,7 +145,7 @@ pub fn translate_cursor(
 
         // TODO: Use the offset of minefield to calculate `target_translation`
         let target_translation = position.absolute(TILE_SIZE, TILE_SIZE);
-        let cursor_diff = target_translation - cursor_translation.truncate();
+        let cursor_diff = target_translation - cursor_translation.xz();
 
         // translate cursor
         if cursor_diff.length_squared() > 0.0001 {
