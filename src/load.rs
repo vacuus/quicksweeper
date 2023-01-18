@@ -10,12 +10,19 @@ pub struct Textures {
     #[asset(texture_atlas(tile_size_x = 32.0, tile_size_y = 32.0, columns = 4, rows = 3))]
     #[asset(path = "textures.png")]
     pub mines: Handle<TextureAtlas>,
-    #[asset(path = "tiles.glb")]
-    pub mines_3d: Handle<Gltf>,
     #[asset(path = "cursor.png")]
     pub cursor: Handle<Image>,
     #[asset(path = "Roboto.ttf")]
     pub roboto: Handle<Font>,
+
+    // 3d assets
+    #[asset(path = "tiles.glb#Scene1")]
+    pub tile_empty: Handle<Scene>,
+    #[asset(path = "tiles.glb#Scene2")]
+    pub tile_filled: Handle<Scene>,
+
+    #[asset(path = "tiles.glb")]
+    pub mines_3d: Handle<Gltf>,
 }
 
 #[derive(AssetCollection, Resource)]

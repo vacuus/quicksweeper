@@ -240,7 +240,11 @@ West,                      East,
 
 fn init_cameras(mut commands: Commands) {
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_translation(Vec3::new(0., 0., 5.)),
+        transform: Transform {
+            translation: Vec3::new(0., 50., 0.),
+            rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
+            ..default()
+        },
         ..default()
     });
 }

@@ -212,34 +212,8 @@ pub fn pan_camera(
     mut pan_controls: Local<PanControls>,
 ) {
     let translation = &mut camera.single_mut().translation;
-
-    // const CAMERA_VELOCITY: f32 = 500.0;
-    // let velocity = CAMERA_VELOCITY * time.delta_seconds() * **scale;
-
     pan_controls.update(&input, &keybinds, &time);
-
     *translation += time.delta_seconds() * pan_controls.velocity() * **scale;
-    // Vec3::new(
-    //     if input.pressed(keybinds.camera_left) {
-    //         -velocity
-    //     } else {
-    //         0.
-    //     } + if input.pressed(keybinds.camera_right) {
-    //         velocity
-    //     } else {
-    //         0.
-    //     },
-    //     if input.pressed(keybinds.camera_down) {
-    //         -velocity
-    //     } else {
-    //         0.
-    //     } + if input.pressed(keybinds.camera_up) {
-    //         velocity
-    //     } else {
-    //         0.
-    //     },
-    //     0.,
-    // )
 }
 
 pub fn check_cell(
@@ -320,7 +294,6 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScaleFactor(1.0))
             .init_resource::<Bindings>()
-            // .add_system(track_cursor)
             .add_system(pan_camera)
             .add_system(translate_cursor)
             .add_system(zoom_camera)

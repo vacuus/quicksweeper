@@ -319,14 +319,8 @@ fn pause(
     }
 }
 
-pub fn gltf_properties(mut commands: Commands, tex: Res<Textures>, gltf: Res<Assets<Gltf>>) {
+pub fn gltf_properties(tex: Res<Textures>, gltf: Res<Assets<Gltf>>) {
     let mines = gltf.get(&tex.mines_3d).unwrap();
-
-    commands.spawn(SceneBundle {
-        scene: mines.named_scenes["tile_empty"].clone(),
-        ..default()
-    });
-
     println!("{:?}", mines.named_meshes);
     println!("{:?}", mines.named_scenes);
 }

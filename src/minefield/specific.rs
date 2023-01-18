@@ -8,9 +8,9 @@ use tap::Tap;
 /// change.
 pub const TILE_SIZE: f32 = 32.0;
 
-#[derive(Clone, Bundle)]
+#[derive(Bundle)]
 pub struct MineCell {
-    sprite: SpriteSheetBundle,
+    sprite: SceneBundle,
     state: MineCellState,
     position: Position,
 }
@@ -18,12 +18,15 @@ pub struct MineCell {
 impl MineCell {
     pub fn new_empty(position @ Position { x, y }: Position, textures: &Res<Textures>) -> Self {
         MineCell {
-            sprite: textures.empty_mine().tap_mut(|b| {
-                b.transform = Transform {
-                    translation: Vec3::new((x as f32) * TILE_SIZE, (y as f32) * TILE_SIZE, 3.0),
-                    ..Default::default()
-                };
-            }),
+            sprite: SceneBundle {
+                scene: textures.tile_empty.clone(),
+                transform: Transform::from_translation(Vec3::new(
+                    (x as f32) * TILE_SIZE,
+                    0.0,
+                    (y as f32) * TILE_SIZE,
+                )),
+                ..default()
+            },
             state: MineCellState::Empty,
             position,
         }
@@ -57,6 +60,7 @@ impl MineCellState {
 }
 
 pub fn render_mines(
+    // do it!
     mut changed_cells: Query<
         (&mut TextureAtlasSprite, &MineCellState),
         Or<(Added<MineCellState>, Changed<MineCellState>)>,
