@@ -239,8 +239,10 @@ West,                      East,
 }
 
 fn init_cameras(mut commands: Commands) {
-    // commands.spawn(Camera2dBundle::default());
-    commands.spawn(Camera3dBundle::default());
+    commands.spawn(Camera3dBundle {
+        transform: Transform::from_translation(Vec3::new(0., 0., 5.)),
+        ..default()
+    });
 }
 
 pub trait Contains<T> {
@@ -267,6 +269,7 @@ pub struct QuicksweeperTypes;
 impl Plugin for QuicksweeperTypes {
     fn build(&self, app: &mut App) {
         app.init_resource::<Events<CheckCell>>()
+            .insert_resource(ClearColor(Color::BLACK))
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>()
             .add_startup_system(init_cameras);
