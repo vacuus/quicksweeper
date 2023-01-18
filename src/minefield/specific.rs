@@ -6,7 +6,7 @@ use tap::Tap;
 /// Size of a single cell containing or not containing a mine. For now the display size of the mine
 /// will be kept the same as the actual size of the sprite, but of course this will be subject to
 /// change.
-pub const TILE_SIZE: f32 = 32.0;
+pub const TILE_SIZE: f32 = 2.0;
 
 #[derive(Bundle)]
 pub struct MineCell {

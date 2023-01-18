@@ -51,7 +51,7 @@ fn create_entities(
     field_templates: Res<Assets<FieldShape>>,
     template_handles: Res<Field>,
     textures: Res<Textures>,
-    // mut camera: Query<&mut Transform, With<Camera>>,
+    mut camera: Query<&mut Transform, With<Camera>>,
 ) {
     // create minefield
     let field_template = field_templates
@@ -70,7 +70,9 @@ fn create_entities(
     let minefield_entity = commands.spawn(()).insert(minefield).id();
 
     // move camera to cursor
-    // camera.single_mut().translation = init_position.absolute(TILE_SIZE, TILE_SIZE).extend(100.0);
+    let mut camera = camera.single_mut();
+    camera.translation.x = TILE_SIZE * init_position.x as f32;
+    camera.translation.z = TILE_SIZE * init_position.y as f32;
 
     // create cursor
     commands.spawn(CursorBundle {

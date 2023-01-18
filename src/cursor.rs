@@ -196,8 +196,8 @@ impl PanControls {
     fn velocity(&self) -> Vec3 {
         Vec3::new(
             self.right.velocity - self.left.velocity,
-            self.up.velocity - self.down.velocity,
             0.,
+            self.up.velocity - self.down.velocity,
         )
     }
 }
