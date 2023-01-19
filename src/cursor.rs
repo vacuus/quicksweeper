@@ -91,7 +91,7 @@ pub fn pointer_cursor(
     tiles: Query<&Transform>, // Does not include only tiles, but can be queried for tiles
     minefields: Query<&Minefield>,
 ) {
-    let Ok((cursor, mut position)) = cursors.get_single_mut() else { return; };
+    let Ok((cursor, mut cursor_position)) = cursors.get_single_mut() else { return; };
     let Ok(minefield) = minefields.get(cursor.owning_minefield) else { return; };
     let open_position = minefield.iter_positions().next().unwrap();
     let Ok(root_tile) = tiles.get(minefield[&open_position]) else { return; };
@@ -106,32 +106,24 @@ pub fn pointer_cursor(
 
     // check if the cursor is inside the window and get its position
     if let Some(screen_pos) = wnd.cursor_position() {
-        // get the size of the window
-        let window_size = Vec2::new(wnd.width(), wnd.height());
+        if let Some(world_pos) = camera.viewport_to_world(camera_transform, screen_pos) {
+            let ray = world_pos.direction;
 
-        // convert screen position [0..resolution] to ndc [-1..1] (gpu coordinates)
-        let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
+            let scale = camera_transform.translation().y / -ray.y;
+            let intersection = (ray * scale + world_pos.origin).xz();
 
-        // matrix for undoing the projection and camera transform
-        let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
+            // get the position relative to one tile on the board
+            let field_transform =
+                root_tile.translation.xz() - open_position.absolute(TILE_SIZE, TILE_SIZE);
+            let offset = intersection - field_transform + Vec2::splat(TILE_SIZE) / 2.;
+            let pos = Position {
+                x: (offset.x / TILE_SIZE).floor() as isize,
+                y: (offset.y / TILE_SIZE).floor() as isize,
+            };
 
-        // use it to convert ndc to world-space coordinates
-        let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
-
-        // reduce it to a 2D value
-        let world_pos = world_pos.truncate();
-
-        // get the position relative to one tile on the board
-        let field_transform =
-            root_tile.translation.truncate() - open_position.absolute(TILE_SIZE, TILE_SIZE);
-        let offset = world_pos - field_transform + Vec2::splat(TILE_SIZE) / 2.;
-        let pos = Position {
-            x: (offset.x / TILE_SIZE).floor() as isize,
-            y: (offset.y / TILE_SIZE).floor() as isize,
-        };
-
-        if minefield.is_contained(&pos) && *position != pos {
-            *position = pos;
+            if minefield.is_contained(&pos) && *cursor_position != pos {
+                *cursor_position = pos;
+            }
         }
     }
 }
