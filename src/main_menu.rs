@@ -338,7 +338,6 @@ impl Plugin for MainMenuPlugin {
         app.add_loopless_state(Menu::Loading)
             .add_event::<ToGame>()
             .init_resource::<MenuFields>()
-            .add_system(gltf_diagnostics)
             .add_system(poll_connection)
             .add_system(run_main_menu.run_in_state(Menu::MainMenu))
             .add_system(server_select_menu.run_in_state(Menu::ServerSelect))

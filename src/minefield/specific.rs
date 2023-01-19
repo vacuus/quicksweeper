@@ -5,7 +5,6 @@ use crate::{
     cursor::Cursor,
     load::Textures,
 };
-use tap::Tap;
 
 /// Size of a single cell containing or not containing a mine. For now the display size of the mine
 /// will be kept the same as the actual size of the sprite, but of course this will be subject to
@@ -80,7 +79,6 @@ pub fn render_mines(
                 textures.tile_empty.clone()
             }
             &MineCellState::Revealed(x) => {
-                // TextureAtlasSprite::new(x as usize).tap_mut(|s| s.color = color)
                 gltf.get(&textures.mines_3d).unwrap().named_scenes[&format!("tile_filled.{x}")]
                     .clone()
             }
