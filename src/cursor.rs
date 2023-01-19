@@ -80,7 +80,7 @@ impl Cursor {
 pub fn destroy_cursors(mut commands: Commands, cursors: Query<Entity, With<Cursor>>) {
     cursors
         .iter()
-        .for_each(|cursor| commands.entity(cursor).despawn())
+        .for_each(|cursor| commands.entity(cursor).despawn_recursive())
 }
 
 /// Tracks the cursor to the system pointer
@@ -142,10 +142,8 @@ pub fn translate_cursor(
         // translate cursor
         if cursor_diff.length_squared() > 0.0001 {
             let scale = 10.0;
-            // *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend(0.0);
             *cursor_translation += (cursor_diff * time.delta_seconds() * scale).extend_xz(0.0);
         } else {
-            // *cursor_translation = target_translation.extend(3.0);
             *cursor_translation = target_translation.extend_xz(1.0);
         }
     }
@@ -243,7 +241,6 @@ pub fn init_check_cell(
         println!("sending init check event");
         for (
             &Cursor {
-                // position: cursor_position @ CursorPosition(_, minefield),
                 owning_minefield: minefield,
                 ..
             },

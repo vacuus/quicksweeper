@@ -13,7 +13,7 @@ pub fn destroy_minefields(
     states: Query<Entity, With<MineCellState>>,
 ) {
     minefield.for_each(|map| commands.entity(map).despawn());
-    states.for_each(|ent| commands.entity(ent).despawn());
+    states.for_each(|ent| commands.entity(ent).despawn_recursive());
 }
 
 pub fn wipe_minefields(
