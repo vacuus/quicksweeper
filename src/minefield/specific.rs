@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{gltf::Gltf, prelude::*};
 
 use crate::{
     common::{Position, Vec2Ext},
@@ -69,6 +69,7 @@ pub fn render_mines(
     >,
     cursor: Query<&Cursor>,
     textures: Res<Textures>,
+    gltf: Res<Assets<Gltf>>,
 ) {
     let color = cursor.get_single().map(|c| c.color).unwrap_or(Color::WHITE);
     changed_cells.for_each_mut(|(mut scene, state)| {
@@ -80,7 +81,8 @@ pub fn render_mines(
             }
             &MineCellState::Revealed(x) => {
                 // TextureAtlasSprite::new(x as usize).tap_mut(|s| s.color = color)
-                textures.tile_filled.clone()
+                gltf.get(&textures.mines_3d).unwrap().named_scenes[&format!("tile_filled.{x}")]
+                    .clone()
             }
         };
     })
