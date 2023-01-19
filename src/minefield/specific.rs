@@ -64,20 +64,23 @@ impl MineCellState {
 pub fn render_mines(
     // do it!
     mut changed_cells: Query<
-        (&mut TextureAtlasSprite, &MineCellState),
+        (&mut Handle<Scene>, &MineCellState),
         Or<(Added<MineCellState>, Changed<MineCellState>)>,
     >,
     cursor: Query<&Cursor>,
+    textures: Res<Textures>,
 ) {
     let color = cursor.get_single().map(|c| c.color).unwrap_or(Color::WHITE);
-    changed_cells.for_each_mut(|(mut sprite, state)| {
-        *sprite = match state {
-            MineCellState::Empty | MineCellState::Mine => TextureAtlasSprite::new(9),
+    changed_cells.for_each_mut(|(mut scene, state)| {
+        *scene = match state {
+            MineCellState::Empty | MineCellState::Mine => textures.tile_empty.clone(),
             MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => {
-                TextureAtlasSprite::new(10).tap_mut(|s| s.color = color)
+                // TextureAtlasSprite::new(10).tap_mut(|s| s.color = color)
+                textures.tile_empty.clone()
             }
             &MineCellState::Revealed(x) => {
-                TextureAtlasSprite::new(x as usize).tap_mut(|s| s.color = color)
+                // TextureAtlasSprite::new(x as usize).tap_mut(|s| s.color = color)
+                textures.tile_filled.clone()
             }
         };
     })
