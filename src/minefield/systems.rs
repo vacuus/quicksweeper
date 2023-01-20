@@ -3,17 +3,18 @@ use crate::{
     common::{CheckCell, FlagCell, InitCheckCell},
     cursor::CursorPosition,
 };
-use bevy::prelude::*;
+use bevy::{prelude::*, scene::SceneInstance};
 use itertools::Itertools;
 use std::collections::VecDeque;
 
 pub fn destroy_minefields(
     mut commands: Commands,
+    mut scene_spawner: ResMut<SceneSpawner>,
     minefield: Query<Entity, With<Minefield>>,
-    states: Query<Entity, With<MineCellState>>,
+    states: Query<&SceneInstance, With<MineCellState>>,
 ) {
     minefield.for_each(|map| commands.entity(map).despawn());
-    states.for_each(|ent| commands.entity(ent).despawn_recursive());
+    states.for_each(|scene_id| scene_spawner.despawn_instance(**scene_id));
 }
 
 pub fn wipe_minefields(
