@@ -75,11 +75,10 @@ pub fn render_mines(
         *scene = match state {
             MineCellState::Empty | MineCellState::Mine => textures.tile_empty.clone(),
             MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => {
-                // TextureAtlasSprite::new(10).tap_mut(|s| s.color = color)
-                textures.tile_empty.clone()
+                textures.tile_flagged.clone()
             }
             &MineCellState::Revealed(x) => {
-                gltf.get(&textures.mines_3d).unwrap().named_scenes[&format!("tile_filled.{x}")]
+                gltf.get(&textures.mines_3d).unwrap().named_scenes[&format!("f.tile_filled.{x}")]
                     .clone()
             }
         };

@@ -19,7 +19,7 @@ pub struct Textures {
     #[asset(path = "tiles.glb#Scene1")]
     pub tile_empty: Handle<Scene>,
     #[asset(path = "tiles.glb#Scene2")]
-    pub tile_filled: Handle<Scene>,
+    pub tile_flagged: Handle<Scene>,
 
     #[asset(path = "tiles.glb")]
     pub mines_3d: Handle<Gltf>,
