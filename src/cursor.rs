@@ -3,6 +3,7 @@ use crate::common::{CheckCell, FlagCell, InitCheckCell, Position, Vec2Ext};
 use crate::main_menu::Menu;
 use crate::minefield::specific::TILE_SIZE;
 use crate::minefield::Minefield;
+use bevy::ecs::query::QuerySingleError;
 use bevy::input::mouse::MouseWheel;
 use bevy::math::Vec3Swizzles;
 use bevy::{prelude::*, render::camera::Camera};
@@ -280,12 +281,41 @@ fn zoom_camera(
     }
 }
 
+// cursor material handling tools
+
+#[derive(Resource, Deref)]
+pub struct MainCursorMaterial(Handle<StandardMaterial>);
+
+fn init_cursor_material(mut commands: Commands, mut assets: ResMut<Assets<StandardMaterial>>) {
+    commands.insert_resource(MainCursorMaterial(assets.add(StandardMaterial::default())))
+}
+
+fn manage_cursor_material(
+    res_material: Res<MainCursorMaterial>,
+    mut assets_material: ResMut<Assets<StandardMaterial>>,
+    cursor: Query<&Cursor, Or<(Added<Cursor>, Changed<Cursor>)>>,
+) {
+    match cursor.get_single() {
+        Ok(cursor) => {
+            assets_material.get_mut(&**res_material).unwrap().emissive = cursor.color;
+        }
+        Err(QuerySingleError::MultipleEntities(s)) => {
+            panic!("{s}");
+        }
+        Err(_) => {
+            // do nothing
+        }
+    }
+}
+
 pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScaleFactor(1.0))
             .init_resource::<Bindings>()
+            .add_startup_system(init_cursor_material)
+            .add_system(manage_cursor_material)
             .add_system(pan_camera)
             .add_system(translate_cursor)
             .add_system(zoom_camera)

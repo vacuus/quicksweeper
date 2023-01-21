@@ -24,6 +24,8 @@ impl Plugin for MinefieldPlugin {
         app.add_asset::<load::FieldShape>()
             .add_asset_loader(load::FieldLoader)
             .add_event::<GameOutcome>()
-            .add_system(specific::render_mines.run_not_in_state(Menu::Loading));
+            // diagnostics
+            .add_system(specific::update_tile_colors)
+            .add_system(specific::update_tiles.run_not_in_state(Menu::Loading));
     }
 }
