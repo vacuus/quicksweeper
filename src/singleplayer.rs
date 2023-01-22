@@ -1,7 +1,7 @@
 use crate::{
     common::{InitCheckCell, Vec2Ext},
     cursor::*,
-    load::{Field, Textures},
+    load::{Field, Textures}, minefield::specific::MineCellState,
 };
 use crate::{
     main_menu::Menu,
@@ -11,7 +11,7 @@ use crate::{
         FieldShape, GameOutcome, Minefield,
     },
 };
-use bevy::prelude::*;
+use bevy::{prelude::*, gltf::Gltf};
 use iyes_loopless::{
     prelude::{AppLooplessStateExt, ConditionSet, IntoConditionalSystem},
     state::NextState,
@@ -89,12 +89,76 @@ fn create_entities(
     });
 }
 
+#[derive(Component, Deref)]
+pub struct NeedsMaterial(Handle<StandardMaterial>); // TODO fill this in with material handle instead of color
+
+pub fn update_tiles(
+    mut commands: Commands,
+    mut changed_cells: Query<
+        (Entity, &mut Handle<Scene>, &MineCellState),
+        Or<(Added<MineCellState>, Changed<MineCellState>)>,
+    >,
+    player_material: Res<MainCursorMaterial>,
+    // cursor: Query<&Cursor>,
+    textures: Res<Textures>,
+    gltf: Res<Assets<Gltf>>,
+) {
+    // let color = cursor.get_single().map(|c| c.color).unwrap_or(Color::WHITE);
+    changed_cells.for_each_mut(|(tile_id, mut scene, state)| {
+        *scene = match state {
+            MineCellState::Empty | MineCellState::Mine => textures.tile_empty.clone(),
+            MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => {
+                commands
+                    .entity(tile_id)
+                    .insert((NeedsMaterial(player_material.clone()),));
+                textures.tile_flagged.clone()
+            }
+            &MineCellState::Revealed(x) => {
+                commands
+                    .entity(tile_id)
+                    .insert((NeedsMaterial(player_material.clone()),));
+                gltf.get(&textures.mines_3d).unwrap().named_scenes[&format!("f.tile_filled.{x}")]
+                    .clone()
+            }
+        };
+    })
+}
+
+pub fn update_tile_colors(
+    mut commands: Commands,
+    mut new_meshes: Query<(Entity, &mut Handle<StandardMaterial>, &Name), Added<Handle<Mesh>>>,
+    color_requested: Query<&NeedsMaterial>,
+    parents: Query<&Parent>,
+) {
+    let parent_of = |mut id: Entity, recursions: usize| {
+        for _ in 0..recursions {
+            id = **parents.get(id).unwrap()
+        }
+        id
+    };
+
+    for (tile_id, mut material, name) in &mut new_meshes {
+        if name.contains("Text") || &**name == ("tile_empty"){
+            continue;
+        }
+        let root = parent_of(tile_id, 3);
+        if let Ok(color) = color_requested.get(root) {
+            // TODO assign color here
+            *material = (*color).clone();
+        }
+        commands.entity(root).remove::<NeedsMaterial>();
+    }
+}
+
 pub struct SingleplayerMode;
 
 impl Plugin for SingleplayerMode {
     fn build(&self, app: &mut App) {
         use Singleplayer::*;
         app
+            // tile draw
+            .add_system(update_tile_colors)
+            .add_system(update_tiles.run_not_in_state(Menu::Loading))
             // state
             .add_loopless_state(Inactive)
             // menu after game complete

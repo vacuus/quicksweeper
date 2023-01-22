@@ -7,10 +7,7 @@ pub mod specific;
 pub mod systems;
 
 pub use field::*;
-use iyes_loopless::prelude::IntoConditionalSystem;
 pub use load::FieldShape;
-
-use crate::main_menu::Menu;
 
 pub enum GameOutcome {
     Failed,
@@ -23,9 +20,6 @@ impl Plugin for MinefieldPlugin {
     fn build(&self, app: &mut App) {
         app.add_asset::<load::FieldShape>()
             .add_asset_loader(load::FieldLoader)
-            .add_event::<GameOutcome>()
-            // diagnostics
-            .add_system(specific::update_tile_colors)
-            .add_system(specific::update_tiles.run_not_in_state(Menu::Loading));
+            .add_event::<GameOutcome>();
     }
 }
