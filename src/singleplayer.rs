@@ -1,5 +1,5 @@
 use crate::{
-    common::{InitCheckCell, Vec2Ext},
+    common::{InitCheckCell, Vec2Ext, NeedsMaterial},
     cursor::*,
     load::{Field, Textures}, minefield::specific::MineCellState,
 };
@@ -89,8 +89,6 @@ fn create_entities(
     });
 }
 
-#[derive(Component, Deref)]
-pub struct NeedsMaterial(Handle<StandardMaterial>); // TODO fill this in with material handle instead of color
 
 pub fn update_tiles(
     mut commands: Commands,
@@ -123,32 +121,6 @@ pub fn update_tiles(
     })
 }
 
-pub fn update_tile_colors(
-    mut commands: Commands,
-    mut new_meshes: Query<(Entity, &mut Handle<StandardMaterial>, &Name), Added<Handle<Mesh>>>,
-    color_requested: Query<&NeedsMaterial>,
-    parents: Query<&Parent>,
-) {
-    let parent_of = |mut id: Entity, recursions: usize| {
-        for _ in 0..recursions {
-            id = **parents.get(id).unwrap()
-        }
-        id
-    };
-
-    for (tile_id, mut material, name) in &mut new_meshes {
-        if name.contains("Text") || &**name == ("tile_empty"){
-            continue;
-        }
-        let root = parent_of(tile_id, 3);
-        if let Ok(color) = color_requested.get(root) {
-            // TODO assign color here
-            *material = (*color).clone();
-        }
-        commands.entity(root).remove::<NeedsMaterial>();
-    }
-}
-
 pub struct SingleplayerMode;
 
 impl Plugin for SingleplayerMode {
@@ -156,7 +128,6 @@ impl Plugin for SingleplayerMode {
         use Singleplayer::*;
         app
             // tile draw
-            .add_system(update_tile_colors)
             .add_system(update_tiles.run_not_in_state(Menu::Loading))
             // state
             .add_loopless_state(Inactive)

@@ -282,6 +282,34 @@ impl Vec2Ext for Vec2 {
     }
 }
 
+#[derive(Component, Deref)]
+pub struct NeedsMaterial(pub Handle<StandardMaterial>);
+
+pub fn insert_materials(
+    mut commands: Commands,
+    mut new_meshes: Query<(Entity, &mut Handle<StandardMaterial>, &Name), Added<Handle<Mesh>>>,
+    color_requested: Query<&NeedsMaterial>,
+    parents: Query<&Parent>,
+) {
+    let parent_of = |mut id: Entity, recursions: usize| {
+        for _ in 0..recursions {
+            id = **parents.get(id).unwrap()
+        }
+        id
+    };
+
+    for (tile_id, mut material, name) in &mut new_meshes {
+        if name.contains("Text") || &**name == ("tile_empty"){
+            continue;
+        }
+        let root = parent_of(tile_id, 3);
+        if let Ok(color) = color_requested.get(root) {
+            *material = (*color).clone();
+        }
+        commands.entity(root).remove::<NeedsMaterial>(); // TODO: Make this assignable to multiple meshes within a scene
+    }
+}
+
 pub struct QuicksweeperTypes;
 
 impl Plugin for QuicksweeperTypes {
@@ -290,7 +318,8 @@ impl Plugin for QuicksweeperTypes {
             .insert_resource(ClearColor(Color::BLACK))
             .add_event::<FlagCell>()
             .add_event::<InitCheckCell>()
-            .add_startup_system(init_cameras);
+            .add_startup_system(init_cameras)
+            .add_system(insert_materials);
     }
 }
 

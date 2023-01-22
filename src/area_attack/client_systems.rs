@@ -5,7 +5,7 @@ use tap::Tap;
 
 use crate::{
     common::{Position, Vec2Ext},
-    cursor::{Bindings, Cursor, CursorBundle},
+    cursor::{Bindings, Cursor, CursorBundle, MainCursorMaterial},
     load::Textures,
     main_menu::standard_window,
     minefield::{query::MinefieldQuery, specific::TILE_SIZE, Minefield},
@@ -310,11 +310,12 @@ pub fn draw_tiles(
         Or<(Added<ClientTile>, Changed<ClientTile>)>,
     >,
     textures: Res<Textures>,
-    own_cursor: Query<&Cursor>,
+    // own_cursor: Query<&Cursor>,
+    own_material: Res<MainCursorMaterial>,
     puppets: Query<(&PuppetCursor, &Remote)>,
     gltf: Res<Assets<Gltf>>,
 ) {
-    let own_color = own_cursor.get_single().map(|c| c.color).map_err(|_| ());
+    // let own_color = own_cursor.get_single().map(|c| c.color).map_err(|_| ());
     updated_tiles.for_each_mut(|(mut sprite, state)| {
         *sprite = match state {
             ClientTile::Unknown => {
