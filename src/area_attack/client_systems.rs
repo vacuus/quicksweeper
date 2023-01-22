@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{gltf::Gltf, prelude::*, scene::SceneInstance};
 use bevy_egui::EguiContext;
 use iyes_loopless::state::{CurrentState, NextState};
 use tap::Tap;
@@ -103,15 +103,20 @@ pub fn listen_net(mut events: EventWriter<AreaAttackUpdate>, mut sock: ResMut<Co
 /// Despite its name, this system is also used to create a new field if it didn't exist before
 pub fn reset_field(
     mut events: EventReader<AreaAttackUpdate>,
+    mut scene_spawner: ResMut<SceneSpawner>,
     mut commands: Commands,
     textures: Res<Textures>,
-    old_entities: Query<Entity, Or<(With<ClientTile>, With<Minefield>, With<Cursor>)>>,
+    old_scenes: Query<&SceneInstance, Or<(With<ClientTile>, With<Cursor>)>>,
+    old_minefields: Query<Entity, With<Minefield>>,
 ) {
     for ev in events.iter() {
         if let AreaAttackUpdate::FieldShape(template) = ev {
             // despawn previously constructed entities
-            for e in old_entities.iter() {
-                commands.entity(e).despawn();
+            for scn in &old_scenes {
+                scene_spawner.despawn_instance(**scn);
+            }
+            for ent in &old_minefields {
+                commands.entity(ent).despawn();
             }
 
             // spawn all received tiles
@@ -121,10 +126,13 @@ pub fn reset_field(
                         .spawn(ClientTileBundle {
                             tile: ClientTile::Unknown,
                             position,
-                            sprite: textures.empty_mine().tap_mut(|b| {
-                                b.transform.translation =
-                                    position.absolute(TILE_SIZE, TILE_SIZE).extend_xz(0.0);
-                            }),
+                            scene: SceneBundle {
+                                scene: textures.tile_empty.clone(),
+                                transform: Transform::from_translation(
+                                    position.absolute(TILE_SIZE, TILE_SIZE).extend_xz(0.0),
+                                ),
+                                ..default()
+                            },
                         })
                         .id()
                 },
@@ -191,7 +199,7 @@ pub fn player_update(
 pub fn self_update(
     mut events: EventReader<AreaAttackUpdate>,
     mut commands: Commands,
-    mut camera: Query<&mut Transform, With<Camera2d>>,
+    mut camera: Query<&mut Transform, With<Camera>>,
     textures: Res<Textures>,
     field: Query<Entity, With<Minefield>>,
     mut save_event: Local<Option<AreaAttackUpdate>>,
@@ -298,34 +306,43 @@ pub fn freeze_timer(
 
 pub fn draw_tiles(
     mut updated_tiles: Query<
-        (&mut TextureAtlasSprite, &ClientTile),
+        (&mut Handle<Scene>, &ClientTile),
         Or<(Added<ClientTile>, Changed<ClientTile>)>,
     >,
+    textures: Res<Textures>,
     own_cursor: Query<&Cursor>,
     puppets: Query<(&PuppetCursor, &Remote)>,
+    gltf: Res<Assets<Gltf>>,
 ) {
     let own_color = own_cursor.get_single().map(|c| c.color).map_err(|_| ());
     updated_tiles.for_each_mut(|(mut sprite, state)| {
         *sprite = match state {
             ClientTile::Unknown => {
-                TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::default())
+                // TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::default())
+                textures.tile_empty.clone()
             }
             ClientTile::Owned {
                 player,
                 num_neighbors,
-            } => TextureAtlasSprite::new(*num_neighbors as usize).tap_mut(|s| {
-                s.color = puppets
-                    .iter()
-                    .find_map(|(&PuppetCursor(color), &Remote(rem))| {
-                        (rem == *player).then_some(color)
-                    })
-                    .unwrap_or_else(|| own_color.unwrap())
-            }),
-            ClientTile::Mine => TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default()),
+            } => gltf.get(&textures.mines_3d).unwrap().named_scenes
+                [&format!("f.tile_filled.{num_neighbors}")]
+                .clone(),
+            // TextureAtlasSprite::new(*num_neighbors as usize).tap_mut(|s| {
+            //     s.color = puppets
+            //         .iter()
+            //         .find_map(|(&PuppetCursor(color), &Remote(rem))| {
+            //             (rem == *player).then_some(color)
+            //         })
+            //         .unwrap_or_else(|| own_color.unwrap())
+            // }),
+            // ClientTile::Mine => TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default()),
             ClientTile::Flag => {
-                TextureAtlasSprite::new(10).tap_mut(|s| s.color = own_color.unwrap())
+                // TextureAtlasSprite::new(10).tap_mut(|s| s.color = own_color.unwrap())
+                textures.tile_flagged.clone()
             }
-            ClientTile::Destroyed => TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::BLACK),
+            // ClientTile::Destroyed => TextureAtlasSprite::new(9).tap_mut(|s| s.color =
+            // Color::BLACK),
+            _ => textures.tile_empty.clone(), // TODO fill in meshes for destroyed and mine tile
         }
     })
 }

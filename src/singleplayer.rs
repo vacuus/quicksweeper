@@ -99,7 +99,6 @@ pub fn update_tiles(
         Or<(Added<MineCellState>, Changed<MineCellState>)>,
     >,
     player_material: Res<MainCursorMaterial>,
-    // cursor: Query<&Cursor>,
     textures: Res<Textures>,
     gltf: Res<Assets<Gltf>>,
 ) {

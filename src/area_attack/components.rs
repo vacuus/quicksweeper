@@ -159,7 +159,7 @@ pub enum ClientTile {
 pub struct ClientTileBundle {
     pub tile: ClientTile,
     pub position: Position,
-    pub sprite: SpriteSheetBundle,
+    pub scene: SceneBundle,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Component, EnumIter, PartialEq, Eq, Debug)]
