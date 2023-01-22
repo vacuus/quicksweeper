@@ -4,7 +4,7 @@ use iyes_loopless::state::{CurrentState, NextState};
 use tap::Tap;
 
 use crate::{
-    common::{Position, Vec2Ext},
+    common::{NeedsMaterial, Position, Vec2Ext},
     cursor::{Bindings, Cursor, CursorBundle, MainCursorMaterial},
     load::Textures,
     main_menu::standard_window,
@@ -148,6 +148,7 @@ pub fn player_update(
     mut events: EventReader<AreaAttackUpdate>,
     mut commands: Commands,
     mut puppets: Query<(&mut PuppetCursor, &mut Position, &Remote)>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     textures: Res<Textures>,
 ) {
     for ev in events.iter() {
@@ -158,11 +159,15 @@ pub fn player_update(
             position,
         } = ev
         {
+            let mat = materials.add(StandardMaterial {
+                emissive: (*color).into(),
+                ..default()
+            });
             if let Some((mut puppet, mut pos, _)) = puppets
                 .iter_mut()
                 .find(|(_, _, &Remote(remote))| remote == *id)
             {
-                puppet.0 = (*color).into();
+                puppet.0 = mat;
                 *pos = *position;
             } else {
                 let name = commands
@@ -182,9 +187,9 @@ pub fn player_update(
 
                 commands
                     .spawn(PuppetCursorBundle {
-                        cursor: PuppetCursor((*color).into()),
+                        cursor: PuppetCursor(mat),
                         position: *position,
-                        sprite_bundle: SceneBundle {
+                        scene: SceneBundle {
                             scene: textures.cursor.clone(),
                             ..default()
                         },
@@ -305,44 +310,42 @@ pub fn freeze_timer(
 }
 
 pub fn draw_tiles(
+    mut commands: Commands,
     mut updated_tiles: Query<
-        (&mut Handle<Scene>, &ClientTile),
+        (&mut Handle<Scene>, &ClientTile, Entity),
         Or<(Added<ClientTile>, Changed<ClientTile>)>,
     >,
     textures: Res<Textures>,
-    // own_cursor: Query<&Cursor>,
     own_material: Res<MainCursorMaterial>,
     puppets: Query<(&PuppetCursor, &Remote)>,
     gltf: Res<Assets<Gltf>>,
 ) {
-    // let own_color = own_cursor.get_single().map(|c| c.color).map_err(|_| ());
-    updated_tiles.for_each_mut(|(mut sprite, state)| {
+    updated_tiles.for_each_mut(|(mut sprite, state, tile_id)| {
+        let mut tile = commands.entity(tile_id);
         *sprite = match state {
-            ClientTile::Unknown => {
-                // TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::default())
-                textures.tile_empty.clone()
-            }
+            ClientTile::Unknown => textures.tile_empty.clone(),
             ClientTile::Owned {
                 player,
                 num_neighbors,
-            } => gltf.get(&textures.mines_3d).unwrap().named_scenes
-                [&format!("f.tile_filled.{num_neighbors}")]
-                .clone(),
-            // TextureAtlasSprite::new(*num_neighbors as usize).tap_mut(|s| {
-            //     s.color = puppets
-            //         .iter()
-            //         .find_map(|(&PuppetCursor(color), &Remote(rem))| {
-            //             (rem == *player).then_some(color)
-            //         })
-            //         .unwrap_or_else(|| own_color.unwrap())
-            // }),
+            } => {
+                tile.insert(NeedsMaterial(
+                    puppets
+                        .iter()
+                        .find_map(|(PuppetCursor(color), &Remote(rem))| {
+                            (rem == *player).then_some(color.clone())
+                        })
+                        .unwrap_or_else(|| own_material.clone()),
+                ));
+                gltf.get(&textures.mines_3d).unwrap().named_scenes
+                    [&format!("f.tile_filled.{num_neighbors}")]
+                    .clone()
+            }
             // ClientTile::Mine => TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default()),
             ClientTile::Flag => {
-                // TextureAtlasSprite::new(10).tap_mut(|s| s.color = own_color.unwrap())
+                tile.insert(NeedsMaterial(own_material.clone()));
                 textures.tile_flagged.clone()
             }
-            // ClientTile::Destroyed => TextureAtlasSprite::new(9).tap_mut(|s| s.color =
-            // Color::BLACK),
+            // ClientTile::Destroyed => TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::BLACK),
             _ => textures.tile_empty.clone(), // TODO fill in meshes for destroyed and mine tile
         }
     })

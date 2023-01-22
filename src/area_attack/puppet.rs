@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use crate::{common::Position, cursor::Cursor};
 
 #[derive(Component)]
-pub struct PuppetCursor(pub Color);
+pub struct PuppetCursor(pub Handle<StandardMaterial>);
 
 #[derive(Component, Deref, Copy, Clone)]
 pub struct Remote(pub Entity);
@@ -21,7 +21,7 @@ impl PartialEq<Entity> for Remote {
 pub struct PuppetCursorBundle {
     pub cursor: PuppetCursor,
     pub position: Position,
-    pub sprite_bundle: SceneBundle,
+    pub scene: SceneBundle,
     pub remote: Remote,
 }
 
@@ -31,17 +31,17 @@ pub fn update_cursor_colors(
         Query<(&mut Sprite, &Cursor), Or<(Added<Cursor>, Changed<Cursor>)>>,
     )>,
 ) {
-    for (mut sprite, &PuppetCursor(color_src)) in q_set.p0().iter_mut() {
-        sprite.color = color_src;
-    }
+    // for (mut sprite, &PuppetCursor(color_src)) in q_set.p0().iter_mut() {
+    //     sprite.color = color_src;
+    // }
 
-    for (
-        mut sprite,
-        &Cursor {
-            color: color_src, ..
-        },
-    ) in q_set.p1().iter_mut()
-    {
-        sprite.color = color_src;
-    }
+    // for (
+    //     mut sprite,
+    //     &Cursor {
+    //         color: color_src, ..
+    //     },
+    // ) in q_set.p1().iter_mut()
+    // {
+    //     sprite.color = color_src;
+    // }
 }
