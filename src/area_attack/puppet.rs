@@ -3,7 +3,7 @@
 
 use bevy::prelude::*;
 
-use crate::{common::Position, cursor::Cursor};
+use crate::common::Position;
 
 #[derive(Component)]
 pub struct PuppetCursor(pub Handle<StandardMaterial>);
@@ -23,25 +23,4 @@ pub struct PuppetCursorBundle {
     pub position: Position,
     pub scene: SceneBundle,
     pub remote: Remote,
-}
-
-pub fn update_cursor_colors(
-    mut q_set: ParamSet<(
-        Query<(&mut Sprite, &PuppetCursor), Or<(Added<PuppetCursor>, Changed<PuppetCursor>)>>,
-        Query<(&mut Sprite, &Cursor), Or<(Added<Cursor>, Changed<Cursor>)>>,
-    )>,
-) {
-    // for (mut sprite, &PuppetCursor(color_src)) in q_set.p0().iter_mut() {
-    //     sprite.color = color_src;
-    // }
-
-    // for (
-    //     mut sprite,
-    //     &Cursor {
-    //         color: color_src, ..
-    //     },
-    // ) in q_set.p1().iter_mut()
-    // {
-    //     sprite.color = color_src;
-    // }
 }
