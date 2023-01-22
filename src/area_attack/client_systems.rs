@@ -147,7 +147,7 @@ pub fn reset_field(
 pub fn player_update(
     mut events: EventReader<AreaAttackUpdate>,
     mut commands: Commands,
-    mut puppets: Query<(&mut PuppetCursor, &mut Position, &Remote)>,
+    mut puppets: Query<(&mut PuppetCursor, &mut Position, &Remote, Entity)>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     textures: Res<Textures>,
 ) {
@@ -163,10 +163,11 @@ pub fn player_update(
                 emissive: (*color).into(),
                 ..default()
             });
-            if let Some((mut puppet, mut pos, _)) = puppets
+            if let Some((mut puppet, mut pos, _, mesh_id)) = puppets
                 .iter_mut()
-                .find(|(_, _, &Remote(remote))| remote == *id)
+                .find(|(_, _, &Remote(remote), _)| remote == *id)
             {
+                commands.entity(mesh_id).insert(NeedsMaterial(mat.clone()));
                 puppet.0 = mat;
                 *pos = *position;
             } else {
@@ -187,7 +188,7 @@ pub fn player_update(
 
                 commands
                     .spawn(PuppetCursorBundle {
-                        cursor: PuppetCursor(mat),
+                        cursor: PuppetCursor(mat.clone()),
                         position: *position,
                         scene: SceneBundle {
                             scene: textures.cursor.clone(),
@@ -195,6 +196,7 @@ pub fn player_update(
                         },
                         remote: Remote(*id),
                     })
+                    .insert(NeedsMaterial(mat))
                     .add_child(name);
             }
         }
@@ -208,6 +210,7 @@ pub fn self_update(
     textures: Res<Textures>,
     field: Query<Entity, With<Minefield>>,
     mut save_event: Local<Option<AreaAttackUpdate>>,
+    mut assets: ResMut<Assets<StandardMaterial>>,
 ) {
     if let Some(AreaAttackUpdate::SelfChange { color, position }) =
         std::mem::replace(&mut *save_event, None).or_else(|| {
@@ -224,15 +227,20 @@ pub fn self_update(
                 t.translation.x = translation.x;
                 t.translation.z = translation.z;
             });
-            commands.spawn(CursorBundle {
-                cursor: Cursor::new((color).into(), field),
-                position,
-                texture: SceneBundle {
-                    scene: textures.cursor.clone(),
-                    transform: Transform::from_translation(translation),
+            commands
+                .spawn(CursorBundle {
+                    cursor: Cursor::new(color.into(), field),
+                    position,
+                    texture: SceneBundle {
+                        scene: textures.cursor.clone(),
+                        transform: Transform::from_translation(translation),
+                        ..default()
+                    },
+                })
+                .insert(NeedsMaterial(assets.add(StandardMaterial {
+                    emissive: color.into(),
                     ..default()
-                },
-            });
+                })));
         } else {
             *save_event = Some(AreaAttackUpdate::SelfChange { color, position })
         }
