@@ -55,3 +55,6 @@ thiserror = "*"
 log = "*"
 clap = { version = "4.0.29", features = ["derive"] }
 bevy_framepace = "0.9.1"
+
+# async server packages
+tokio = { version = "1.24", features = [ "rt-multi-thread", "net" ]} 
