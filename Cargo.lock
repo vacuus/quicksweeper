@@ -3115,6 +3115,7 @@ dependencies = [
  "clap",
  "crossbeam-channel",
  "egui",
+ "futures-lite",
  "gridly",
  "gridly_grids",
  "itertools",
@@ -3131,6 +3132,7 @@ dependencies = [
  "tap",
  "thiserror",
  "tokio",
+ "tokio-tungstenite",
  "tungstenite",
  "vec-drain-where",
  "wasm-bindgen",
@@ -3696,12 +3698,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "597a12a59981d9e3c38d216785b0c37399f6e415e8d0712047620f189371b0bb"
 dependencies = [
  "autocfg",
+ "bytes",
  "libc",
+ "memchr",
  "mio",
  "num_cpus",
  "pin-project-lite",
  "socket2",
  "windows-sys 0.42.0",
+]
+
+[[package]]
+name = "tokio-tungstenite"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54319c93411147bced34cb5609a80e0a8e44c5999c93903a81cd866630ec0bfd"
+dependencies = [
+ "futures-util",
+ "log",
+ "tokio",
+ "tungstenite",
 ]
 
 [[package]]
