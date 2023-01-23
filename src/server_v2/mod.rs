@@ -1,4 +1,1 @@
-
-pub async fn srv_main() {
-
-}
+pub async fn srv_main() {}
