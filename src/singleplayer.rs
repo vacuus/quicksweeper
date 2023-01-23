@@ -1,7 +1,8 @@
 use crate::{
-    common::{InitCheckCell, Vec2Ext, NeedsMaterial},
+    common::{InitCheckCell, NeedsMaterial, Vec2Ext},
     cursor::*,
-    load::{Field, Textures}, minefield::specific::MineCellState,
+    load::{Field, Textures},
+    minefield::specific::MineCellState, area_attack::puppet::Puppet,
 };
 use crate::{
     main_menu::Menu,
@@ -11,7 +12,7 @@ use crate::{
         FieldShape, GameOutcome, Minefield,
     },
 };
-use bevy::{prelude::*, gltf::Gltf};
+use bevy::{gltf::Gltf, prelude::*};
 use iyes_loopless::{
     prelude::{AppLooplessStateExt, ConditionSet, IntoConditionalSystem},
     state::NextState,
@@ -49,6 +50,7 @@ fn advance_to_game(mut commands: Commands, init_move: EventReader<InitCheckCell>
 fn create_entities(
     mut commands: Commands,
     field_templates: Res<Assets<FieldShape>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     template_handles: Res<Field>,
     textures: Res<Textures>,
     mut camera: Query<&mut Transform, With<Camera>>,
@@ -76,7 +78,14 @@ fn create_entities(
 
     // create cursor
     commands.spawn(CursorBundle {
-        cursor: Cursor::new(Color::YELLOW_GREEN, minefield_entity),
+        cursor: Cursor {
+            color: Color::YELLOW_GREEN,
+            owning_minefield: minefield_entity,
+            tile_material: materials.add(StandardMaterial {
+                emissive: Color::YELLOW_GREEN,
+                ..default()
+            }),
+        },
         position: init_position,
         texture: SceneBundle {
             scene: textures.cursor.clone(),
@@ -85,10 +94,9 @@ fn create_entities(
                 ..default()
             },
             ..default()
-        }// ,
+        }, // ,
     });
 }
-
 
 pub fn update_tiles(
     mut commands: Commands,
@@ -96,7 +104,8 @@ pub fn update_tiles(
         (Entity, &mut Handle<Scene>, &MineCellState),
         Or<(Added<MineCellState>, Changed<MineCellState>)>,
     >,
-    player_material: Res<MainCursorMaterial>,
+    // player_material: Res<MainCursorMaterial>,
+    cursor: Query<&Cursor, Without<Puppet>>,
     textures: Res<Textures>,
     gltf: Res<Assets<Gltf>>,
 ) {
@@ -107,13 +116,13 @@ pub fn update_tiles(
             MineCellState::FlaggedMine | MineCellState::FlaggedEmpty => {
                 commands
                     .entity(tile_id)
-                    .insert((NeedsMaterial(player_material.clone()),));
+                    .insert((NeedsMaterial(cursor.single().tile_material.clone()),));
                 textures.tile_flagged.clone()
             }
             &MineCellState::Revealed(x) => {
                 commands
                     .entity(tile_id)
-                    .insert((NeedsMaterial(player_material.clone()),));
+                    .insert((NeedsMaterial(cursor.single().tile_material.clone()),));
                 gltf.get(&textures.mines_3d).unwrap().named_scenes[&format!("f.tile_filled.{x}")]
                     .clone()
             }

@@ -3,15 +3,12 @@
 
 use bevy::prelude::*;
 
-use crate::common::Position;
-
-#[derive(Component)]
-pub struct PuppetCursor(pub Handle<StandardMaterial>);
+use crate::{common::Position, cursor::Cursor};
 
 #[derive(Component, Deref, Copy, Clone)]
-pub struct Remote(pub Entity);
+pub struct Puppet(pub Entity);
 
-impl PartialEq<Entity> for Remote {
+impl PartialEq<Entity> for Puppet {
     fn eq(&self, other: &Entity) -> bool {
         **self == *other
     }
@@ -19,8 +16,8 @@ impl PartialEq<Entity> for Remote {
 
 #[derive(Bundle)]
 pub struct PuppetCursorBundle {
-    pub cursor: PuppetCursor,
+    pub cursor: Cursor,
     pub position: Position,
     pub scene: SceneBundle,
-    pub remote: Remote,
+    pub remote: Puppet,
 }

@@ -5,7 +5,7 @@ use tap::Tap;
 
 use crate::{
     common::{NeedsMaterial, Position, Vec2Ext},
-    cursor::{Bindings, Cursor, CursorBundle, MainCursorMaterial},
+    cursor::{Bindings, Cursor, CursorBundle},
     load::Textures,
     main_menu::standard_window,
     minefield::{query::MinefieldQuery, specific::TILE_SIZE, Minefield},
@@ -15,7 +15,7 @@ use crate::{
 use super::{
     components::{ClientTile, ClientTileBundle, FreezeTimer, FreezeTimerDisplay},
     protocol::{AreaAttackRequest, AreaAttackUpdate},
-    puppet::{PuppetCursor, PuppetCursorBundle, Remote},
+    puppet::{Puppet, PuppetCursorBundle},
     states::AreaAttack,
 };
 
@@ -38,7 +38,7 @@ pub fn request_reveal(
     mut sock: ResMut<Connection>,
     state: Res<CurrentState<AreaAttack>>,
     mut field: MinefieldQuery<&mut ClientTile>,
-    puppets: Query<&Remote, With<PuppetCursor>>,
+    puppets: Query<&Puppet>,
 ) {
     for &position in cursor.iter() {
         let mut field = field.get_single().unwrap();
@@ -147,7 +147,7 @@ pub fn reset_field(
 pub fn player_update(
     mut events: EventReader<AreaAttackUpdate>,
     mut commands: Commands,
-    mut puppets: Query<(&mut PuppetCursor, &mut Position, &Remote, Entity)>,
+    mut puppets: Query<(&mut Cursor, &mut Position, &Puppet)>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     textures: Res<Textures>,
 ) {
@@ -163,41 +163,29 @@ pub fn player_update(
                 emissive: (*color).into(),
                 ..default()
             });
-            if let Some((mut puppet, mut pos, _, mesh_id)) = puppets
+            if let Some((mut puppet, mut pos, _)) = puppets
                 .iter_mut()
-                .find(|(_, _, &Remote(remote), _)| remote == *id)
+                .find(|(_, _, &Puppet(remote))| remote == *id)
             {
-                commands.entity(mesh_id).insert(NeedsMaterial(mat.clone()));
-                puppet.0 = mat;
+                puppet.color = (*color).into();
+                materials.get_mut(&puppet.tile_material).unwrap().emissive = (*color).into();
                 *pos = *position;
             } else {
-                let name = commands
-                    .spawn(Text2dBundle {
-                        text: Text::from_section(
-                            username,
-                            TextStyle {
-                                font: textures.roboto.clone(),
-                                font_size: 10.0,
-                                color: (*color).into(),
-                            },
-                        ),
-                        transform: Transform::from_xyz(10.0, 10.0, 0.0),
-                        ..default()
-                    })
-                    .id();
-
                 commands
                     .spawn(PuppetCursorBundle {
-                        cursor: PuppetCursor(mat.clone()),
+                        cursor: Cursor {
+                            color: (*color).into(),
+                            owning_minefield: Entity::from_raw(0), // TODO better solution than a fake entity?
+                            tile_material: (mat.clone()),
+                        },
                         position: *position,
                         scene: SceneBundle {
                             scene: textures.cursor.clone(),
                             ..default()
                         },
-                        remote: Remote(*id),
+                        remote: Puppet(*id),
                     })
-                    .insert(NeedsMaterial(mat))
-                    .add_child(name);
+                    .insert(NeedsMaterial(mat));
             }
         }
     }
@@ -227,9 +215,18 @@ pub fn self_update(
                 t.translation.x = translation.x;
                 t.translation.z = translation.z;
             });
+
+            let material = assets.add(StandardMaterial {
+                emissive: color.into(),
+                ..default()
+            });
             commands
                 .spawn(CursorBundle {
-                    cursor: Cursor::new(color.into(), field),
+                    cursor: Cursor {
+                        color: color.into(),
+                        owning_minefield: field,
+                        tile_material: material.clone(),
+                    },
                     position,
                     texture: SceneBundle {
                         scene: textures.cursor.clone(),
@@ -237,10 +234,7 @@ pub fn self_update(
                         ..default()
                     },
                 })
-                .insert(NeedsMaterial(assets.add(StandardMaterial {
-                    emissive: color.into(),
-                    ..default()
-                })));
+                .insert(NeedsMaterial(material));
         } else {
             *save_event = Some(AreaAttackUpdate::SelfChange { color, position })
         }
@@ -249,7 +243,7 @@ pub fn self_update(
 
 pub fn puppet_control(
     mut events: EventReader<AreaAttackUpdate>,
-    mut puppets: Query<(&mut Position, &Remote), With<PuppetCursor>>,
+    mut puppets: Query<(&mut Position, &Puppet)>,
     mut field: MinefieldQuery<&mut ClientTile>,
 ) {
     if field.get_single().is_none() {
@@ -258,10 +252,12 @@ pub fn puppet_control(
     for ev in events.iter() {
         match ev {
             AreaAttackUpdate::Reposition { id, position } => {
-                *(puppets
+                if let Some(mut puppet) = puppets
                     .iter_mut()
-                    .find_map(|(pos_mut, &Remote(rem))| (rem == *id).then_some(pos_mut))
-                    .unwrap()) = *position;
+                    .find_map(|(pos_mut, &Puppet(rem))| (rem == *id).then_some(pos_mut))
+                {
+                    *puppet = *position
+                }
             }
             AreaAttackUpdate::TileChanged { position, to } => {
                 *field.get_single().unwrap().get_mut(*position).unwrap() = *to
@@ -324,8 +320,9 @@ pub fn draw_tiles(
         Or<(Added<ClientTile>, Changed<ClientTile>)>,
     >,
     textures: Res<Textures>,
-    own_material: Res<MainCursorMaterial>,
-    puppets: Query<(&PuppetCursor, &Remote)>,
+    // own_material: Res<MainCursorMaterial>,
+    puppets: Query<(&Cursor, &Puppet)>,
+    own_cursor: Query<&Cursor, Without<Puppet>>,
     gltf: Res<Assets<Gltf>>,
 ) {
     updated_tiles.for_each_mut(|(mut sprite, state, tile_id)| {
@@ -339,10 +336,10 @@ pub fn draw_tiles(
                 tile.insert(NeedsMaterial(
                     puppets
                         .iter()
-                        .find_map(|(PuppetCursor(color), &Remote(rem))| {
-                            (rem == *player).then_some(color.clone())
+                        .find_map(|(Cursor { tile_material, .. }, &Puppet(rem))| {
+                            (rem == *player).then_some(tile_material.clone())
                         })
-                        .unwrap_or_else(|| own_material.clone()),
+                        .unwrap_or_else(|| own_cursor.single().tile_material.clone()),
                 ));
                 gltf.get(&textures.mines_3d).unwrap().named_scenes
                     [&format!("f.tile_filled.{num_neighbors}")]
@@ -350,7 +347,7 @@ pub fn draw_tiles(
             }
             // ClientTile::Mine => TextureAtlasSprite::new(11).tap_mut(|s| s.color = Color::default()),
             ClientTile::Flag => {
-                tile.insert(NeedsMaterial(own_material.clone()));
+                tile.insert(NeedsMaterial(own_cursor.single().tile_material.clone()));
                 textures.tile_flagged.clone()
             }
             // ClientTile::Destroyed => TextureAtlasSprite::new(9).tap_mut(|s| s.color = Color::BLACK),
