@@ -10,6 +10,7 @@ mod main_menu;
 mod minefield;
 mod registry;
 mod server;
+mod server_v2;
 mod singleplayer;
 mod state;
 
