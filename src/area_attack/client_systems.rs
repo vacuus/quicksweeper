@@ -32,7 +32,7 @@ pub fn begin_game(mut ctx: ResMut<EguiContext>, sock: Option<ResMut<Connection>>
 }
 
 pub fn request_reveal(
-    cursor: Query<&Position, With<Cursor>>,
+    cursor: Query<&Position, (With<Cursor>, Without<Puppet>)>,
     keybinds: Res<Bindings>,
     kb: Res<Input<KeyCode>>,
     mut sock: ResMut<Connection>,
@@ -40,55 +40,53 @@ pub fn request_reveal(
     mut field: MinefieldQuery<&mut ClientTile>,
     puppets: Query<&Puppet>,
 ) {
-    for &position in cursor.iter() {
-        let mut field = field.get_single().unwrap();
-        if kb.just_pressed(keybinds.check) {
-            match field.get(position).unwrap() {
-                ClientTile::Unknown => {
-                    sock.send_logged(ClientMessage::Ingame {
-                        data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
-                    });
-                }
-                ClientTile::Owned {
-                    player,
-                    num_neighbors,
-                } => {
-                    if !puppets.iter().any(|puppet| *puppet == *player) {
-                        // counts both flags and known mines
-                        let marked_count = field
-                            .neighbor_cells(position)
-                            .filter(|tile| matches!(tile, ClientTile::Flag | ClientTile::Mine))
-                            .count() as u8;
+    let Some(mut field) = field.get_single() else { return; };
+    let Ok(&position) = cursor.get_single() else { return; };
 
-                        if marked_count == *num_neighbors {
-                            for (position, tile) in field.neighbors(position) {
-                                if !matches!(tile, ClientTile::Flag) {
-                                    sock.send_logged(ClientMessage::Ingame {
-                                        data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(
-                                            position,
-                                        ))
+    if kb.just_pressed(keybinds.check) {
+        match field.get(position).unwrap() {
+            ClientTile::Unknown => {
+                sock.send_logged(ClientMessage::Ingame {
+                    data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position)).unwrap(),
+                });
+            }
+            ClientTile::Owned {
+                player,
+                num_neighbors,
+            } => {
+                if !puppets.iter().any(|puppet| *puppet == *player) {
+                    // counts both flags and known mines
+                    let marked_count = field
+                        .neighbor_cells(position)
+                        .filter(|tile| matches!(tile, ClientTile::Flag | ClientTile::Mine))
+                        .count() as u8;
+
+                    if marked_count == *num_neighbors {
+                        for (position, tile) in field.neighbors(position) {
+                            if !matches!(tile, ClientTile::Flag) {
+                                sock.send_logged(ClientMessage::Ingame {
+                                    data: rmp_serde::to_vec(&AreaAttackRequest::Reveal(position))
                                         .unwrap(),
-                                    });
-                                }
+                                });
                             }
                         }
                     }
                 }
-                _ => (), // do nothing, since these tiles semantically contains mines
             }
-        } else if kb.just_pressed(keybinds.flag)
-            && !matches!(
-                state.0,
-                // truthfully the last of these three should be impossible, but check it anyway
-                AreaAttack::Selecting | AreaAttack::Finishing | AreaAttack::Inactive
-            )
-        {
-            if let Some(mut tile) = field.get_mut(position) {
-                match *tile {
-                    ClientTile::Unknown => *tile = ClientTile::Flag,
-                    ClientTile::Flag => *tile = ClientTile::Unknown,
-                    _ => (), // do nothing, since these tiles are nonsensical to flag
-                }
+            _ => (), // do nothing, since these tiles semantically contains mines
+        }
+    } else if kb.just_pressed(keybinds.flag)
+        && !matches!(
+            state.0,
+            // truthfully the last of these three should be impossible, but check it anyway
+            AreaAttack::Selecting | AreaAttack::Finishing | AreaAttack::Inactive
+        )
+    {
+        if let Some(mut tile) = field.get_mut(position) {
+            match *tile {
+                ClientTile::Unknown => *tile = ClientTile::Flag,
+                ClientTile::Flag => *tile = ClientTile::Unknown,
+                _ => (), // do nothing, since these tiles are nonsensical to flag
             }
         }
     }
@@ -320,7 +318,6 @@ pub fn draw_tiles(
         Or<(Added<ClientTile>, Changed<ClientTile>)>,
     >,
     textures: Res<Textures>,
-    // own_material: Res<MainCursorMaterial>,
     puppets: Query<(&Cursor, &Puppet)>,
     own_cursor: Query<&Cursor, Without<Puppet>>,
     gltf: Res<Assets<Gltf>>,
@@ -357,7 +354,14 @@ pub fn draw_tiles(
 }
 
 pub fn send_position(
-    pos: Query<&Position, (With<Cursor>, Or<(Added<Position>, Changed<Position>)>)>,
+    pos: Query<
+        &Position,
+        (
+            With<Cursor>,
+            Without<Puppet>,
+            Or<(Added<Position>, Changed<Position>)>,
+        ),
+    >,
     mut sock: ResMut<Connection>,
 ) {
     for pos in pos.iter() {
