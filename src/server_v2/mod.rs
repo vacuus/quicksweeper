@@ -12,6 +12,10 @@ use tungstenite::{Error, Message};
 
 use crate::server::{ClientMessage, Greeting, MessageError};
 
+use self::double_channel::DoubleChannel;
+
+mod double_channel;
+
 pub fn recv_message<D>(msg: Result<Message, Error>) -> Option<Result<D, MessageError>>
 where
     D: DeserializeOwned,
@@ -34,8 +38,7 @@ struct PartialConnection(WebSocketStream<TcpStream>);
 struct Player {
     socket: WebSocketStream<TcpStream>,
     info: Greeting,
-    sender: Option<broadcast::Sender<Vec<u8>>>,
-    receiver: Option<broadcast::Receiver<Vec<u8>>>,
+    game_channel: Option<DoubleChannel<Vec<u8>>>,
 }
 
 impl PartialConnection {
@@ -47,8 +50,7 @@ impl PartialConnection {
                     Ok(greeting @ Greeting { .. }) => Ok(Player {
                         socket: sock,
                         info: greeting,
-                        sender: None,
-                        receiver: None,
+                        game_channel: None,
                     }),
                     Err(e) => Err(e),
                 };
@@ -61,9 +63,9 @@ impl Player {
     /// Begin listening to messages
     async fn enter(&mut self) {
         loop {
-            if let Some(ref mut recv) = self.receiver {
+            if let Some(ref mut recv) = self.game_channel {
                 tokio::select! {
-                    Ok(msg) = recv.recv() => {
+                    Some(msg) = recv.recv() => {
                         self.socket.send(Message::Binary(msg)).await;
                     }
                     Some(maybe_msg) = self.socket.next() => {
@@ -102,7 +104,10 @@ async fn srv_main(address: String) {
         tokio::spawn(async {
             let sock = PartialConnection(tungsten::accept_async(sock).await?);
             match sock.upgrade().await {
-                Ok(player) => Ok(()),
+                Ok(mut player) => {
+                    player.enter().await;
+                    Ok(())
+                }
                 Err(e) => Err(e),
             }
         });
