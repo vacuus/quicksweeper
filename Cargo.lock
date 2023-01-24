@@ -3028,6 +3028,7 @@ dependencies = [
  "js-sys",
  "local-ip-address",
  "log",
+ "once_cell",
  "ouroboros",
  "rand",
  "rmp-serde",

@@ -5,7 +5,6 @@ use futures_util::{SinkExt, StreamExt};
 use tokio::{
     net::{TcpListener, TcpStream},
     runtime::Runtime,
-    sync::broadcast,
 };
 use tungsten::WebSocketStream;
 use tungstenite::{Error, Message};
