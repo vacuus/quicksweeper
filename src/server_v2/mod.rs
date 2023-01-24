@@ -4,12 +4,13 @@ use tokio_tungstenite as tungsten;
 use futures_lite::StreamExt;
 use tokio::{
     net::{TcpListener, TcpStream},
-    runtime::Runtime, sync::mpsc,
+    runtime::Runtime, sync::broadcast,
 };
 use tungsten::WebSocketStream;
 use tungstenite::{Error, Message};
 
-use crate::server::{ClientMessage, ConnectionInfo, Greeting, MessageError, ServerMessage};
+use crate::server::{Greeting, MessageError};
+
 
 pub fn recv_message<D>(msg: Result<Message, Error>) -> Option<Result<D, MessageError>>
 where
@@ -33,6 +34,8 @@ struct PartialConnection(WebSocketStream<TcpStream>);
 struct Player {
     socket: WebSocketStream<TcpStream>,
     info: Greeting,
+    sender: Option<broadcast::Sender<Vec<u8>>>,
+    receiver: Option<broadcast::Receiver<Vec<u8>>>,
 }
 
 impl PartialConnection {
@@ -44,6 +47,8 @@ impl PartialConnection {
                     Ok(greeting @ Greeting { .. }) => Ok(Player {
                         socket: sock,
                         info: greeting,
+                        sender: None,
+                        receiver: None,
                     }),
                     Err(e) => Err(e),
                 };
@@ -66,7 +71,8 @@ async fn srv_main(address: String) {
             match sock.upgrade().await {
                 Ok(player) => {
 
-                    Ok(())},
+                    Ok(())
+                }
                 Err(e) => Err(e),
             }
         });
