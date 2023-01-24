@@ -1,16 +1,16 @@
 use serde::de::DeserializeOwned;
 use tokio_tungstenite as tungsten;
 
-use futures_lite::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use tokio::{
     net::{TcpListener, TcpStream},
-    runtime::Runtime, sync::broadcast,
+    runtime::Runtime,
+    sync::broadcast,
 };
 use tungsten::WebSocketStream;
 use tungstenite::{Error, Message};
 
-use crate::server::{Greeting, MessageError};
-
+use crate::server::{ClientMessage, Greeting, MessageError};
 
 pub fn recv_message<D>(msg: Result<Message, Error>) -> Option<Result<D, MessageError>>
 where
@@ -57,6 +57,39 @@ impl PartialConnection {
     }
 }
 
+impl Player {
+    /// Begin listening to messages
+    async fn enter(&mut self) {
+        loop {
+            if let Some(ref mut recv) = self.receiver {
+                tokio::select! {
+                    Ok(msg) = recv.recv() => {
+                        self.socket.send(Message::Binary(msg)).await;
+                    }
+                    Some(maybe_msg) = self.socket.next() => {
+                        self.handle_client_message(maybe_msg)
+                    }
+                }
+            } else if let Some(msg) = self.socket.next().await {
+                self.handle_client_message(msg)
+            }
+        }
+    }
+
+    fn handle_client_message(&mut self, message: Result<Message, Error>) {
+        match recv_message(message) {
+            Some(Ok(ClientMessage::Create { game, args })) => (),
+            Some(Ok(ClientMessage::ForceLeave)) => (),
+            Some(Ok(ClientMessage::GameTypes)) => (),
+            Some(Ok(ClientMessage::Games)) => (),
+            Some(Ok(ClientMessage::Ingame { data })) => (),
+            Some(Ok(ClientMessage::Join { game })) => (),
+            Some(Err(_)) => (),
+            None => (),
+        }
+    }
+}
+
 #[allow(dead_code)]
 pub fn srv_start(address: String) {
     Runtime::new().unwrap().block_on(srv_main(address))
@@ -69,10 +102,7 @@ async fn srv_main(address: String) {
         tokio::spawn(async {
             let sock = PartialConnection(tungsten::accept_async(sock).await?);
             match sock.upgrade().await {
-                Ok(player) => {
-
-                    Ok(())
-                }
+                Ok(player) => Ok(()),
                 Err(e) => Err(e),
             }
         });
