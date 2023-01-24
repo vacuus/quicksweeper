@@ -18,7 +18,7 @@ lto = "fat"
 
 [features]
 default = ["bevy/dynamic", "server" ]
-server = [ "local-ip-address" ]
+server = [ "local-ip-address", "tokio", "tokio-tungstenite", "futures-util" ]
 
 [dependencies]
 bevy = { version = "0.9" }
@@ -57,6 +57,6 @@ clap = { version = "4.0.29", features = ["derive"] }
 bevy_framepace = "0.9.1"
 
 # async server packages
-tokio = { version = "1.24", features = [ "rt-multi-thread", "net", "sync", "macros" ]} 
-tokio-tungstenite = "0.18"
-futures-util = "0.3"
+tokio = { version = "1.24", features = [ "rt-multi-thread", "net", "sync", "macros" ], optional = true } 
+tokio-tungstenite = { version = "0.18", optional = true }
+futures-util = { version = "0.3", optional = true }
