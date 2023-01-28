@@ -11,6 +11,7 @@ use crate::{
 use self::connection::Connection;
 use self::double_channel::DoubleChannel;
 
+mod app;
 mod connection;
 mod double_channel;
 
@@ -51,7 +52,13 @@ impl Player {
                     .await;
             }
             Ok(ClientMessage::Games) => (),
-            Ok(ClientMessage::Ingame { data }) => {}
+            Ok(ClientMessage::Ingame { data }) => {
+                if let Some(chan) = &mut self.game_channel {
+                    chan.send(data);
+                } else {
+                    self.socket.send_ser(ServerMessage::Malformed);
+                }
+            }
             Ok(ClientMessage::Join { game }) => (),
             Err(_) => (),
         }
