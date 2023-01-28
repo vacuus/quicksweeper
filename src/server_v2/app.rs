@@ -4,7 +4,7 @@ use tokio::{
     net::TcpListener,
     sync::{
         mpsc::{Receiver, Sender},
-        Mutex,
+        Mutex, RwLock,
     },
 };
 use tokio_tungstenite as tungsten;
@@ -24,7 +24,7 @@ pub struct GameHandle {
 }
 
 #[derive(Clone, Default)]
-pub struct GameList(Arc<Vec<GameHandle>>);
+pub struct GameList(Arc<RwLock<Vec<GameHandle>>>);
 
 pub struct App {
     games: GameList,
