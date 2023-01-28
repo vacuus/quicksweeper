@@ -17,25 +17,24 @@ pub struct GameConnector {
     recv: Receiver<DoubleChannel<Vec<u8>>>,
 }
 
-pub struct GameInfo {
-    pub kind: GameMarker,
-}
-
 pub struct GameHandle {
-    info: GameInfo,
+    kind: GameMarker,
     connect: Mutex<GameConnector>,
 }
 
+#[derive(Clone, Default)]
+pub struct GameList(Arc<Vec<GameHandle>>);
+
 pub struct App {
-    games: Vec<GameHandle>,
+    games: GameList,
     listener: TcpListener,
 }
 
 impl App {
-    pub async fn new(address: String) -> Arc<Self> {
-        Arc::new(Self {
+    pub async fn new(address: String) -> Self {
+        Self {
             games: Default::default(),
             listener: TcpListener::bind(address).await.unwrap(),
-        })
+        }
     }
 }
