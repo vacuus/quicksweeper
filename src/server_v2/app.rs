@@ -7,10 +7,11 @@ use tokio::{
         Mutex,
     },
 };
+use tokio_tungstenite as tungsten;
 
 use crate::server::GameMarker;
 
-use super::double_channel::DoubleChannel;
+use super::{connection::Connection, double_channel::DoubleChannel};
 
 pub struct GameConnector {
     request: Sender<bool>,
@@ -35,6 +36,21 @@ impl App {
         Self {
             games: Default::default(),
             listener: TcpListener::bind(address).await.unwrap(),
+        }
+    }
+
+    pub async fn run(self) {
+        while let Ok((sock, _addr)) = self.listener.accept().await {
+            tokio::spawn(async {
+                let sock = Connection(tungsten::accept_async(sock).await?);
+                match sock.upgrade().await {
+                    Ok(mut player) => {
+                        player.enter().await;
+                        Ok(())
+                    }
+                    Err(e) => Err(e),
+                }
+            });
         }
     }
 }
