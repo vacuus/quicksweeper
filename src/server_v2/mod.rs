@@ -7,7 +7,7 @@ use crate::{
     server::{ClientMessage, Greeting, ServerMessage},
 };
 
-use self::app::App;
+use self::app::{App, GameList};
 use self::connection::Connection;
 use self::double_channel::DoubleChannel;
 
@@ -18,6 +18,7 @@ mod double_channel;
 pub struct Player {
     socket: Connection,
     info: Greeting,
+    game_list: GameList,
     game_channel: Option<DoubleChannel<Vec<u8>>>,
 }
 

@@ -6,7 +6,7 @@ use tungstenite::Message;
 
 use crate::server::MessageError;
 
-use super::Player;
+use super::{Player, app::GameList};
 
 pub struct Connection(pub WebSocketStream<TcpStream>);
 
@@ -37,13 +37,14 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn upgrade(mut self) -> Result<Player, MessageError> {
+    pub async fn upgrade(mut self, list: GameList) -> Result<Player, MessageError> {
         loop {
             if let Some(msg) = self.recv_message().await {
                 break match msg {
                     Ok(greeting) => Ok(Player {
                         socket: self,
                         info: greeting,
+                        game_list: list,
                         game_channel: None,
                     }),
                     Err(e) => Err(e),

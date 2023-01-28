@@ -41,9 +41,10 @@ impl App {
 
     pub async fn run(self) {
         while let Ok((sock, _addr)) = self.listener.accept().await {
+            let games = self.games.clone();
             tokio::spawn(async {
                 let sock = Connection(tungsten::accept_async(sock).await?);
-                match sock.upgrade().await {
+                match sock.upgrade(games).await {
                     Ok(mut player) => {
                         player.enter().await;
                         Ok(())
