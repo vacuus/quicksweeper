@@ -1,8 +1,11 @@
+use std::sync::Arc;
+
 use futures_util::{Sink, SinkExt, Stream, StreamExt};
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::net::TcpStream;
 use tokio_tungstenite::WebSocketStream;
 use tungstenite::Message;
+use unique_id::sequence::SequenceGenerator;
 
 use crate::server::MessageError;
 
@@ -37,14 +40,15 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn upgrade(mut self, list: GameList) -> Result<Player, MessageError> {
+    pub async fn upgrade(mut self, game_list: GameList, generator: Arc<SequenceGenerator>) -> Result<Player, MessageError> {
         loop {
             if let Some(msg) = self.recv_message().await {
                 break match msg {
                     Ok(greeting) => Ok(Player {
                         socket: self,
                         info: greeting,
-                        game_list: list,
+                        game_list,
+                        generator,
                         game_channel: None,
                     }),
                     Err(e) => Err(e),

@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use futures_util::SinkExt;
 use tokio::runtime::Runtime;
+use unique_id::sequence::SequenceGenerator;
 
 use crate::server::MessageError;
 use crate::{
@@ -19,6 +22,7 @@ pub struct Player {
     socket: Connection,
     info: Greeting,
     game_list: GameList,
+    generator: Arc<SequenceGenerator>,
     game_channel: Option<DoubleChannel<Vec<u8>>>,
 }
 

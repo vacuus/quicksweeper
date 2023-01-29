@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, collections::HashMap};
 
 use tokio::{
     net::TcpListener,
@@ -8,6 +8,7 @@ use tokio::{
     },
 };
 use tokio_tungstenite as tungsten;
+use unique_id::sequence::SequenceGenerator;
 
 use crate::server::GameMarker;
 
@@ -24,10 +25,11 @@ pub struct GameHandle {
 }
 
 #[derive(Clone, Default)]
-pub struct GameList(Arc<RwLock<Vec<GameHandle>>>);
+pub struct GameList(Arc<RwLock<HashMap<u64, GameHandle>>>);
 
 pub struct App {
     games: GameList,
+    generator: Arc<SequenceGenerator>,
     listener: TcpListener,
 }
 
@@ -35,6 +37,7 @@ impl App {
     pub async fn new(address: String) -> Self {
         Self {
             games: Default::default(),
+            generator: Arc::new(SequenceGenerator::default()),
             listener: TcpListener::bind(address).await.unwrap(),
         }
     }
@@ -42,9 +45,10 @@ impl App {
     pub async fn run(self) {
         while let Ok((sock, _addr)) = self.listener.accept().await {
             let games = self.games.clone();
+            let generator = self.generator.clone();
             tokio::spawn(async {
                 let sock = Connection(tungsten::accept_async(sock).await?);
-                match sock.upgrade(games).await {
+                match sock.upgrade(games, generator).await {
                     Ok(mut player) => {
                         player.enter().await;
                         Ok(())
