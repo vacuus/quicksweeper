@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use futures_util::SinkExt;
+use simple_logger::SimpleLogger;
 use tokio::runtime::Runtime;
 use unique_id::sequence::SequenceGenerator;
 
@@ -75,6 +76,7 @@ impl Player {
 
 #[allow(dead_code)]
 pub fn srv_start(address: String) {
+    SimpleLogger::new().init().expect("logging framework failed to start");
     Runtime::new().unwrap().block_on(srv_main(address))
 }
 
