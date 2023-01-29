@@ -9,7 +9,7 @@ use unique_id::sequence::SequenceGenerator;
 
 use crate::server::MessageError;
 
-use super::{Player, app::GameList};
+use super::{app::GameList, Player};
 
 pub struct Connection(pub WebSocketStream<TcpStream>);
 
@@ -40,9 +40,18 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn upgrade(mut self, game_list: GameList, generator: Arc<SequenceGenerator>) -> Result<Player, MessageError> {
+    pub async fn upgrade(
+        mut self,
+        game_list: GameList,
+        generator: Arc<SequenceGenerator>,
+    ) -> Result<Player, MessageError> {
         loop {
             if let Some(msg) = self.recv_message().await {
+                if let Ok(address) = self.0.get_ref().peer_addr() {
+                    log::debug!("Connection from {address} was successfully upgraded and can now join games");
+                } else {
+                    log::debug!("Connection from unknown source was successfully upgraded and can now join games")
+                }
                 break match msg {
                     Ok(greeting) => Ok(Player {
                         socket: self,
