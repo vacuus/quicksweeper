@@ -56,7 +56,10 @@ impl Player {
                     ))
                     .await;
             }
-            Ok(ClientMessage::Games) => (),
+            Ok(ClientMessage::Games) => {
+                self.socket
+                    .send_ser(ServerMessage::ActiveGames(self.game_list.list().await));
+            }
             Ok(ClientMessage::Ingame { data }) => {
                 if let Some(chan) = &mut self.game_channel {
                     chan.send(data);

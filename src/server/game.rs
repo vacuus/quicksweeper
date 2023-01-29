@@ -90,7 +90,7 @@ pub fn server_messages(
                                 .collect();
                             ActiveGame {
                                 marker,
-                                id,
+                                id: id.to_bits(),
                                 players,
                             }
                         })

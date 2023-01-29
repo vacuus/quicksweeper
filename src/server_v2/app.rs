@@ -1,5 +1,6 @@
-use std::{sync::Arc, collections::HashMap};
+use std::{collections::HashMap, sync::Arc};
 
+use itertools::Itertools;
 use tokio::{
     net::TcpListener,
     sync::{
@@ -10,7 +11,7 @@ use tokio::{
 use tokio_tungstenite as tungsten;
 use unique_id::sequence::SequenceGenerator;
 
-use crate::server::GameMarker;
+use crate::server::{ActiveGame, GameMarker};
 
 use super::{connection::Connection, double_channel::DoubleChannel};
 
@@ -21,11 +22,27 @@ pub struct GameConnector {
 
 pub struct GameHandle {
     kind: GameMarker,
+    players: Arc<Vec<String>>,
     connect: Mutex<GameConnector>,
 }
 
 #[derive(Clone, Default)]
 pub struct GameList(Arc<RwLock<HashMap<u64, GameHandle>>>);
+
+impl GameList {
+    pub async fn list(&self) -> Vec<ActiveGame> {
+        self.0
+            .read()
+            .await
+            .iter()
+            .map(|(&id, handle)| ActiveGame {
+                marker: handle.kind,
+                id,
+                players: (*handle.players).clone(),
+            })
+            .collect_vec()
+    }
+}
 
 pub struct App {
     games: GameList,

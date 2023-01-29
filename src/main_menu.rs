@@ -269,7 +269,7 @@ fn game_select_menu(
                 go_back,
                 reload,
                 create: create.then_some(selected_gamemode.1).flatten(),
-                join_game,
+                join_game: join_game.map(|(id, u)| (Entity::from_bits(id), u)),
             }
         })
     })
