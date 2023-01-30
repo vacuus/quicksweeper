@@ -52,10 +52,13 @@ pub struct App {
 
 impl App {
     pub async fn new(address: String) -> Self {
+        let listener = TcpListener::bind((address, 0)).await.unwrap();
+        log::debug!("Server open at {}", listener.local_addr().unwrap());
+
         Self {
             games: Default::default(),
             generator: Arc::new(SequenceGenerator::default()),
-            listener: TcpListener::bind((address, 0)).await.unwrap(),
+            listener,
         }
     }
 
