@@ -17,6 +17,6 @@ pub struct GameComponents {
 /// game, and return the join handle for that task as well as some objects for manipulation of the
 /// game.
 #[async_trait]
-pub trait QuicksweeperGame {
-    async fn create(params: Vec<u8>) -> (DoubleChannel<Vec<u8>>, GameConnector, JoinHandle<()>);
+pub trait GamemodeInitializer {
+    async fn create(&self, params: Vec<u8>) -> (DoubleChannel<Vec<u8>>, GameConnector, JoinHandle<()>);
 }
