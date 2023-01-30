@@ -76,7 +76,7 @@ impl Player {
 
 #[allow(dead_code)]
 pub fn srv_start(address: String) {
-    SimpleLogger::new().init().expect("logging framework failed to start");
+    SimpleLogger::new().with_level(log::LevelFilter::Debug).init().expect("logging framework failed to start");
     Runtime::new().unwrap().block_on(srv_main(address))
 }
 
