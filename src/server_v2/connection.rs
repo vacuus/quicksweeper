@@ -18,6 +18,7 @@ impl Connection {
     where
         D: DeserializeOwned,
     {
+        // TODO when connection is closed, this will yield none -- handle gracefully
         let msg = match self.0.next().await.unwrap() {
             Ok(msg) => Some(msg),
             Err(e) => return Some(Err(e.into())),
