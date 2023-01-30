@@ -11,12 +11,12 @@ use tokio::{
 use tokio_tungstenite as tungsten;
 use unique_id::sequence::SequenceGenerator;
 
-use crate::server::{ActiveGame, GameMarker};
+use crate::server::{ActiveGame, GameMarker, Greeting};
 
 use super::{connection::Connection, double_channel::DoubleChannel};
 
 pub struct GameConnector {
-    request: Sender<bool>,
+    request: Sender<Greeting>,
     recv: Receiver<DoubleChannel<Vec<u8>>>,
 }
 
