@@ -372,8 +372,7 @@ mod test {
         assert_eq!(
             duplicates.len(),
             0,
-            "duplicated (may contain duplicates itself): {:?}",
-            duplicates
+            "duplicated (may contain duplicates itself): {duplicates:?}",
         )
     }
 }

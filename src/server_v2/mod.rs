@@ -59,13 +59,13 @@ impl Player {
             }
             Ok(ClientMessage::Games) => {
                 self.socket
-                    .send_ser(ServerMessage::ActiveGames(self.game_list.list().await));
+                    .send_ser(ServerMessage::ActiveGames(self.game_list.list().await)).await;
             }
             Ok(ClientMessage::Ingame { data }) => {
                 if let Some(chan) = &mut self.game_channel {
                     chan.send(data);
                 } else {
-                    self.socket.send_ser(ServerMessage::Malformed);
+                    self.socket.send_ser(ServerMessage::Malformed).await;
                 }
             }
             Ok(ClientMessage::Join { game }) => (),
