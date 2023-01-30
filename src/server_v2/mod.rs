@@ -16,6 +16,7 @@ use self::connection::Connection;
 use self::double_channel::DoubleChannel;
 
 mod app;
+mod game;
 mod connection;
 mod double_channel;
 

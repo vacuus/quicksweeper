@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::{Arc, atomic::AtomicU64}};
 
 use itertools::Itertools;
 use tokio::{
@@ -16,6 +16,7 @@ use crate::server::{ActiveGame, GameMarker, Greeting};
 use super::{connection::Connection, double_channel::DoubleChannel};
 
 pub struct GameConnector {
+    num_connections: Arc<AtomicU64>,
     request: Sender<Greeting>,
     recv: Receiver<DoubleChannel<Vec<u8>>>,
 }
