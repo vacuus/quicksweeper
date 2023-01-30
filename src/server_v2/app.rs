@@ -6,7 +6,7 @@ use tokio::{
     sync::{
         mpsc::{Receiver, Sender},
         Mutex, RwLock,
-    },
+    }, task::JoinHandle,
 };
 use tokio_tungstenite as tungsten;
 use unique_id::sequence::SequenceGenerator;
@@ -24,6 +24,7 @@ pub struct GameHandle {
     kind: GameMarker,
     players: Arc<Vec<String>>,
     connect: Mutex<GameConnector>,
+    task_handle: JoinHandle<()>,
 }
 
 #[derive(Clone, Default)]
