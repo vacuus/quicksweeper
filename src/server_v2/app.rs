@@ -1,4 +1,10 @@
-use std::{collections::HashMap, sync::{Arc, atomic::AtomicU64}};
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
+};
 
 use itertools::Itertools;
 use tokio::{
@@ -6,7 +12,8 @@ use tokio::{
     sync::{
         mpsc::{Receiver, Sender},
         Mutex, RwLock,
-    }, task::JoinHandle,
+    },
+    task::JoinHandle,
 };
 use tokio_tungstenite as tungsten;
 use unique_id::sequence::SequenceGenerator;
@@ -19,6 +26,21 @@ pub struct GameConnector {
     num_connections: Arc<AtomicU64>,
     request: Sender<Greeting>,
     recv: Receiver<DoubleChannel<Vec<u8>>>,
+}
+
+impl GameConnector {
+    pub async fn connect(&mut self, player: Greeting) -> Option<DoubleChannel<Vec<u8>>> {
+        if self.request.send(player).await.is_ok() {
+            if let Some(result) = self.recv.recv().await {
+                self.num_connections.fetch_add(1, Ordering::SeqCst);
+                Some(result)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
 
 pub struct GameHandle {
@@ -43,6 +65,21 @@ impl GameList {
                 players: (*handle.players).clone(),
             })
             .collect_vec()
+    }
+
+    pub async fn join(&self, game_id: &u64, player: Greeting) -> Option<DoubleChannel<Vec<u8>>> {
+        if let Some(game) = self.0.read().await.get(game_id) {
+            if let Some(chan) = game.connect.lock().await.connect(player).await {
+                Some(chan)
+            } else {
+                if let Some(GameHandle { task_handle, .. }) = self.0.write().await.remove(game_id) {
+                    task_handle.abort();
+                }
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 

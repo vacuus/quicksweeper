@@ -10,7 +10,7 @@ pub struct ActiveGame {
     pub players: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Greeting {
     pub username: String,
 }
@@ -18,7 +18,7 @@ pub struct Greeting {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage {
     Create { game: GameMarker, args: Vec<u8> },
-    Join { game: Entity },
+    Join { game: u64 },
     Ingame { data: Vec<u8> },
     ForceLeave,
     Games,

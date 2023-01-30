@@ -113,7 +113,7 @@ pub fn server_messages(
                     .add_child(player);
             }
             Some(Ok(ClientMessage::Join { game })) => {
-                if let Some(mut ent) = commands.get_entity(game) {
+                if let Some(mut ent) = commands.get_entity(Entity::from_bits(game)) {
                     ent.add_child(player);
                 } else {
                     socket.send_logged(ServerMessage::Malformed);

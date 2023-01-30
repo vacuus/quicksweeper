@@ -70,7 +70,13 @@ impl Player {
                     self.socket.send_ser(ServerMessage::Malformed).await;
                 }
             }
-            Ok(ClientMessage::Join { game }) => (),
+            Ok(ClientMessage::Join { game }) => {
+                if let Some(game) = self.game_list.join(&game, self.info.clone()).await {
+                    self.game_channel = Some(game);
+                } else {
+                    self.socket.send_ser(ServerMessage::Malformed).await;
+                }
+            },
             Err(_) => (),
         }
     }

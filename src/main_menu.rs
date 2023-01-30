@@ -210,7 +210,7 @@ fn game_select_menu(
         go_back: egui::Response,
         reload: egui::Response,
         create: Option<GameMarker>,
-        join_game: Option<(Entity, GameMarker)>,
+        join_game: Option<(u64, GameMarker)>,
     }
 
     if let Some(Ok(ServerMessage::ActiveGames(v))) = socket.recv_message() {
@@ -268,7 +268,7 @@ fn game_select_menu(
                 go_back,
                 reload,
                 create: create.then_some(selected_gamemode.1).flatten(),
-                join_game: join_game.map(|(id, u)| (Entity::from_bits(id), u)),
+                join_game,
             }
         })
     })
