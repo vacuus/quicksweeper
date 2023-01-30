@@ -5,6 +5,7 @@ mod components;
 mod protocol;
 pub mod puppet;
 mod server_systems;
+mod impl_v2;
 mod states;
 
 use iyes_loopless::prelude::*;
@@ -15,6 +16,8 @@ use crate::{
     main_menu::{Menu, ToGame},
     server::{GameMarker, LocalEvent},
 };
+
+pub use impl_v2::IAreaAttack;
 
 use self::{components::RevealTile, protocol::AreaAttackRequest, states::AreaAttack};
 

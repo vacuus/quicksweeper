@@ -6,11 +6,16 @@
 //! entire world, so caution should be exercised when modifying entities.
 //!
 
+use std::fmt::Debug;
+
 use bevy::{hierarchy::HierarchyEvent, prelude::*, utils::Uuid};
 use serde::{Deserialize, Serialize};
 use vec_drain_where::VecDrainWhereExt;
 
-use crate::registry::{GameRegistry, REGISTRY};
+use crate::{
+    registry::{GameRegistry, REGISTRY},
+    server_v2::game::GamemodeInitializer,
+};
 
 use super::{
     protocol::{ActiveGame, ClientMessage, ServerMessage},
@@ -18,10 +23,19 @@ use super::{
     IngameEvent,
 };
 
-#[derive(Component, Serialize, Deserialize, Debug, Clone)]
 pub struct GameDescriptor {
     pub name: String,
     pub description: String,
+    pub initializer: Box<dyn GamemodeInitializer>,
+}
+
+impl Debug for GameDescriptor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GameDescriptor")
+            .field("name", &self.name)
+            .field("description", &self.description)
+            .finish()
+    }
 }
 
 #[derive(

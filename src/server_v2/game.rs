@@ -16,6 +16,6 @@ pub struct GameComponents {
 /// game, and return the join handle for that task as well as some objects for manipulation of the
 /// game. Since it is meant to spawn a task, this function must be called from within a tokio
 /// context.
-pub trait GamemodeInitializer {
+pub trait GamemodeInitializer: Send + Sync {
     fn create(&self, params: Vec<u8>) -> GameComponents;
 }
