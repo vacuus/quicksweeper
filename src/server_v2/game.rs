@@ -18,5 +18,5 @@ pub struct GameComponents {
 /// game.
 #[async_trait]
 pub trait GamemodeInitializer {
-    async fn create(&self, params: Vec<u8>) -> (DoubleChannel<Vec<u8>>, GameConnector, JoinHandle<()>);
+    async fn create(&self, params: Vec<u8>) -> GameComponents;
 }
