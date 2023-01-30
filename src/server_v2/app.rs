@@ -55,7 +55,7 @@ impl App {
         Self {
             games: Default::default(),
             generator: Arc::new(SequenceGenerator::default()),
-            listener: TcpListener::bind(address).await.unwrap(),
+            listener: TcpListener::bind((address, 0)).await.unwrap(),
         }
     }
 

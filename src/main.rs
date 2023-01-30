@@ -69,12 +69,13 @@ fn framerate_limit(mut settings: ResMut<bevy_framepace::FramepaceSettings>) {
 
 fn main() {
     match Args::parse().mode {
-        None | Some(Mode::Client) => client_app(),
+        None | Some(Mode::Client) => client_app().run(),
         #[allow(unused)]
         Some(Mode::Server { address }) => {
             #[cfg(feature = "server")]
             {
-                server::server_app(address)
+                // server::server_app(address)
+                server_v2::srv_start(address.unwrap_or("192.168.131.1".to_string()));
             }
             #[cfg(not(feature = "server"))]
             {
@@ -82,5 +83,4 @@ fn main() {
             }
         }
     }
-    .run();
 }
