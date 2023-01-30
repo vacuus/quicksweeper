@@ -11,7 +11,7 @@ use tungstenite::{handshake::client::Response, ClientHandshake, HandshakeError, 
 
 use crate::{
     cursor::Bindings,
-    registry::GameRegistry,
+    registry::{GameRegistry, REGISTRY},
     server::{
         ActiveGame, ClientMessage, CommonConnection as Connection, GameMarker, Greeting,
         ServerMessage,
@@ -205,7 +205,6 @@ fn game_select_menu(
     mut selected_gamemode: Local<(Option<String>, Option<GameMarker>)>,
     mut socket: ResMut<Connection>,
     mut start_game: EventWriter<ToGame>,
-    registry: Res<GameRegistry>,
 ) {
     struct GameSelectResponse {
         go_back: egui::Response,
@@ -228,7 +227,7 @@ fn game_select_menu(
 
             let mut join_game = None;
             for game in games.iter() {
-                if let Some(descriptor) = registry.get(&game.marker) {
+                if let Some(descriptor) = REGISTRY.get(&game.marker) {
                     ui.vertical(|ui| {
                         ui.label(&descriptor.name);
                         ui.label(&descriptor.description);
@@ -254,7 +253,7 @@ fn game_select_menu(
                         .unwrap_or("<Choose gamemode>"),
                 )
                 .show_ui(ui, |ui| {
-                    for (&marker, descriptor) in registry.iter() {
+                    for (&marker, descriptor) in REGISTRY.iter() {
                         ui.selectable_value(
                             &mut *selected_gamemode,
                             (Some(descriptor.name.clone()), Some(marker)),

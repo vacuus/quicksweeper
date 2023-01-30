@@ -59,7 +59,8 @@ impl Player {
             }
             Ok(ClientMessage::Games) => {
                 self.socket
-                    .send_ser(ServerMessage::ActiveGames(self.game_list.list().await)).await;
+                    .send_ser(ServerMessage::ActiveGames(self.game_list.list().await))
+                    .await;
             }
             Ok(ClientMessage::Ingame { data }) => {
                 if let Some(chan) = &mut self.game_channel {
@@ -76,7 +77,10 @@ impl Player {
 
 #[allow(dead_code)]
 pub fn srv_start(address: String) {
-    SimpleLogger::new().with_level(log::LevelFilter::Debug).init().expect("logging framework failed to start");
+    SimpleLogger::new()
+        .with_level(log::LevelFilter::Debug)
+        .init()
+        .expect("logging framework failed to start");
     Runtime::new().unwrap().block_on(srv_main(address))
 }
 

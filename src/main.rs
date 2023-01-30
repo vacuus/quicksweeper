@@ -21,7 +21,7 @@ use bevy_egui::EguiPlugin;
 use clap::{Parser, Subcommand};
 use cursor::CursorPlugin;
 use main_menu::MainMenuPlugin;
-use registry::GameRegistry;
+use registry::{GameRegistry, REGISTRY};
 pub use singleplayer::Singleplayer;
 
 #[derive(Parser)]
@@ -40,26 +40,25 @@ enum Mode {
 
 fn client_app() -> App {
     let mut app = App::new();
-    app.init_resource::<GameRegistry>()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
-                title: "Quicksweeper".to_string(),
-                ..default()
-            },
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        window: WindowDescriptor {
+            title: "Quicksweeper".to_string(),
             ..default()
-        }))
-        .add_plugin(EguiPlugin)
-        .add_plugin(CursorPlugin)
-        .add_plugin(MainMenuPlugin)
-        .add_plugin(common::QuicksweeperTypes)
-        .add_plugin(load::ClientLoad)
-        .add_plugin(minefield::MinefieldPlugin)
-        // gamemodes
-        .add_plugin(singleplayer::SingleplayerMode)
-        .add_plugin(area_attack::AreaAttackClient)
-        // framerate
-        .add_plugin(bevy_framepace::FramepacePlugin)
-        .add_startup_system(framerate_limit);
+        },
+        ..default()
+    }))
+    .add_plugin(EguiPlugin)
+    .add_plugin(CursorPlugin)
+    .add_plugin(MainMenuPlugin)
+    .add_plugin(common::QuicksweeperTypes)
+    .add_plugin(load::ClientLoad)
+    .add_plugin(minefield::MinefieldPlugin)
+    // gamemodes
+    .add_plugin(singleplayer::SingleplayerMode)
+    .add_plugin(area_attack::AreaAttackClient)
+    // framerate
+    .add_plugin(bevy_framepace::FramepacePlugin)
+    .add_startup_system(framerate_limit);
     app
 }
 

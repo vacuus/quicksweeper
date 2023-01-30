@@ -13,8 +13,7 @@ use server_systems::*;
 use crate::{
     area_attack::{components::FreezeTimer, protocol::AreaAttackUpdate},
     main_menu::{Menu, ToGame},
-    registry::GameRegistry,
-    server::{GameDescriptor, GameMarker, LocalEvent},
+    server::{GameMarker, LocalEvent},
 };
 
 use self::{components::RevealTile, protocol::AreaAttackRequest, states::AreaAttack};
@@ -26,23 +25,12 @@ pub const AREA_ATTACK_MARKER: GameMarker = GameMarker(
     },
 );
 
-fn registry_entry(mut registry: ResMut<GameRegistry>) {
-    registry.insert(
-        AREA_ATTACK_MARKER,
-        GameDescriptor {
-            name: "Area Attack".to_string(),
-            description: "Race to claim the board for yourself".to_string(),
-        },
-    );
-}
-
 #[derive(Component)]
 pub struct AreaAttackServer;
 
 impl Plugin for AreaAttackServer {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(registry_entry)
-            .add_event::<LocalEvent<AreaAttackRequest>>()
+        app.add_event::<LocalEvent<AreaAttackRequest>>()
             .add_event::<RevealTile>()
             .add_system_set(
                 ConditionSet::new()
@@ -72,7 +60,6 @@ impl Plugin for AreaAttackClient {
         app.add_loopless_state(Inactive)
             .init_resource::<FreezeTimer>()
             .add_event::<AreaAttackUpdate>()
-            .add_startup_system(registry_entry)
             .add_system(|mut commands: Commands, mut ev: EventReader<ToGame>| {
                 if ev.iter().any(|e| **e == AREA_ATTACK_MARKER) {
                     // transition from menu into game

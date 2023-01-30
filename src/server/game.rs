@@ -10,7 +10,7 @@ use bevy::{hierarchy::HierarchyEvent, prelude::*, utils::Uuid};
 use serde::{Deserialize, Serialize};
 use vec_drain_where::VecDrainWhereExt;
 
-use crate::registry::GameRegistry;
+use crate::registry::{GameRegistry, REGISTRY};
 
 use super::{
     protocol::{ActiveGame, ClientMessage, ServerMessage},
@@ -75,7 +75,6 @@ pub fn server_messages(
     mut clients: Query<(Entity, &mut Connection), (With<ConnectionInfo>, Without<Parent>)>,
     q_players: Query<&ConnectionInfo>,
     active_games: Query<(Entity, &GameMarker, &Children)>,
-    registry: Res<GameRegistry>,
 ) {
     for (player, mut socket) in clients.iter_mut() {
         match socket.recv_message() {
@@ -101,7 +100,7 @@ pub fn server_messages(
             }
             Some(Ok(ClientMessage::GameTypes)) => {
                 socket.send_logged(ServerMessage::AvailableGames(
-                    registry.keys().copied().collect(),
+                    REGISTRY.keys().copied().collect(),
                 ));
             }
             Some(Ok(ClientMessage::Create { game, args: _args })) => {
