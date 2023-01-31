@@ -2,7 +2,7 @@ use tokio::task::JoinHandle;
 
 use super::{app::GameConnector, double_channel::DoubleChannel};
 
-pub struct GameComponents {
+pub struct SessionObjects {
     /// The channel with which the game communicates as a host. This object has no explicit
     /// priveliges, but it is guaranteed by the server that this channel will be passed to the
     /// player that initialized the game.
@@ -17,5 +17,5 @@ pub struct GameComponents {
 /// game. Since it is meant to spawn a task, this function must be called from within a tokio
 /// context.
 pub trait GamemodeInitializer: Send + Sync {
-    fn create(&self, params: Vec<u8>) -> GameComponents;
+    fn create(&self, params: Vec<u8>) -> SessionObjects;
 }

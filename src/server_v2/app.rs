@@ -23,7 +23,7 @@ use crate::{
     server::{ActiveGame, GameDescriptor, GameMarker, Greeting},
 };
 
-use super::{connection::Connection, double_channel::DoubleChannel, game::GameComponents};
+use super::{connection::Connection, double_channel::DoubleChannel, game::SessionObjects};
 
 pub struct GameConnector {
     num_connections: Arc<AtomicU64>,
@@ -96,7 +96,7 @@ impl GameStore {
         args: Vec<u8>,
     ) -> Option<DoubleChannel<Vec<u8>>> {
         if let Some(GameDescriptor { initializer, .. }) = REGISTRY.get(game) {
-            let GameComponents {
+            let SessionObjects {
                 host_channel,
                 connector,
                 main_task,

@@ -14,7 +14,7 @@ use crate::{
 use self::app::{App, GameStore};
 use self::connection::Connection;
 use self::double_channel::DoubleChannel;
-use self::game::GameComponents;
+use self::game::SessionObjects;
 
 mod app;
 mod connection;
