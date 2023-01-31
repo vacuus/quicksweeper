@@ -51,11 +51,14 @@ pub struct GameHandle {
 }
 
 #[derive(Clone, Default)]
-pub struct GameList(Arc<RwLock<HashMap<u64, GameHandle>>>);
+pub struct GameStore {
+    store: Arc<RwLock<HashMap<u64, GameHandle>>>,
+    generator: Arc<SequenceGenerator>,
+}
 
-impl GameList {
+impl GameStore {
     pub async fn list(&self) -> Vec<ActiveGame> {
-        self.0
+        self.store
             .read()
             .await
             .iter()
@@ -68,11 +71,13 @@ impl GameList {
     }
 
     pub async fn join(&self, game_id: &u64, player: Greeting) -> Option<DoubleChannel<Vec<u8>>> {
-        if let Some(game) = self.0.read().await.get(game_id) {
+        if let Some(game) = self.store.read().await.get(game_id) {
             if let Some(chan) = game.connect.lock().await.connect(player).await {
                 Some(chan)
             } else {
-                if let Some(GameHandle { task_handle, .. }) = self.0.write().await.remove(game_id) {
+                if let Some(GameHandle { task_handle, .. }) =
+                    self.store.write().await.remove(game_id)
+                {
                     task_handle.abort();
                 }
                 None
@@ -84,8 +89,7 @@ impl GameList {
 }
 
 pub struct App {
-    games: GameList,
-    generator: Arc<SequenceGenerator>,
+    games: GameStore,
     listener: TcpListener,
 }
 
@@ -96,7 +100,6 @@ impl App {
 
         Self {
             games: Default::default(),
-            generator: Arc::new(SequenceGenerator::default()),
             listener,
         }
     }
@@ -104,10 +107,9 @@ impl App {
     pub async fn run(self) {
         while let Ok((sock, _addr)) = self.listener.accept().await {
             let games = self.games.clone();
-            let generator = self.generator.clone();
             tokio::spawn(async {
                 let sock = Connection(tungsten::accept_async(sock).await?);
-                match sock.upgrade(games, generator).await {
+                match sock.upgrade(games).await {
                     Ok(mut player) => {
                         player.enter().await;
                         Ok(())

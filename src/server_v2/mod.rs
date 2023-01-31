@@ -5,26 +5,26 @@ use simple_logger::SimpleLogger;
 use tokio::runtime::Runtime;
 use unique_id::sequence::SequenceGenerator;
 
-use crate::server::MessageError;
+use crate::server::{GameDescriptor, MessageError};
 use crate::{
     registry::REGISTRY,
     server::{ClientMessage, Greeting, ServerMessage},
 };
 
-use self::app::{App, GameList};
+use self::app::{App, GameStore};
 use self::connection::Connection;
 use self::double_channel::DoubleChannel;
+use self::game::GameComponents;
 
 mod app;
-pub mod game;
 mod connection;
 mod double_channel;
+pub mod game;
 
 pub struct Player {
     socket: Connection,
     info: Greeting,
-    game_list: GameList,
-    generator: Arc<SequenceGenerator>,
+    game_list: GameStore,
     game_channel: Option<DoubleChannel<Vec<u8>>>,
 }
 
@@ -76,7 +76,7 @@ impl Player {
                 } else {
                     self.socket.send_ser(ServerMessage::Malformed).await;
                 }
-            },
+            }
             Err(_) => (),
         }
     }

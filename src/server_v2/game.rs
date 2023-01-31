@@ -6,9 +6,9 @@ pub struct GameComponents {
     /// The channel with which the game communicates as a host. This object has no explicit
     /// priveliges, but it is guaranteed by the server that this channel will be passed to the
     /// player that initialized the game.
-    host_channel: DoubleChannel<Vec<u8>>,
-    connector: GameConnector,
-    main_task: JoinHandle<()>,
+    pub host_channel: DoubleChannel<Vec<u8>>,
+    pub connector: GameConnector,
+    pub main_task: JoinHandle<()>,
 }
 
 /// Trait which provides the initialization behavior (and thus the general behavior) of a particular

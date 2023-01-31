@@ -9,7 +9,7 @@ use unique_id::sequence::SequenceGenerator;
 
 use crate::server::MessageError;
 
-use super::{app::GameList, Player};
+use super::{app::GameStore, Player};
 
 pub struct Connection(pub WebSocketStream<TcpStream>);
 
@@ -43,8 +43,7 @@ impl Connection {
 
     pub async fn upgrade(
         mut self,
-        game_list: GameList,
-        generator: Arc<SequenceGenerator>,
+        game_list: GameStore,
     ) -> Result<Player, MessageError> {
         loop {
             if let Some(msg) = self.recv_message().await {
@@ -58,7 +57,6 @@ impl Connection {
                         socket: self,
                         info: greeting,
                         game_list,
-                        generator,
                         game_channel: None,
                     }),
                     Err(e) => Err(e),
