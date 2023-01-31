@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use once_cell::sync::Lazy;
 
-use crate::{server::{GameDescriptor, GameMarker}, area_attack::{AREA_ATTACK_MARKER, IAreaAttack}};
+use crate::{
+    area_attack::{IAreaAttack, AREA_ATTACK_MARKER},
+    server::{GameDescriptor, GameMarker},
+};
 
 pub static REGISTRY: Lazy<GameRegistry> = Lazy::new(|| {
     GameRegistry(
@@ -12,7 +15,7 @@ pub static REGISTRY: Lazy<GameRegistry> = Lazy::new(|| {
             GameDescriptor {
                 name: "Area Attack".to_string(),
                 description: "Race to claim the board for yourself".to_string(),
-                initializer: IAreaAttack::new()
+                initializer: IAreaAttack::new(),
             },
         )]
         .into_iter()

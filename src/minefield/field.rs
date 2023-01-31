@@ -14,20 +14,20 @@ use std::ops::{Deref, DerefMut};
 use super::FieldShape;
 
 #[derive(Component)]
-pub struct Minefield {
-    pub field: SparseGrid<Option<Entity>>,
+pub struct Minefield<T: Clone + PartialEq> {
+    pub field: SparseGrid<Option<T>>,
     pub remaining_blank: usize,
 }
 
-impl Deref for Minefield {
-    type Target = SparseGrid<Option<Entity>>;
+impl<T: Clone + PartialEq> Deref for Minefield<T> {
+    type Target = SparseGrid<Option<T>>;
 
     fn deref(&self) -> &Self::Target {
         &self.field
     }
 }
 
-impl DerefMut for Minefield {
+impl<T: Clone + PartialEq> DerefMut for Minefield<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.field
     }
@@ -39,10 +39,10 @@ fn field_density(val: usize) -> usize {
     val * 8 / 10
 }
 
-impl Minefield {
+impl<T: Clone + PartialEq> Minefield<T> {
     pub fn new_shaped<F>(mut make_entity: F, template: &FieldShape) -> Self
     where
-        F: FnMut(&Position) -> Entity,
+        F: FnMut(&Position) -> T,
     {
         let mut field = SparseGrid::new_default((Rows(10), Columns(10)), None); // TODO: Use less arbitrary numbers in init
         for pos in template.decode() {
@@ -62,11 +62,11 @@ impl Minefield {
         &self,
         exclude: &impl Contains<Position>,
         rng: &mut impl Rng,
-    ) -> impl IntoIterator<Item = (&Location, Entity)> {
+    ) -> impl IntoIterator<Item = (&Location, T)> {
         let num_entries = self.field.occupied_entries().count();
 
         self.occupied_entries()
-            .filter_map(|(a, b)| b.map(|b| (a, b)))
+            .filter_map(|(a, b)| b.clone().map(|b| (a, b)))
             .filter(|&(&pos, _)| !exclude.contains(&pos.into()))
             .choose_multiple(rng, num_entries - self.remaining_blank)
     }
@@ -78,11 +78,11 @@ impl Minefield {
     pub fn iter_neighbors_enumerated(
         &self,
         pos: Position,
-    ) -> impl Iterator<Item = (Position, Entity)> + '_ {
+    ) -> impl Iterator<Item = (Position, T)> + '_ {
         pos.neighbors().into_iter().filter_map(|neighbor| {
             self.get(neighbor)
                 .ok()
-                .and_then(|&x| x)
+                .and_then(|x| x.clone())
                 .map(|entity| (neighbor, entity))
         })
     }
@@ -96,8 +96,8 @@ impl Minefield {
     }
 }
 
-impl Index<&Position> for Minefield {
-    type Output = Entity;
+impl<T: Clone + PartialEq> Index<&Position> for Minefield<T> {
+    type Output = T;
 
     fn index(&self, pos: &Position) -> &Self::Output {
         self.field[pos].as_ref().unwrap()

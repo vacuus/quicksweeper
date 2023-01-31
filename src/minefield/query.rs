@@ -22,7 +22,7 @@ pub struct MinefieldQuery<'w, 's, Tile>
 where
     Tile: WorldQuery + 'static,
 {
-    minefield_query: Query<'w, 's, &'static Minefield>,
+    minefield_query: Query<'w, 's, &'static Minefield<Entity>>,
     tile_query: Query<'w, 's, Tile>,
 }
 
@@ -42,7 +42,9 @@ where
                 tile_query: &mut self.tile_query,
                 minefield: BorrowedMinefieldBuilder {
                     minefield_query: &self.minefield_query,
-                    minefield_builder: |query: &&Query<&Minefield>| query.get(entity).unwrap(),
+                    minefield_builder: |query: &&Query<&Minefield<Entity>>| {
+                        query.get(entity).unwrap()
+                    },
                 }
                 .build(),
             })
@@ -56,7 +58,7 @@ where
                 tile_query: &mut self.tile_query,
                 minefield: BorrowedMinefieldBuilder {
                     minefield_query: &mut self.minefield_query,
-                    minefield_builder: |query: &&Query<&Minefield>| query.single(),
+                    minefield_builder: |query: &&Query<&Minefield<Entity>>| query.single(),
                 }
                 .build(),
             })
@@ -69,13 +71,13 @@ where
     'world: 'all,
     'state: 'all,
 {
-    minefield_query: &'all Query<'world, 'state, &'static Minefield>,
+    minefield_query: &'all Query<'world, 'state, &'static Minefield<Entity>>,
     #[borrows(minefield_query)]
-    minefield: &'this Minefield,
+    minefield: &'this Minefield<Entity>,
 }
 
 impl<'all, 'world, 'state> Deref for BorrowedMinefield<'all, 'world, 'state> {
-    type Target = Minefield;
+    type Target = Minefield<Entity>;
 
     fn deref(&self) -> &Self::Target {
         self.borrow_minefield()

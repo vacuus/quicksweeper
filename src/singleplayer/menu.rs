@@ -10,7 +10,11 @@ use crate::{
     Singleplayer,
 };
 
-fn fail_screen(mut commands: Commands, ctx: ResMut<EguiContext>, minefield: Query<&Minefield>) {
+fn fail_screen(
+    mut commands: Commands,
+    ctx: ResMut<EguiContext>,
+    minefield: Query<&Minefield<Entity>>,
+) {
     let remaining = minefield.single().remaining_blank;
 
     create_screen(

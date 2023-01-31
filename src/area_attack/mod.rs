@@ -2,10 +2,10 @@ use bevy::{prelude::*, utils::Uuid};
 
 mod client_systems;
 mod components;
+mod impl_v2;
 mod protocol;
 pub mod puppet;
 mod server_systems;
-mod impl_v2;
 mod states;
 
 use iyes_loopless::prelude::*;

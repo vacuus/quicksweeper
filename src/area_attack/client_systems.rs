@@ -105,7 +105,7 @@ pub fn reset_field(
     mut commands: Commands,
     textures: Res<Textures>,
     old_scenes: Query<&SceneInstance, Or<(With<ClientTile>, With<Cursor>)>>,
-    old_minefields: Query<Entity, With<Minefield>>,
+    old_minefields: Query<Entity, With<Minefield<Entity>>>,
 ) {
     for ev in events.iter() {
         if let AreaAttackUpdate::FieldShape(template) = ev {
@@ -194,7 +194,7 @@ pub fn self_update(
     mut commands: Commands,
     mut camera: Query<&mut Transform, With<Camera>>,
     textures: Res<Textures>,
-    field: Query<Entity, With<Minefield>>,
+    field: Query<Entity, With<Minefield<Entity>>>,
     mut save_event: Local<Option<AreaAttackUpdate>>,
     mut assets: ResMut<Assets<StandardMaterial>>,
 ) {

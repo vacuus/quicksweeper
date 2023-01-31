@@ -408,7 +408,10 @@ pub fn update_tile_playing(
 pub fn prepare_player(
     mut commands: Commands,
     mut ev: EventReader<ConnectionSwitch>,
-    mut games: Query<(&Children, &Minefield, &FieldShape, &mut Access), With<AreaAttackServer>>,
+    mut games: Query<
+        (&Children, &Minefield<Entity>, &FieldShape, &mut Access),
+        With<AreaAttackServer>,
+    >,
     players: Query<(&ConnectionInfo, &mut PlayerColor, &Position)>,
     partial_connection_info: Query<&ConnectionInfo>,
     mut connections: Query<&mut Connection>,

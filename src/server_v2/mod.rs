@@ -51,7 +51,7 @@ impl Player {
         match message {
             Ok(ClientMessage::Create { game, args }) => {
                 self.game_channel = self.game_list.create_new(&game, args).await;
-            },
+            }
             Ok(ClientMessage::ForceLeave) => (),
             Ok(ClientMessage::GameTypes) => {
                 self.socket

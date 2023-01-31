@@ -10,7 +10,7 @@ use std::collections::VecDeque;
 pub fn destroy_minefields(
     mut commands: Commands,
     mut scene_spawner: ResMut<SceneSpawner>,
-    minefield: Query<Entity, With<Minefield>>,
+    minefield: Query<Entity, With<Minefield<Entity>>>,
     states: Query<&SceneInstance, With<MineCellState>>,
 ) {
     minefield.for_each(|map| commands.entity(map).despawn());
@@ -19,7 +19,7 @@ pub fn destroy_minefields(
 
 pub fn wipe_minefields(
     mut states: Query<&mut MineCellState>,
-    mut minefield: Query<&mut Minefield>,
+    mut minefield: Query<&mut Minefield<Entity>>,
 ) {
     minefield.for_each_mut(|mut field| {
         states.for_each_mut(|mut state| *state = MineCellState::Empty);
@@ -32,7 +32,7 @@ pub fn wipe_minefields(
 pub fn generate_minefield(
     mut check: EventReader<InitCheckCell>,
     mut write_back: EventWriter<CheckCell>,
-    minefields: Query<(Entity, &Minefield)>,
+    minefields: Query<(Entity, &Minefield<Entity>)>,
     mut states: Query<&mut MineCellState>,
 ) {
     if let Some(ev) = check.iter().next().cloned() {
@@ -54,7 +54,7 @@ pub fn generate_minefield(
 
 /// Reacts to requests to reveal cells, and is the sole consumer of [CheckCell] events.
 pub fn reveal_cell(
-    mut fields: Query<&mut Minefield>,
+    mut fields: Query<&mut Minefield<Entity>>,
     mut states: Query<&mut MineCellState>,
     mut ev: ResMut<Events<CheckCell>>,
     mut check_next: Local<VecDeque<CursorPosition>>,
@@ -112,7 +112,7 @@ pub fn reveal_cell(
 
 pub fn flag_cell(
     mut ev: EventReader<FlagCell>,
-    mut fields: Query<&mut Minefield>,
+    mut fields: Query<&mut Minefield<Entity>>,
     mut states: Query<&mut MineCellState>,
 ) {
     use MineCellState::*;

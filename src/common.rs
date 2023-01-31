@@ -299,7 +299,7 @@ pub fn insert_materials(
     };
 
     for (tile_id, mut material, name) in &mut new_meshes {
-        if name.contains("Text") || &**name == ("tile_empty"){
+        if name.contains("Text") || &**name == ("tile_empty") {
             continue;
         }
         let root = parent_of(tile_id, 3);

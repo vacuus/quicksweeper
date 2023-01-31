@@ -1,8 +1,9 @@
 use crate::{
+    area_attack::puppet::Puppet,
     common::{InitCheckCell, NeedsMaterial, Vec2Ext},
     cursor::*,
     load::{Field, Textures},
-    minefield::specific::MineCellState, area_attack::puppet::Puppet,
+    minefield::specific::MineCellState,
 };
 use crate::{
     main_menu::Menu,

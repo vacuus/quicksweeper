@@ -5,22 +5,24 @@ pub struct DoubleChannel<T> {
     receiver: mpsc::UnboundedReceiver<T>,
 }
 
-impl <T> DoubleChannel<T> {
+impl<T> DoubleChannel<T> {
     pub fn double() -> (Self, Self) {
         let (tx1, rx1) = mpsc::unbounded_channel();
         let (tx2, rx2) = mpsc::unbounded_channel();
 
         (
             Self {
-                sender: tx1, receiver: rx2,
+                sender: tx1,
+                receiver: rx2,
             },
             Self {
-                sender: tx2, receiver: rx1,
-            }
+                sender: tx2,
+                receiver: rx1,
+            },
         )
     }
 
-    pub fn send(&mut self, message: T) -> Result<(), SendError<T>>{
+    pub fn send(&mut self, message: T) -> Result<(), SendError<T>> {
         self.sender.send(message)
     }
 

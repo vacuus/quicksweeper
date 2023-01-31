@@ -15,7 +15,7 @@ pub struct CursorPosition(pub Position, pub Entity);
 impl CursorPosition {
     pub fn iter_neighbors<'a>(
         &'a self,
-        minefields: impl IntoIterator<Item = (Entity, &'a Minefield)>,
+        minefields: impl IntoIterator<Item = (Entity, &'a Minefield<Entity>)>,
     ) -> Option<impl Iterator<Item = Self> + 'a> {
         minefields
             .into_iter()
@@ -82,7 +82,7 @@ pub fn pointer_cursor(
     cameras: Query<(&Camera, &GlobalTransform)>,
     mut cursors: Query<(&Cursor, &mut Position), Without<Puppet>>,
     tiles: Query<&Transform>, // Does not include only tiles, but can be queried for tiles
-    minefields: Query<&Minefield>,
+    minefields: Query<&Minefield<Entity>>,
 ) {
     let Ok((cursor, mut cursor_position)) = cursors.get_single_mut() else { return; };
     let Ok(minefield) = minefields.get(cursor.owning_minefield) else { return; };
@@ -229,7 +229,7 @@ pub fn init_check_cell(
     cursors: Query<(&Cursor, &Position)>,
     kb: Res<Input<KeyCode>>,
     mut ev: EventWriter<InitCheckCell>,
-    fields: Query<(Entity, &Minefield)>,
+    fields: Query<(Entity, &Minefield<Entity>)>,
 ) {
     if kb.just_pressed(KeyCode::Space) {
         println!("sending init check event");
@@ -273,7 +273,6 @@ fn zoom_camera(
         }
     }
 }
-
 
 pub struct CursorPlugin;
 

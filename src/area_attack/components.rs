@@ -15,13 +15,13 @@ use super::{states::AreaAttack, AreaAttackServer};
 pub const FREEZE_DURATION: Duration = Duration::from_secs(5);
 
 #[derive(Component)]
-pub struct StageTimer{
+pub struct StageTimer {
     previous_time: Duration,
     timer: Timer,
 }
 
 impl StageTimer {
-    pub fn tick(&mut self, delta: Duration) -> &Self{
+    pub fn tick(&mut self, delta: Duration) -> &Self {
         self.previous_time = self.timer.elapsed();
         self.timer.tick(delta);
         self
@@ -47,16 +47,17 @@ impl StageTimer {
 
 impl Default for StageTimer {
     fn default() -> Self {
-        Self{
+        Self {
             previous_time: Duration::from_nanos(0),
-            timer: Timer::new(Duration::from_secs(7 * 60), TimerMode::Once).tap_mut(|timer| timer.pause()),
+            timer: Timer::new(Duration::from_secs(7 * 60), TimerMode::Once)
+                .tap_mut(|timer| timer.pause()),
         }
     }
 }
 
 #[derive(Bundle)]
 pub struct AreaAttackBundle {
-    field: Minefield,
+    field: Minefield<Entity>,
     template: FieldShape,
     selections: InitialSelections,
     state: AreaAttack,

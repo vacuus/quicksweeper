@@ -90,7 +90,11 @@ impl GameStore {
         }
     }
 
-    pub async fn create_new(&self, game: &GameMarker, args: Vec<u8>) -> Option<DoubleChannel<Vec<u8>>> {
+    pub async fn create_new(
+        &self,
+        game: &GameMarker,
+        args: Vec<u8>,
+    ) -> Option<DoubleChannel<Vec<u8>>> {
         if let Some(GameDescriptor { initializer, .. }) = REGISTRY.get(game) {
             let GameComponents {
                 host_channel,
