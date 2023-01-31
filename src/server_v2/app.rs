@@ -16,11 +16,14 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_tungstenite as tungsten;
-use unique_id::sequence::SequenceGenerator;
+use unique_id::{sequence::SequenceGenerator, Generator};
 
-use crate::server::{ActiveGame, GameMarker, Greeting};
+use crate::{
+    registry::REGISTRY,
+    server::{ActiveGame, GameDescriptor, GameMarker, Greeting},
+};
 
-use super::{connection::Connection, double_channel::DoubleChannel};
+use super::{connection::Connection, double_channel::DoubleChannel, game::GameComponents};
 
 pub struct GameConnector {
     num_connections: Arc<AtomicU64>,
@@ -82,6 +85,30 @@ impl GameStore {
                 }
                 None
             }
+        } else {
+            None
+        }
+    }
+
+    pub async fn create_new(&self, game: &GameMarker, args: Vec<u8>) -> Option<DoubleChannel<Vec<u8>>> {
+        if let Some(GameDescriptor { initializer, .. }) = REGISTRY.get(game) {
+            let GameComponents {
+                host_channel,
+                connector,
+                main_task,
+            } = initializer.create(args);
+            let key = self.generator.next_id() as u64; //TODO generator reset? Or some way to prevent crashes
+
+            self.store.write().await.insert(
+                key,
+                GameHandle {
+                    kind: *game,
+                    players: Arc::new(Vec::new()),
+                    connect: Mutex::new(connector),
+                    task_handle: main_task,
+                },
+            );
+            Some(host_channel)
         } else {
             None
         }

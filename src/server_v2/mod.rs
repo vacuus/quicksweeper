@@ -49,7 +49,9 @@ impl Player {
 
     async fn handle_client_message(&mut self, message: Result<ClientMessage, MessageError>) {
         match message {
-            Ok(ClientMessage::Create { game, args }) => (),
+            Ok(ClientMessage::Create { game, args }) => {
+                self.game_channel = self.game_list.create_new(&game, args).await;
+            },
             Ok(ClientMessage::ForceLeave) => (),
             Ok(ClientMessage::GameTypes) => {
                 self.socket
