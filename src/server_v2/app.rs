@@ -1,10 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::{
-        atomic::{AtomicU64, Ordering},
-        Arc,
-    },
-};
+use std::{collections::HashMap, sync::Arc};
 
 use itertools::Itertools;
 use tokio::{
@@ -26,7 +20,6 @@ use crate::{
 use super::{connection::Connection, double_channel::DoubleChannel, game::SessionObjects};
 
 pub struct GameConnector {
-    num_connections: Arc<AtomicU64>,
     request: Sender<Greeting>,
     recv: Receiver<DoubleChannel<Vec<u8>>>,
 }
@@ -34,12 +27,7 @@ pub struct GameConnector {
 impl GameConnector {
     pub async fn connect(&mut self, player: Greeting) -> Option<DoubleChannel<Vec<u8>>> {
         if self.request.send(player).await.is_ok() {
-            if let Some(result) = self.recv.recv().await {
-                self.num_connections.fetch_add(1, Ordering::SeqCst);
-                Some(result)
-            } else {
-                None
-            }
+            self.recv.recv().await
         } else {
             None
         }
