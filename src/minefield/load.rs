@@ -101,6 +101,33 @@ impl FieldShape {
     }
 }
 
+impl TryFrom<&[u8]> for FieldShape {
+    type Error = anyhow::Error;
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        let mut data = Vec::new();
+
+        bytes
+            .rsplit(|&b| b == b'\n')
+            .try_for_each(|line| {
+                let row_header = line
+                    .first()
+                    .map(|&c| TileKind::try_from(c))
+                    .unwrap_or(Ok(TileKind::Void))?;
+
+                data.push(FieldCode::Row { starts: row_header });
+
+                line.iter()
+                    .group_by(|&&c| TileKind::try_from(c))
+                    .into_iter()
+                    .try_for_each(|(group, i)| {
+                        group.map(|_| data.push(FieldCode::Run(i.count() as u32)))
+                    })
+            })
+            .map_err(|char| anyhow!("Did not expect character '{char}' as a tile"))?;
+        Ok(Self(data))
+    }
+}
+
 pub struct FieldLoader;
 
 impl AssetLoader for FieldLoader {
@@ -109,30 +136,9 @@ impl AssetLoader for FieldLoader {
         bytes: &'a [u8],
         ctx: &'a mut bevy::asset::LoadContext,
     ) -> bevy::asset::BoxedFuture<'a, Result<(), anyhow::Error>> {
-        Box::pin(async {
-            let mut data = Vec::new();
-
-            bytes
-                .rsplit(|&b| b == b'\n')
-                .try_for_each(|line| {
-                    let row_header = line
-                        .first()
-                        .map(|&c| TileKind::try_from(c))
-                        .unwrap_or(Ok(TileKind::Void))?;
-
-                    data.push(FieldCode::Row { starts: row_header });
-
-                    line.iter()
-                        .group_by(|&&c| TileKind::try_from(c))
-                        .into_iter()
-                        .try_for_each(|(group, i)| {
-                            group.map(|_| data.push(FieldCode::Run(i.count() as u32)))
-                        })
-                })
-                .map_err(|char| anyhow!("Did not expect character '{char}' as a tile"))?;
-
-            ctx.set_default_asset(LoadedAsset::new(FieldShape(data)));
-
+        Box::pin(async move {
+            let field = FieldShape::try_from(bytes)?;
+            ctx.set_default_asset(LoadedAsset::new(field));
             Ok(())
         })
     }
