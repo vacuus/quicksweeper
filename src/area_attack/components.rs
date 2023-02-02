@@ -109,7 +109,7 @@ pub struct Frozen(Option<Duration>);
 #[derive(Component, Debug, Default, Deref, DerefMut)]
 pub struct Killed(bool);
 
-#[derive(Component, Debug, Clone, Copy)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ServerTile {
     /// No one has claimed the tile, and the tile does not contain a mine
     Empty,

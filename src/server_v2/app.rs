@@ -4,7 +4,7 @@ use itertools::Itertools;
 use tokio::{
     net::TcpListener,
     sync::{
-        mpsc::{Receiver, Sender},
+        mpsc::{channel, Receiver, Sender},
         Mutex, RwLock,
     },
     task::JoinHandle,
@@ -19,9 +19,31 @@ use crate::{
 
 use super::{connection::Connection, double_channel::DoubleChannel, game::SessionObjects};
 
+pub fn player_connector_pair() -> (GameConnector, PlayerReceiver) {
+    let (greeting_tx, greeting_rx) = channel(1);
+    let (connector_tx, connector_rx) = channel(1);
+
+    (
+        GameConnector {
+            request: greeting_tx,
+            recv: connector_rx,
+        },
+        PlayerReceiver {
+            recv: greeting_rx,
+            reply: connector_tx,
+        },
+    )
+}
+
 pub struct GameConnector {
     request: Sender<Greeting>,
     recv: Receiver<DoubleChannel<Vec<u8>>>,
+}
+
+/// The other end of [GameConnector], held by the game
+pub struct PlayerReceiver {
+    recv: Receiver<Greeting>,
+    reply: Sender<DoubleChannel<Vec<u8>>>,
 }
 
 impl GameConnector {

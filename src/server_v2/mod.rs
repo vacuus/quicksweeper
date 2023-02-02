@@ -1,11 +1,8 @@
-use std::sync::Arc;
-
 use futures_util::SinkExt;
 use simple_logger::SimpleLogger;
 use tokio::runtime::Runtime;
-use unique_id::sequence::SequenceGenerator;
 
-use crate::server::{GameDescriptor, MessageError};
+use crate::server::MessageError;
 use crate::{
     registry::REGISTRY,
     server::{ClientMessage, Greeting, ServerMessage},
@@ -14,11 +11,10 @@ use crate::{
 use self::app::{App, GameStore};
 use self::connection::Connection;
 use self::double_channel::DoubleChannel;
-use self::game::SessionObjects;
 
-mod app;
+pub mod app;
 mod connection;
-mod double_channel;
+pub mod double_channel;
 pub mod game;
 
 pub struct Player {
