@@ -97,14 +97,9 @@ pub fn server_messages(
                     active_games
                         .iter()
                         .map(|(id, &marker, player_ids)| {
-                            let players = player_ids
-                                .iter()
-                                .map(|&ent| q_players.get(ent).unwrap().username.clone())
-                                .collect();
                             ActiveGame {
                                 marker,
                                 id: id.to_bits(),
-                                players,
                             }
                         })
                         .collect(),

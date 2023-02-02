@@ -7,7 +7,6 @@ use crate::server::GameMarker;
 pub struct ActiveGame {
     pub marker: GameMarker,
     pub id: u64,
-    pub players: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

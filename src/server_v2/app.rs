@@ -58,7 +58,6 @@ impl GameConnector {
 
 pub struct GameHandle {
     kind: GameMarker,
-    players: Arc<Vec<String>>,
     connect: Mutex<GameConnector>,
     task_handle: JoinHandle<()>,
 }
@@ -78,7 +77,6 @@ impl GameStore {
             .map(|(&id, handle)| ActiveGame {
                 marker: handle.kind,
                 id,
-                players: (*handle.players).clone(),
             })
             .collect_vec()
     }
@@ -117,7 +115,6 @@ impl GameStore {
                 key,
                 GameHandle {
                     kind: *game,
-                    players: Arc::new(Vec::new()),
                     connect: Mutex::new(connector),
                     task_handle: main_task,
                 },
