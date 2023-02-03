@@ -25,5 +25,3 @@ pub static REGISTRY: Lazy<GameRegistry> = Lazy::new(|| {
 
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct GameRegistry(HashMap<GameMarker, GameDescriptor>);
-
-impl GameRegistry {}

@@ -16,6 +16,7 @@ pub mod app;
 mod connection;
 pub mod double_channel;
 pub mod game;
+mod fields;
 
 pub struct Player {
     socket: Connection,
