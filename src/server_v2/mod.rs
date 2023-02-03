@@ -18,6 +18,8 @@ pub mod double_channel;
 pub mod game;
 mod fields;
 
+pub use fields::FIELDS;
+
 pub struct Player {
     socket: Connection,
     info: Greeting,
