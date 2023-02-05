@@ -36,7 +36,7 @@ pub enum AreaAttackUpdate {
     Transition(AreaAttack),
     /// Indicates to the player that they have been frozen at this time
     Freeze,
-    /// The client has attempted to select a mine in the [AreaAttackUpdate::Lock] and thus died
+    /// The client has attempted to select a mine in the [AreaAttack::Lock] stage and thus died
     Killed,
     /// Issued to a client when it attempts to join a full game
     Full,
