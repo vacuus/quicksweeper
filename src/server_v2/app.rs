@@ -31,6 +31,7 @@ pub fn player_connector_pair() -> (GameConnector, PlayerReceiver) {
         PlayerReceiver {
             recv: greeting_rx,
             reply: connector_tx,
+            needs_reply: false,
         },
     )
 }
@@ -44,6 +45,27 @@ pub struct GameConnector {
 pub struct PlayerReceiver {
     recv: Receiver<Greeting>,
     reply: Sender<DoubleChannel<Vec<u8>>>,
+    needs_reply: bool,
+}
+
+impl PlayerReceiver {
+    pub async fn recv(&mut self) -> Option<Greeting> {
+        self.recv.recv().await.map(|u| {
+            self.needs_reply = true;
+            u
+        }) // TODO feature result_option_inspect
+    }
+
+    pub async fn respond(&mut self) -> Option<DoubleChannel<Vec<u8>>> {
+        if self.needs_reply {
+            self.needs_reply = false;
+            let (ch_out, ch_here) = DoubleChannel::double();
+            self.reply.send(ch_out).await;
+            Some(ch_here)
+        } else {
+            None
+        }
+    }
 }
 
 impl GameConnector {
