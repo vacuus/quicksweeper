@@ -5,6 +5,7 @@ use tokio::sync::mpsc::error::SendError;
 
 use crate::{
     minefield::Minefield,
+    server::Greeting,
     server_v2::{
         app::player_connector_pair,
         double_channel::DoubleChannel,
@@ -17,16 +18,8 @@ use super::components::ServerTile;
 
 struct Player {
     is_host: bool,
+    info: Greeting,
     connector: DoubleChannel<Vec<u8>>,
-}
-
-impl From<DoubleChannel<Vec<u8>>> for Player {
-    fn from(connector: DoubleChannel<Vec<u8>>) -> Self {
-        Self {
-            is_host: false,
-            connector,
-        }
-    }
 }
 
 impl Player {
@@ -42,7 +35,7 @@ impl Player {
 pub struct IAreaAttack;
 
 impl GamemodeInitializer for IAreaAttack {
-    fn create(&self, _: Vec<u8>) -> SessionObjects {
+    fn create(&self, _: Vec<u8>, info: Greeting) -> SessionObjects {
         // area attack has no params for now
 
         let (host_channel, host_listener) = DoubleChannel::<Vec<u8>>::double();
@@ -51,7 +44,11 @@ impl GamemodeInitializer for IAreaAttack {
         let field = Minefield::new_shaped(|_| ServerTile::Empty, &field_shape);
 
         let main_task = tokio::spawn(async move {
-            let host = Player::from(host_listener).tap_mut(|p| p.is_host = true);
+            let host = Player {
+                is_host: true,
+                info,
+                connector: host_listener,
+            };
             let mut task_queue = FuturesUnordered::new();
             task_queue.push(host.recv_owned());
 

@@ -124,13 +124,14 @@ impl GameStore {
         &self,
         game: &GameMarker,
         args: Vec<u8>,
+        info: Greeting,
     ) -> Option<DoubleChannel<Vec<u8>>> {
         if let Some(GameDescriptor { initializer, .. }) = REGISTRY.get(game) {
             let SessionObjects {
                 host_channel,
                 connector,
                 main_task,
-            } = initializer.create(args);
+            } = initializer.create(args, info);
             let key = self.generator.next_id() as u64; //TODO generator reset? Or some way to prevent crashes
 
             self.store.write().await.insert(

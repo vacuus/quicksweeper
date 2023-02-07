@@ -1,5 +1,7 @@
 use tokio::task::JoinHandle;
 
+use crate::server::Greeting;
+
 use super::{app::GameConnector, double_channel::DoubleChannel};
 
 pub struct SessionObjects {
@@ -17,5 +19,5 @@ pub struct SessionObjects {
 /// game. Since it is meant to spawn a task, this function must be called from within a tokio
 /// context.
 pub trait GamemodeInitializer: Send + Sync {
-    fn create(&self, params: Vec<u8>) -> SessionObjects;
+    fn create(&self, params: Vec<u8>, initializer: Greeting) -> SessionObjects;
 }

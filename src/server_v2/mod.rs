@@ -49,7 +49,7 @@ impl Player {
     async fn handle_client_message(&mut self, message: Result<ClientMessage, MessageError>) {
         match message {
             Ok(ClientMessage::Create { game, args }) => {
-                self.game_channel = self.game_list.create_new(&game, args).await;
+                self.game_channel = self.game_list.create_new(&game, args, self.info.clone()).await;
             }
             Ok(ClientMessage::ForceLeave) => (),
             Ok(ClientMessage::GameTypes) => {
