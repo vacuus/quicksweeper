@@ -29,4 +29,11 @@ impl<T> DoubleChannel<T> {
     pub async fn recv(&mut self) -> Option<T> {
         self.receiver.recv().await
     }
+
+    /// The same as recv, but takes ownership of the channel while the future is being awaited, and
+    /// returns it when it is finished. Useful for repeatedly awaiting the channel within a
+    /// collection of futures, such as [futures_util::stream::FuturesUnordered]
+    pub async fn recv_owned(mut self) -> (Option<T>, Self) {
+        (self.receiver.recv().await, self)
+    }
 }
