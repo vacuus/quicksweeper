@@ -1,6 +1,5 @@
-
+use futures_util::{stream::FuturesUnordered, StreamExt};
 use rand::seq::SliceRandom;
-use tokio::pin;
 
 use crate::{
     minefield::Minefield,
@@ -25,13 +24,17 @@ impl GamemodeInitializer for IAreaAttack {
         let field_shape = FIELDS.choose(&mut rand::thread_rng()).unwrap().clone();
         let field = Minefield::new_shaped(|_| ServerTile::Empty, &field_shape);
 
-        pin!(host_listener);
-        let mut players = vec![host_listener];
-
         let main_task = tokio::spawn(async move {
+            let mut host_listener = host_listener;
+            let mut task_queue = FuturesUnordered::new();
+            task_queue.push(host_listener.recv());
+
             loop {
                 tokio::select! {
                     Some(player) = player_receiver.recv() => {
+
+                    }
+                    Some(player_msg) = task_queue.next() => {
 
                     }
                 }
