@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use futures_util::{stream::FuturesUnordered, StreamExt};
 use rand::seq::SliceRandom;
 use tap::Tap;
@@ -43,7 +45,10 @@ impl GamemodeInitializer for IAreaAttack {
         let field_shape = FIELDS.choose(&mut rand::thread_rng()).unwrap().clone();
         let field = Minefield::new_shaped(|_| ServerTile::Empty, &field_shape);
 
+        let mut senders = HashMap::new();
+
         let main_task = tokio::spawn(async move {
+            senders.insert(info.clone(), host_listener.sender());
             let host = Player {
                 is_host: true,
                 info,

@@ -9,7 +9,8 @@ pub struct ActiveGame {
     pub id: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+// TODO Better eq/hash implementation based on player id (instead of arbitrary name, which can collide)
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Greeting {
     pub username: String,
 }

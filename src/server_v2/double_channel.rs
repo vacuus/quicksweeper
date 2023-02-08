@@ -22,6 +22,10 @@ impl<T> DoubleChannel<T> {
         )
     }
 
+    pub fn sender(&self) -> mpsc::UnboundedSender<T> {
+        self.sender.clone()
+    }
+
     pub fn send(&mut self, message: T) -> Result<(), SendError<T>> {
         self.sender.send(message)
     }
