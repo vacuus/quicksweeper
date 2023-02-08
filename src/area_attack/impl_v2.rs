@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use futures_util::{stream::FuturesUnordered, StreamExt};
+use futures_util::{stream::FuturesUnordered, Future, StreamExt};
 use rand::seq::SliceRandom;
 use tap::Tap;
-use tokio::sync::mpsc::error::SendError;
+use tokio::sync::mpsc::{error::SendError, UnboundedSender};
 
 use crate::{
     minefield::Minefield,
@@ -16,7 +16,7 @@ use crate::{
     },
 };
 
-use super::components::ServerTile;
+use super::{components::ServerTile, protocol::AreaAttackUpdate};
 
 struct Player {
     is_host: bool,
@@ -62,8 +62,13 @@ impl GamemodeInitializer for IAreaAttack {
                     Some(player) = player_receiver.recv() => {
 
                     }
-                    Some((player_msg, player)) = task_queue.next() => {
-                        task_queue.push(player.recv_owned())
+                    Some((player_msg, mut player)) = task_queue.next() => {
+                        if let Some(msg) = player_msg {
+                            if let Ok(message) = rmp_serde::from_slice(&msg) {
+                                handle_message(message, &mut senders, &mut player);
+                                task_queue.push(player.recv_owned());
+                            }
+                        }
                     }
                 }
             }
@@ -74,6 +79,31 @@ impl GamemodeInitializer for IAreaAttack {
             connector: connector_front,
             main_task,
         }
+    }
+}
+
+fn handle_message(
+    msg: AreaAttackUpdate,
+    senders: &mut HashMap<Greeting, UnboundedSender<Vec<u8>>>,
+    player: &mut Player,
+) {
+    use AreaAttackUpdate::*;
+    match msg {
+        FieldShape(_) => todo!(),
+        PlayerProperties {
+            id,
+            username,
+            color,
+            position,
+        } => todo!(),
+        Reposition { id, position } => todo!(),
+        SelfChange { color, position } => todo!(),
+        TileChanged { position, to } => todo!(),
+        Transition(_) => todo!(),
+        Freeze => todo!(),
+        Killed => todo!(),
+        Full => todo!(),
+        NotHost => todo!(),
     }
 }
 
