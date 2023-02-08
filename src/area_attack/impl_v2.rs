@@ -16,7 +16,7 @@ use crate::{
     },
 };
 
-use super::{components::ServerTile, protocol::AreaAttackUpdate};
+use super::{components::ServerTile, protocol::{AreaAttackUpdate, AreaAttackRequest}};
 
 struct Player {
     is_host: bool,
@@ -83,27 +83,16 @@ impl GamemodeInitializer for IAreaAttack {
 }
 
 fn handle_message(
-    msg: AreaAttackUpdate,
+    msg: AreaAttackRequest,
     senders: &mut HashMap<Greeting, UnboundedSender<Vec<u8>>>,
     player: &mut Player,
 ) {
-    use AreaAttackUpdate::*;
+    use AreaAttackRequest::*;
     match msg {
-        FieldShape(_) => todo!(),
-        PlayerProperties {
-            id,
-            username,
-            color,
-            position,
-        } => todo!(),
-        Reposition { id, position } => todo!(),
-        SelfChange { color, position } => todo!(),
-        TileChanged { position, to } => todo!(),
-        Transition(_) => todo!(),
-        Freeze => todo!(),
-        Killed => todo!(),
-        Full => todo!(),
-        NotHost => todo!(),
+        StartGame => (),
+        Reveal(_) => (),
+        Position(_) => (),
+        Color(_) => (),
     }
 }
 
