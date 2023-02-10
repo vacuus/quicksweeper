@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use futures_util::{stream::FuturesUnordered, StreamExt};
 use rand::seq::SliceRandom;
@@ -15,7 +15,23 @@ use crate::{
     },
 };
 
-use super::{components::ServerTile, protocol::AreaAttackRequest};
+use super::{components::{ServerTile, PlayerColor}, protocol::AreaAttackRequest};
+
+#[derive(Default)]
+struct PlayerSet {
+    map: HashMap<Greeting, SendOnlyPlayer>,
+    taken_colors: HashSet<PlayerColor>,
+}
+
+impl PlayerSet {
+    fn register(&mut self, info: Greeting) -> Player {
+        // assign a color to the player
+        // notify other players of this player
+        // register player into map
+        // return double-channel player
+        todo!()
+    }
+}
 
 struct Player {
     is_host: bool,
@@ -58,15 +74,10 @@ impl GamemodeInitializer for IAreaAttack {
         let field_shape = FIELDS.choose(&mut rand::thread_rng()).unwrap().clone();
         let field = Minefield::new_shaped(|_| ServerTile::Empty, &field_shape);
 
-        let mut senders = HashMap::new();
+        let mut senders = PlayerSet::default();
 
         let main_task = tokio::spawn(async move {
-            let host = Player {
-                is_host: true,
-                info: info.clone(),
-                connector: host_listener,
-            };
-            senders.insert(info.clone(), host.sender());
+            let host = senders.register(info);
             let mut task_queue = FuturesUnordered::new();
             task_queue.push(host.recv_owned());
 
@@ -97,7 +108,7 @@ impl GamemodeInitializer for IAreaAttack {
 
 fn handle_message(
     msg: AreaAttackRequest,
-    senders: &mut HashMap<Greeting, SendOnlyPlayer>,
+    senders: &mut PlayerSet,
     player: &mut Player,
 ) {
     use AreaAttackRequest::*;
