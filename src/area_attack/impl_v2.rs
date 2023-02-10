@@ -36,6 +36,7 @@ impl PlayerSet {
 struct Player {
     is_host: bool,
     info: Greeting,
+    color: PlayerColor,
     connector: DoubleChannel<Vec<u8>>,
 }
 
@@ -52,6 +53,7 @@ impl Player {
         SendOnlyPlayer {
             is_host: self.is_host,
             info: self.info.clone(),
+            color: self.color,
             connector: self.connector.sender(),
         }
     }
@@ -60,6 +62,7 @@ impl Player {
 struct SendOnlyPlayer {
     is_host: bool,
     info: Greeting,
+    color: PlayerColor,
     connector: UnboundedSender<Vec<u8>>,
 }
 
