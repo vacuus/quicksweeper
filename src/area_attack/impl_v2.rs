@@ -74,21 +74,23 @@ impl GamemodeInitializer for IAreaAttack {
         let field_shape = FIELDS.choose(&mut rand::thread_rng()).unwrap().clone();
         let field = Minefield::new_shaped(|_| ServerTile::Empty, &field_shape);
 
-        let mut senders = PlayerSet::default();
+        let mut player_set = PlayerSet::default();
 
         let main_task = tokio::spawn(async move {
-            let host = senders.register(info, host_listener);
+            let host = player_set.register(info, host_listener);
             let mut task_queue = FuturesUnordered::new();
             task_queue.push(host.recv_owned());
 
             loop {
                 tokio::select! {
                     Some(player) = player_receiver.recv() => {
+                        let player_listener = player_receiver.respond().await.unwrap();
+                        player_set.register(player, player_listener);
                     }
                     Some((player_msg, mut player)) = task_queue.next() => {
                         if let Some(msg) = player_msg {
                             if let Ok(message) = rmp_serde::from_slice(&msg) {
-                                handle_message(message, &mut senders, &mut player);
+                                handle_message(message, &mut player_set, &mut player);
                             }
                             task_queue.push(player.recv_owned());
                         }
