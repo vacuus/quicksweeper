@@ -15,8 +15,8 @@ use self::double_channel::DoubleChannel;
 pub mod app;
 mod connection;
 pub mod double_channel;
-pub mod game;
 mod fields;
+pub mod game;
 
 pub use fields::FIELDS;
 
@@ -49,7 +49,10 @@ impl Player {
     async fn handle_client_message(&mut self, message: Result<ClientMessage, MessageError>) {
         match message {
             Ok(ClientMessage::Create { game, args }) => {
-                self.game_channel = self.game_list.create_new(&game, args, self.info.clone()).await;
+                self.game_channel = self
+                    .game_list
+                    .create_new(&game, args, self.info.clone())
+                    .await;
             }
             Ok(ClientMessage::ForceLeave) => (),
             Ok(ClientMessage::GameTypes) => {

@@ -96,11 +96,9 @@ pub fn server_messages(
                 let msg = ServerMessage::ActiveGames(
                     active_games
                         .iter()
-                        .map(|(id, &marker, player_ids)| {
-                            ActiveGame {
-                                marker,
-                                id: id.to_bits(),
-                            }
+                        .map(|(id, &marker, player_ids)| ActiveGame {
+                            marker,
+                            id: id.to_bits(),
                         })
                         .collect(),
                 );
