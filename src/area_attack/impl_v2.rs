@@ -24,7 +24,7 @@ struct PlayerSet {
 }
 
 impl PlayerSet {
-    fn register(&mut self, info: Greeting) -> Player {
+    fn register(&mut self, info: Greeting, chan: DoubleChannel<Vec<u8>>) -> Player {
         // assign a color to the player
         // notify other players of this player
         // register player into map
@@ -77,14 +77,13 @@ impl GamemodeInitializer for IAreaAttack {
         let mut senders = PlayerSet::default();
 
         let main_task = tokio::spawn(async move {
-            let host = senders.register(info);
+            let host = senders.register(info, host_listener);
             let mut task_queue = FuturesUnordered::new();
             task_queue.push(host.recv_owned());
 
             loop {
                 tokio::select! {
                     Some(player) = player_receiver.recv() => {
-
                     }
                     Some((player_msg, mut player)) = task_queue.next() => {
                         if let Some(msg) = player_msg {
