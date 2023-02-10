@@ -16,7 +16,10 @@ use crate::{
     },
 };
 
-use super::{components::ServerTile, protocol::{AreaAttackUpdate, AreaAttackRequest}};
+use super::{
+    components::ServerTile,
+    protocol::{AreaAttackRequest, AreaAttackUpdate},
+};
 
 struct Player {
     is_host: bool,
@@ -66,8 +69,8 @@ impl GamemodeInitializer for IAreaAttack {
                         if let Some(msg) = player_msg {
                             if let Ok(message) = rmp_serde::from_slice(&msg) {
                                 handle_message(message, &mut senders, &mut player);
-                                task_queue.push(player.recv_owned());
                             }
+                            task_queue.push(player.recv_owned());
                         }
                     }
                 }
