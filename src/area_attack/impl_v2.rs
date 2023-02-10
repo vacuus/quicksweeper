@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use futures_util::{stream::FuturesUnordered, Future, StreamExt};
+use futures_util::{stream::FuturesUnordered, StreamExt};
 use rand::seq::SliceRandom;
-use tap::Tap;
 use tokio::sync::mpsc::{error::SendError, UnboundedSender};
 
 use crate::{
@@ -16,10 +15,7 @@ use crate::{
     },
 };
 
-use super::{
-    components::ServerTile,
-    protocol::{AreaAttackRequest, AreaAttackUpdate},
-};
+use super::{components::ServerTile, protocol::AreaAttackRequest};
 
 struct Player {
     is_host: bool,
@@ -35,6 +31,20 @@ impl Player {
     async fn recv_owned(mut self) -> (Option<Vec<u8>>, Self) {
         (self.connector.recv().await, self)
     }
+
+    fn sender(&self) -> SendOnlyPlayer {
+        SendOnlyPlayer {
+            is_host: self.is_host,
+            info: self.info.clone(),
+            connector: self.connector.sender(),
+        }
+    }
+}
+
+struct SendOnlyPlayer {
+    is_host: bool,
+    info: Greeting,
+    connector: UnboundedSender<Vec<u8>>,
 }
 
 pub struct IAreaAttack;
@@ -51,12 +61,12 @@ impl GamemodeInitializer for IAreaAttack {
         let mut senders = HashMap::new();
 
         let main_task = tokio::spawn(async move {
-            senders.insert(info.clone(), host_listener.sender());
             let host = Player {
                 is_host: true,
-                info,
+                info: info.clone(),
                 connector: host_listener,
             };
+            senders.insert(info.clone(), host.sender());
             let mut task_queue = FuturesUnordered::new();
             task_queue.push(host.recv_owned());
 
@@ -87,7 +97,7 @@ impl GamemodeInitializer for IAreaAttack {
 
 fn handle_message(
     msg: AreaAttackRequest,
-    senders: &mut HashMap<Greeting, UnboundedSender<Vec<u8>>>,
+    senders: &mut HashMap<Greeting, SendOnlyPlayer>,
     player: &mut Player,
 ) {
     use AreaAttackRequest::*;
